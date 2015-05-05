@@ -1,0 +1,7 @@
+*.o
+TestDB/*
+last-merge-batches
+lastex
+lastal
+lastdb
+last-split

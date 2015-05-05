@@ -1,0 +1,68 @@
+Matrix stringxx
+Evalues is bad
+# LAST version 475
+#
+# a=7 b=1 A=7 B=1 c=100000 F=-1 e=40 d=10 x=39 y=9 z=39
+# u=2 s=2 T=0 m=10 l=4294967295 n=10 k=1 i=8192 w=1000 t=0.910239 g=1 j=3 Q=0
+# db
+# Reference sequences=3 normal letters=499
+#
+#    A  C  G  T
+# A  1 -1 -1 -1
+# C -1  1 -1 -1
+# G -1 -1  1 -1
+# T -1 -1 -1  1
+#
+# Coordinates are 0-based.  For - strand matches, coordinates
+# in the reverse complement of the 2nd sequence are used.
+#
+# name start alnSize strand seqSize alignment
+#
+# batch 0
+>>>>>>>>>>>>>>>
+    A  C  G  T
+ A  1 -1 -1 -1
+ C -1  1 -1 -1
+ G -1 -1  1 -1
+ T -1 -1 -1  1
+++++++++++++++++
+===================================== BEGIN ===========================
+stat1
+   0.294   0.206   0.206   0.294
+stat2
+   0.289   0.211   0.211   0.289
+stats1.letterocut 499
+stats2.letterocut 922
+===================================== ENd ===========================
+# LAST version 475
+#
+# a=7 b=1 A=7 B=1 c=100000 F=-1 e=40 d=10 x=39 y=9 z=39
+# u=2 s=2 T=0 m=10 l=4294967295 n=10 k=1 i=8192 w=1000 t=0.910239 g=1 j=3 Q=0
+# db
+# Reference sequences=3 normal letters=499
+#
+#    A  C  G  T
+# A  1 -1 -1 -1
+# C -1  1 -1 -1
+# G -1 -1  1 -1
+# T -1 -1 -1  1
+#
+# Coordinates are 0-based.  For - strand matches, coordinates
+# in the reverse complement of the 2nd sequence are used.
+#
+# name start alnSize strand seqSize alignment
+#
+# batch 0
+a score=149 expect=1.23e-68
+s apple 0 181 + 188 ATTTTATCTAAAGTGGGACCATTTATAATGAGGTAATTTTGATTCCGAGCATAAATATCCTGAGCAAATATAAGCTGATTATCCCCCTTCATAGAGGAGGCATACTGAGAAGGCGACAATATTTGTTTTACCAGTTTCGCACCCAAATTCCGGGGATGATCCCCCATGGCAGCCACAATCA
+s Apple 0 173 + 178 ATTTTATCTAAAGTGGGACCATTTATAATGAGGTAATTTTGATTCCGAGCATAAATATCCTGAGCAAATA----CTGATTATCCCCCTTCATAGAGGAGGCATACTGAGAAGGCGACAATATTTGTTTTACCAGTTTCGCACCCAAATTCCGGGGA----CCCCCATGGCAGCCACAAACA
+
+a score=148 expect=3.55e-68
+s boy 0 197 + 197 ATGGTTATTCACATCATTGAAATTTTCCGGATCTACCCAAACGGTGCGGTAATAGGGCTCGGGCTGGGGCGTATAAAGTGTATCGTTAAAAATAGTGGTGAGTACTTGTTGGATTTTGTCACGATCTTCAAATGCAGCCACCACCACCAATTCATTGTCGGCACCCATGGCACGGGGTTTCACCGAGTCACAACCCA
+s Boy 0 183 + 183 ATGGTTATTCACATCATTGAAATTTTCCGGATCTACCCAAACGGTGCG----TAGGGCTCGGGCTGGGGCGTATAAAGTGTATCGTTAAAAATAGTGGTGAGTACTTGTTG------GTCACGATCTTCAAATGCAGCCACCACCACCAATTCATTGTCGGCACCCATGGCACGGGGT----CCGAGTCACAACCCA
+
+a score=86 expect=4.6e-38
+s child 0 103 + 114 CCCATAAGGATAATATTGTTAGTATAATTCCAAATCTTTTCAAGGTCTTTGTCCTACTAATTTTCAAGTATGAAATTAGCCCGTTGTTTCTCAAAAAGCACTG
+s Child 0  98 + 100 CCCATAAGGATAATATTGTTAGTATAATTCCAAATCTTTTCAAGGTCT-----CTACTAATTTTCAAGTATGAAATTAGCCCGTTGTTTCTCAAAAAGCACTG
+
+# CPU time: 0.004235 seconds

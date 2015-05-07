@@ -1,13 +1,6 @@
 // Copyright 2008, 2009, 2010, 2011, 2012, 2013, 2014 Martin C. Frith
 // BLAST-like pair-wise sequence alignment, using suffix arrays.
 
-/*
- *  Need to reserve the maximum number of sequences as well as the maximum number of bytes in the vector
- *  Need to ensure that AlignmentWrite's writeBlastOutput function recieves the thread data so that it 
- *  can add the output to the associated vector.
- *  Do I even need to copy the subset suffix arrays?
- */
-
 #include "lastal.hh"
 
 std::vector<threadData*> *threadDatas;
@@ -595,7 +588,6 @@ void threadData::scanAllVolumes( unsigned volumes ){
     matchCounts.resize( query.finishedSequences() );
   }
 
-  //==============================================================================================
   if( volumes+1 == 0 ) volumes = 1;
 
   for( unsigned i = 0; i < volumes; ++i ){
@@ -606,8 +598,6 @@ void threadData::scanAllVolumes( unsigned volumes ){
     SEM_WAIT(writerSema);
     threadsPassed++;
     SEM_POST(writerSema);
-
-    //==============================================================================================
 
     if( args.strand == 2 && i > 0 ) reverseComplementQuery();
 

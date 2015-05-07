@@ -114,8 +114,8 @@ Miscellaneous options (default settings):\n\
                   4=prb, 5=PSSM ("
     + stringify(inputFormat) + ")\n\
 -S: Optional bit-Score cutoff value (" + stringify(scoreCutoff) + ")\n\
--E: Optional e-value cutoff value (" + stringify(evalueCutoff) + ") \n\
--P: Optional number of threads \n\
+-E: Optional e-value cutoff value (" + stringify(evalueCutoff) + ")\n\
+-P: Optional number of threads (" + stringify(threadNum) + ")\n\
 \n\
 Report bugs to: last-align (ATmark) googlegroups (dot) com\n\
 LAST home page: http://last.cbrc.jp/\n\
@@ -256,11 +256,9 @@ LAST home page: http://last.cbrc.jp/\n\
       //!!
     case 'S':
       unstringify(scoreCutoff, optarg );
-      //if( scoreCutoff < 20 ) scoreCutoff = 20;
       break;
     case 'E':
       unstringify( evalueCutoff, optarg );
-      //if( evalueCutoff > 1.0e-8) evalueCutoff = 1.0e-8;
       break;
     case 'P':
       unstringify(threadNum, optarg);

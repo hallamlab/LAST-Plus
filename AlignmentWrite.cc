@@ -70,24 +70,26 @@ static void writeSignedDifference( size_t x, size_t y, std::ostream& os ){
 
 void Alignment::write( const MultiSequence& seq1, const MultiSequence& seq2,
 		       char strand, bool isTranslated, const Alphabet& alph,
-		       int format, std::ostream& os, LastalArguments &args, 
+		       int format, LastalArguments &args, 
            const AlignmentExtras& extras) const{
   assert( !blocks.empty() );
 
   if( format == 0 ) 
-       writeTab( seq1, seq2, strand, isTranslated, os, extras );
+       writeTab( seq1, seq2, strand, isTranslated, extras );
   else if( format == 2 )  {
-       writeBlastOutput( seq1, seq2, strand, isTranslated, alph,os, extras, args );
+       writeBlastOutput( seq1, seq2, strand, isTranslated, alph, extras, args );
   }
   else 
-       writeMaf( seq1, seq2, strand, isTranslated, alph, os, extras );
+       writeMaf( seq1, seq2, strand, isTranslated, alph, extras );
 
 }
 
 //!!
 void Alignment::writeBlastOutput( const MultiSequence& seq1, const MultiSequence& seq2,
-              char strand, bool isTranslated, const Alphabet& alph, std::ostream& os,
-			  const AlignmentExtras& extras, LastalArguments &args ) const{
+              char strand, bool isTranslated, const Alphabet& alph, 
+			        const AlignmentExtras& extras, LastalArguments &args ) const{
+
+  std::stringstream outputStream;
 
   double fullScore = extras.fullScore;
 
@@ -117,7 +119,7 @@ void Alignment::writeBlastOutput( const MultiSequence& seq1, const MultiSequence
   const int rw = std::max( numDigits(r1), numDigits(r2) );
   const int sw = std::max( numDigits(s1), numDigits(s2) );
 
-  char tab = '\t';
+  const char* tab = "\t";
 
   double evalue = 0;
   size_t identities = 0;
@@ -170,7 +172,7 @@ void Alignment::writeBlastOutput( const MultiSequence& seq1, const MultiSequence
 
   if(bitscore >= args.scoreCutoff && evalue2 <= args.evalueCutoff){
   
-    os << seq2.seqName(w2) << tab
+    outputStream << seq2.seqName(w2) << tab
        << seq1.seqName(w1) << tab
        << identities << tab
        << alignLength << tab
@@ -182,7 +184,11 @@ void Alignment::writeBlastOutput( const MultiSequence& seq1, const MultiSequence
        << (alnEnd1 -seqStart1) << tab
        << evalue2 << tab
        << bitscore;
-       os << '\n';
+       outputStream << "\n";
+  
+       //!! I need to know who this alignment belongs to so I can append to that specific alignment
+       //!! I need a special function so I can append to the threadData structure directly
+       //outputVector->push_back( outputStream.str() );
   }
 
 }
@@ -220,8 +226,10 @@ size_t Alignment::countGaps(std::string& sequence) const {
 }
 
 void Alignment::writeTab( const MultiSequence& seq1, const MultiSequence& seq2,
-			  char strand, bool isTranslated, std::ostream& os,
-			  const AlignmentExtras& extras ) const{
+			  char strand, bool isTranslated, const AlignmentExtras& extras ) const{
+
+  std::stringstream outputStream;
+
   size_t alnBeg1 = beg1();
   size_t alnEnd1 = end1();
   size_t w1 = seq1.whichSequence(alnBeg1);
@@ -234,15 +242,15 @@ void Alignment::writeTab( const MultiSequence& seq1, const MultiSequence& seq2,
   size_t w2 = seq2.whichSequence( strand == '+' ? alnBeg2 : size2 - alnBeg2 );
   size_t seqStart2 = strand == '+' ? seq2.seqBeg(w2) : size2 - seq2.seqEnd(w2);
 
-  os << score << '\t';
+  outputStream << score << '\t';
 
-  os << seq1.seqName(w1) << '\t'
+  outputStream << seq1.seqName(w1) << '\t'
      << alnBeg1 - seqStart1 << '\t'
      << alnEnd1 - alnBeg1 << '\t'
      << '+' << '\t'
      << seq1.seqLen(w1) << '\t';
 
-  os << seq2.seqName(w2) << '\t'
+  outputStream << seq2.seqName(w2) << '\t'
      << alnBeg2 - seqStart2 << '\t'
      << alnEnd2 - alnBeg2 << '\t'
      << strand << '\t'
@@ -253,29 +261,30 @@ void Alignment::writeTab( const MultiSequence& seq1, const MultiSequence& seq2,
   for( CI(SegmentPair) i = blocks.begin(); i < blocks.end(); ++i ){
     if( i > blocks.begin() ){  // between each pair of aligned blocks:
       CI(SegmentPair) j = i - 1;
-      if( j->size ) os << ',';
+      if( j->size ) outputStream << ',';
       size_t gapBeg1 = j->end1();
       size_t gapEnd1 = i->beg1();
-      writeSignedDifference( gapEnd1, gapBeg1, os );  // allow -1 frameshift
-      os << ':';
+      writeSignedDifference( gapEnd1, gapBeg1, outputStream );  // allow -1 frameshift
+      outputStream << ':';
       size_t gapBeg2 = aaToDna( j->end2(), frameSize2 );
       size_t gapEnd2 = aaToDna( i->beg2(), frameSize2 );
-      writeSignedDifference( gapEnd2, gapBeg2, os );  // allow -1 frameshift
-      if( i->size ) os << ',';
+      writeSignedDifference( gapEnd2, gapBeg2, outputStream );  // allow -1 frameshift
+      if( i->size ) outputStream << ',';
     }
-    if( i->size ) os << i->size;
+    if( i->size ) outputStream << i->size;
   }
 
   double fullScore = extras.fullScore;
-  if( fullScore > 0 ) os << "\tfullScore=" << fullScore;
+  if( fullScore > 0 ) outputStream << "\tfullScore=" << fullScore;
 
-  os << '\n';
+  outputStream << '\n';
 }
 
 void Alignment::writeMaf( const MultiSequence& seq1, const MultiSequence& seq2,
-			  char strand, bool isTranslated, const Alphabet& alph,
-			  std::ostream& os,
-			  const AlignmentExtras& extras ) const{
+			  char strand, bool isTranslated, const Alphabet& alph, const AlignmentExtras& extras ) const{
+
+  std::stringstream outputStream;
+
   double fullScore = extras.fullScore;
   const std::vector<uchar>& columnAmbiguityCodes = extras.columnAmbiguityCodes;
   const std::vector<double>& expectedCounts = extras.expectedCounts;
@@ -313,10 +322,10 @@ void Alignment::writeMaf( const MultiSequence& seq1, const MultiSequence& seq2,
   line[ lineLen - 1 ] = '\n';
   char* dest;
 
-  os << "a";
-  os << " score=" << score;
-  if( fullScore > 0 ) os << " fullScore=" << fullScore;
-  os << '\n';
+  outputStream << "a";
+  outputStream << " score=" << score;
+  if( fullScore > 0 ) outputStream << " fullScore=" << fullScore;
+  outputStream << '\n';
 
   dest = sprintChar( line, 's' );
   dest = sprintLeft( dest, n1.c_str(), nw );
@@ -327,14 +336,15 @@ void Alignment::writeMaf( const MultiSequence& seq1, const MultiSequence& seq2,
   
   writeTopSeq( seq1.seqReader(), alph, frameSize2, dest );
 
-  os.write( line, lineLen );
+  //!!os.write( line, lineLen );
   
   if( seq1.qualsPerLetter() > 0 ){
     dest = sprintChar( line, 'q' );
     dest += nw + 1;
     dest = sprintLeft( dest, "", bw + 1 + rw + 3 + sw );
     writeTopQual( seq1.qualityReader(), seq1.qualsPerLetter(), dest );
-    os.write( line, lineLen );
+    
+    //os.write( line, lineLen );
   }
 
   dest = sprintChar( line, 's' );
@@ -344,32 +354,33 @@ void Alignment::writeMaf( const MultiSequence& seq1, const MultiSequence& seq2,
   dest = sprintChar( dest, strand );
   dest = sprintSize( dest, s2, sw );
   writeBotSeq( seq2.seqReader(), alph, frameSize2, dest );
-  os.write( line, lineLen );
+
+  //!!os.write( line, lineLen );
 
   if( seq2.qualsPerLetter() > 0 ){
     dest = sprintChar( line, 'q' );
     dest += nw + 1;
     dest = sprintLeft( dest, "", bw + 1 + rw + 3 + sw );
     writeBotQual( seq2.qualityReader(), seq2.qualsPerLetter(), dest );
-    os.write( line, lineLen );
+
+    //!!os.write( line, lineLen );
   }
 
   if( columnAmbiguityCodes.size() > 0 ){
-    os << "p "
-       << std::setw( nw + bw + rw + sw + 6 ) << "";
-    std::copy( columnAmbiguityCodes.begin(), columnAmbiguityCodes.end(),
-               std::ostream_iterator<uchar>(os) );
-    os << '\n';
+    outputStream << "p " << std::setw( nw + bw + rw + sw + 6 ) << "";
+    //std::copy( columnAmbiguityCodes.begin(), columnAmbiguityCodes.end(),
+    //           std::ostream_iterator<uchar>(os) );
+    outputStream << '\n';
   }
 
   if( expectedCounts.size() > 0 ){
-    os << 'c';
+    outputStream << 'c';
     for( unsigned i = 0; i < expectedCounts.size(); ++i )
-      os << ' ' << expectedCounts[i];
-    os << '\n';
+      outputStream << ' ' << expectedCounts[i];
+    outputStream << '\n';
   }
 
-  os << '\n';  // blank line afterwards
+  outputStream << '\n';  // blank line afterwards
 }
 
 size_t Alignment::numColumns( size_t frameSize ) const{

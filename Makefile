@@ -4,9 +4,9 @@ CC  = gcc
 #CXXFLAGS = -O3 -Wall -Wextra -Wcast-qual -Wswitch-enum -Wundef	\
 #-Wcast-align -Wno-long-long -ansi -pedantic -m64 #-g
 
-CXXFLAGS = -O3 -w -m64
+CXXFLAGS = -O0 -g -w -m64 -pthread
 
-CFLAGS = -Wall -O3  -m64  # -g
+CFLAGS = -Wall -O0 -g -m64  -pthread# -g
 
 DBOBJ = Alphabet.o MultiSequence.o CyclicSubsetSeed.o	\
 SubsetSuffixArray.o LastdbArguments.o io.o fileMap.o	\

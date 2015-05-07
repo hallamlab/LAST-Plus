@@ -1,74 +1,63 @@
 // Copyright 2008, 2009, 2010, 2011, 2012, 2013, 2014 Martin C. Frith
 // BLAST-like pair-wise sequence alignment, using suffix arrays.
 
+/*
+ *  Need to reserve the maximum number of sequences as well as the maximum number of bytes in the vector
+ *  Need to ensure that AlignmentWrite's writeBlastOutput function recieves the thread data so that it 
+ *  can add the output to the associated vector.
+ *  Do I even need to copy the subset suffix arrays?
+ */
+
 #include "lastal.hh"
 
-#define ERR(x) throw std::runtime_error(x)
-#define LOG(x) if( args.verbosity > 0 ) std::cerr << "lastal: " << x << '\n'
+std::vector<threadData*> *threadDatas;
+pthread_barrier_t barr;
+pthread_t *threads;
+unsigned volumes = unsigned(-1);
+countT refSequences = -1;
+SEM_T writerSema;
+SEM_T doneSema;
+int threadsPassed = 0;
+int threadsDone = 0;
+bool ok = 1;
+bool done = 1;
 
-namespace {
-  LastalArguments args;
-  Alphabet alph;
-  Alphabet queryAlph;  // for translated alignment
-  GeneticCode geneticCode;
-  const unsigned maxNumOfIndexes = 16;
-  SubsetSuffixArray suffixArrays[maxNumOfIndexes];
-  ScoreMatrix scoreMatrix;
-  GeneralizedAffineGapCosts gapCosts;
-  GappedXdropAligner gappedXdropAligner;
-  Centroid centroid( gappedXdropAligner );
-  LambdaCalculator lambdaCalculator;
-  MultiSequence query;  // sequence that hasn't been indexed by lastdb
-  MultiSequence text;  // sequence that has been indexed by lastdb
-  std::vector< std::vector<countT> > matchCounts;  // used if outputType == 0
-  OneQualityScoreMatrix oneQualityScoreMatrix;
-  OneQualityScoreMatrix oneQualityScoreMatrixMasked;
-  OneQualityExpMatrix oneQualityExpMatrix;
-  QualityPssmMaker qualityPssmMaker;
-  sequenceFormat::Enum referenceFormat;  // defaults to 0
-  TwoQualityScoreMatrix twoQualityScoreMatrix;
-  TwoQualityScoreMatrix twoQualityScoreMatrixMasked;
-  int minScoreGapless;
-  int isCaseSensitiveSeeds = -1;  // initialize it to an "error" value
-  unsigned numOfIndexes = 1;  // assume this value, if unspecified
-  threadData *threadDatas;
-}
+void threadData::prepareThreadData(){
 
-
-void prepareThreadData(){
-
-  threadDatas = (threadData*)malloc(args.threadNum*sizeof(threadData));
-  // Call a deep copy constructor for each of these objects
   for(int i=0; i<args.threadNum; i++){
 
-    threadData data = threadDatas[i];
+    if( args.isTranslated() ){
+      if( alph.letters == alph.dna ) { // allow user-defined alphabet
+        ERR( "expected protein database, but got DNA" );
+      }
+      queryAlph.fromString( queryAlph.dna );
+      if( args.geneticCodeFile.empty() ) {
+        geneticCode.fromString( geneticCode.standard );
+      } else {
+        geneticCode.fromFile( args.geneticCodeFile );
+      }
+      geneticCode.codeTableSet( alph, queryAlph );
+      query.initForAppending(3);
+    } else {
+      queryAlph = alph;
+      query.initForAppending(1);
+    }
+    queryAlph.tr( query.seqWriter(), query.seqWriter() + query.unfinishedSize() );
 
-    data.alph = alph;
-    data.queryAlph = queryAlph;  // for translated alignment
-    data.geneticCode = geneticCode;
-    //data.maxNumOfIndexes = maxNumOfIndexes;
-    //data.suffixArrays = suffixArrays;
-    memcpy(data.suffixArrays, suffixArrays, sizeof(SubsetSuffixArray)*16);
-    //data.scoreMatrix = scoreMatrix;
-    //data.gapCosts = gapCosts;
-    data.gappedXdropAligner = gappedXdropAligner;
-    //data.centroid = centroid;
-    //data.lambdaCalculator = lambdaCalculator;
-    data.query = query;  // sequence that hasn't been indexed by lastdb
-    data.text = text;  // sequence that has been indexed by lastdb
-    data.matchCounts = matchCounts;  // used if outputType == 0
-    data.oneQualityScoreMatrix = oneQualityScoreMatrix;
-    data.oneQualityScoreMatrixMasked = oneQualityScoreMatrixMasked;
-    data.oneQualityExpMatrix = oneQualityExpMatrix;
-    data.qualityPssmMaker = qualityPssmMaker;
-    //data.referenceFormat = referenceFormat;  // defaults to 0
-    data.twoQualityScoreMatrix = twoQualityScoreMatrix;
-    data.twoQualityScoreMatrixMasked = twoQualityScoreMatrixMasked;
-    //data.minScoreGapless = minScoreGapless;
-    //data.isCaseSensitiveSeeds = isCaseSensitiveSeeds;  // initialize it to an "error" value
-    //data.numOfIndexes = numOfIndexes;  // assume this value, if unspecified
+    if( volumes+1 == 0 ) readIndex( args.lastdbName, refSequences );
+
+    centroid = new Centroid(gappedXdropAligner);
+    this->alph = alph;
+    this->queryAlph = queryAlph;  
+    this->geneticCode = geneticCode;
+    this->matchCounts = matchCounts;
+    this->oneQualityScoreMatrix = oneQualityScoreMatrix;
+    this->oneQualityScoreMatrixMasked = oneQualityScoreMatrixMasked;
+    this->oneQualityExpMatrix = oneQualityExpMatrix;
+    this->qualityPssmMaker = qualityPssmMaker;
+    this->twoQualityScoreMatrix = twoQualityScoreMatrix;
+    this->twoQualityScoreMatrixMasked = twoQualityScoreMatrixMasked;
   }
-
 }
 
 
@@ -168,9 +157,9 @@ void calculateScoreStatistics(){
 }
 
 // Read the .prj file for the whole database
-void readOuterPrj( const std::string& fileName, unsigned& volumes,
-    indexT& minSeedLimit,
+void readOuterPrj( const std::string& fileName, unsigned& volumes, indexT& minSeedLimit,
     countT& refSequences, countT& refLetters ){
+
   std::ifstream f( fileName.c_str() );
   if( !f ) ERR( "can't open file: " + fileName );
   unsigned version = 0;
@@ -223,23 +212,28 @@ void readInnerPrj( const std::string& fileName,
   if( !f ) ERR( "can't read file: " + fileName );
 }
 
+//!!o this doesn't seem to do anything at all...
 // Write match counts for each query sequence
-void writeCounts( std::ostream& out ){
+void threadData::writeCounts(){
+
   LOG( "writing..." );
+  std::stringstream outstream;
+  std::string output;
 
   for( indexT i = 0; i < matchCounts.size(); ++i ){
-    out << query.seqName(i) << '\n';
+    outstream << query.seqName(i) << "\n";
 
     for( indexT j = args.minHitDepth; j < matchCounts[i].size(); ++j ){
-      out << j << '\t' << matchCounts[i][j] << '\n';
+      outstream << j << "\t" << matchCounts[i][j] << "\n";
     }
 
-    out << '\n';  // blank line afterwards
+    outstream << "\n";  // blank line afterwards
+    output = outstream.str();
   }
 }
 
 // Count all matches, of all sizes, of a query batch against a suffix array
-void countMatches( char strand ){
+void threadData::countMatches( char strand ){
   LOG( "counting..." );
   indexT seqNum = strand == '+' ? 0 : query.finishedSequences() - 1;
 
@@ -265,85 +259,21 @@ void countMatches( char strand ){
     }
 
     for( unsigned x = 0; x < numOfIndexes; ++x )
-      suffixArrays[x].countMatches( matchCounts[seqNum], query.seqReader() + i,
-          text.seqReader() );
+      suffixArrays[x].countMatches( matchCounts[seqNum], query.seqReader() + i, text.seqReader() );
   }
 }
 
-namespace Phase{ enum Enum{ gapless, gapped, final }; }
-
-struct Dispatcher{
-  const uchar* a;  // the reference sequence
-  const uchar* b;  // the query sequence
-  const uchar* i;  // the reference quality data
-  const uchar* j;  // the query quality data
-  const ScoreMatrixRow* p;  // the query PSSM
-  const ScoreMatrixRow* m;  // the score matrix
-  const TwoQualityScoreMatrix& t;
-  int d;  // the maximum score drop
-  int z;
-
-  Dispatcher( Phase::Enum e ) :
-    a( text.seqReader() ),
-    b( query.seqReader() ),
-    i( text.qualityReader() ),
-    j( query.qualityReader() ),
-    p( query.pssmReader() ),
-    m( (e < args.maskLowercase) ?
-        scoreMatrix.caseSensitive : scoreMatrix.caseInsensitive ),
-    t( (e < args.maskLowercase) ?
-        twoQualityScoreMatrixMasked : twoQualityScoreMatrix ),
-    d( (e == Phase::gapless) ? args.maxDropGapless :
-        (e == Phase::gapped ) ? args.maxDropGapped : args.maxDropFinal ),
-    z( (args.inputFormat == sequenceFormat::fasta) ? 0 :
-        (referenceFormat  == sequenceFormat::fasta) ? 1 : 2 ){}
-
-  int forwardGaplessScore( indexT x, indexT y ) const{
-    if( z==0 ) return forwardGaplessXdropScore( a+x, b+y, m, d );
-    if( z==1 ) return forwardGaplessPssmXdropScore( a+x, p+y, d );
-    return forwardGaplessTwoQualityXdropScore( a+x, i+x, b+y, j+y, t, d );
-  }
-
-  int reverseGaplessScore( indexT x, indexT y ) const{
-    if( z==0 ) return reverseGaplessXdropScore( a+x, b+y, m, d );
-    if( z==1 ) return reverseGaplessPssmXdropScore( a+x, p+y, d );
-    return reverseGaplessTwoQualityXdropScore( a+x, i+x, b+y, j+y, t, d );
-  }
-
-  indexT forwardGaplessEnd( indexT x, indexT y, int s ) const{
-    if( z==0 ) return forwardGaplessXdropEnd( a+x, b+y, m, s ) - a;
-    if( z==1 ) return forwardGaplessPssmXdropEnd( a+x, p+y, s ) - a;
-    return forwardGaplessTwoQualityXdropEnd( a+x, i+x, b+y, j+y, t, s ) - a;
-  }
-
-  indexT reverseGaplessEnd( indexT x, indexT y, int s ) const{
-    if( z==0 ) return reverseGaplessXdropEnd( a+x, b+y, m, s ) - a;
-    if( z==1 ) return reverseGaplessPssmXdropEnd( a+x, p+y, s ) - a;
-    return reverseGaplessTwoQualityXdropEnd( a+x, i+x, b+y, j+y, t, s ) - a;
-  }
-
-  bool isOptimalGapless( indexT x, indexT e, indexT y ) const{
-    if( z==0 ) return isOptimalGaplessXdrop( a+x, a+e, b+y, m, d );
-    if( z==1 ) return isOptimalGaplessPssmXdrop( a+x, a+e, p+y, d );
-    return isOptimalGaplessTwoQualityXdrop( a+x, a+e, i+x, b+y, j+y, t, d );
-  }
-
-  int gaplessScore( indexT x, indexT e, indexT y ) const{
-    if( z==0 ) return gaplessAlignmentScore( a+x, a+e, b+y, m );
-    if( z==1 ) return gaplessPssmAlignmentScore( a+x, a+e, p+y );
-    return gaplessTwoQualityAlignmentScore( a+x, a+e, i+x, b+y, j+y, t );
-  }
-};
-
 // Find query matches to the suffix array, and do gapless extensions
-void alignGapless( SegmentPairPot& gaplessAlns,
-    char strand, std::ostream& out ){
+void threadData::alignGapless( SegmentPairPot& gaplessAlns, char strand ){
+
   Dispatcher dis( Phase::gapless );
   DiagonalTable dt;  // record already-covered positions on each diagonal
   countT matchCount = 0, gaplessExtensionCount = 0, gaplessAlignmentCount = 0;
 
   for( indexT i = 0; i < query.finishedSize(); i += args.queryStep ){
+
     for( unsigned x = 0; x < numOfIndexes; ++x ){
+
       const indexT* beg;
       const indexT* end;
       suffixArrays[x].match( beg, end, dis.b + i, dis.a,
@@ -356,9 +286,9 @@ void alignGapless( SegmentPairPot& gaplessAlns,
 
       indexT gaplessAlignmentsPerQueryPosition = 0;
 
-      for( /* noop */; beg < end; ++beg ){  // loop over suffix-array matches
-        if( gaplessAlignmentsPerQueryPosition ==
-            args.maxGaplessAlignmentsPerQueryPosition ) break;
+      for( /* no-op*/; beg < end; ++beg ){ // loop over suffix-array matches
+
+        if( gaplessAlignmentsPerQueryPosition == args.maxGaplessAlignmentsPerQueryPosition ) break;
 
         indexT j = *beg;  // coordinate in the reference sequence
 
@@ -383,7 +313,7 @@ void alignGapless( SegmentPairPot& gaplessAlns,
         if( args.outputType == 1 ){  // we just want gapless alignments
           Alignment aln;
           aln.fromSegmentPair(sp);
-          aln.write( text, query, strand, args.isTranslated(), alph, args.outputFormat, out, args);
+          aln.write( text, query, strand, args.isTranslated(), alph, args.outputFormat, args);
         }
         else{
           gaplessAlns.add(sp);  // add the gapless alignment to the pot
@@ -395,7 +325,6 @@ void alignGapless( SegmentPairPot& gaplessAlns,
       }
     }
   }
-
   LOG( "initial matches=" << matchCount );
   LOG( "gapless extensions=" << gaplessExtensionCount );
   LOG( "gapless alignments=" << gaplessAlignmentCount );
@@ -405,14 +334,15 @@ void alignGapless( SegmentPairPot& gaplessAlns,
 // This trims off possibly unreliable parts of the gapless alignment.
 // It may not be the best strategy for protein alignment with subset
 // seeds: there could be few or no identical matches...
-void shrinkToLongestIdenticalRun( SegmentPair& sp, const Dispatcher& dis ){
-  sp.maxIdenticalRun( dis.a, dis.b, alph.canonical );
-  sp.score = dis.gaplessScore( sp.beg1(), sp.end1(), sp.beg2() );
+//void threadData::Dispatcher::shrinkToLongestIdenticalRun( SegmentPair& sp, const Dispatcher& dis ){
+void Dispatcher::shrinkToLongestIdenticalRun( SegmentPair& sp){
+  sp.maxIdenticalRun( a, b, alph.canonical );
+  sp.score = gaplessScore( sp.beg1(), sp.end1(), sp.beg2() );
 }
 
 // Do gapped extensions of the gapless alignments
-void alignGapped( AlignmentPot& gappedAlns, SegmentPairPot& gaplessAlns,
-    Phase::Enum phase ){
+void threadData::alignGapped( AlignmentPot& gappedAlns, SegmentPairPot& gaplessAlns, Phase::Enum phase ){
+
   Dispatcher dis(phase);
   indexT frameSize = args.isTranslated() ? (query.finishedSize() / 3) : 0;
   countT gappedExtensionCount = 0, gappedAlignmentCount = 0;
@@ -451,10 +381,10 @@ void alignGapped( AlignmentPot& gappedAlns, SegmentPairPot& gaplessAlns,
     AlignmentExtras extras;  // not used
     aln.seed = sp;
 
-    shrinkToLongestIdenticalRun( aln.seed, dis );
+    dis.shrinkToLongestIdenticalRun( aln.seed );
 
     // do gapped extension from each end of the seed:
-    aln.makeXdrop( gappedXdropAligner, centroid, dis.a, dis.b, args.globality,
+    aln.makeXdrop( gappedXdropAligner, *centroid, dis.a, dis.b, args.globality,
         dis.m, scoreMatrix.maxScore, gapCosts, dis.d,
         args.frameshiftCost, frameSize, dis.p,
         dis.t, dis.i, dis.j, alph, extras );
@@ -485,21 +415,21 @@ void alignGapped( AlignmentPot& gappedAlns, SegmentPairPot& gaplessAlns,
 
 // Print the gapped alignments, after optionally calculating match
 // probabilities and re-aligning using the gamma-centroid algorithm
-void alignFinish( const AlignmentPot& gappedAlns,
-    char strand, std::ostream& out ){
+void threadData::alignFinish( const AlignmentPot& gappedAlns, char strand ){
+
   Dispatcher dis( Phase::final );
   indexT frameSize = args.isTranslated() ? (query.finishedSize() / 3) : 0;
 
   if( args.outputType > 3 ){
     if( dis.p ){
       LOG( "exponentiating PSSM..." );
-      centroid.setPssm( dis.p, query.finishedSize(), args.temperature,
+      centroid->setPssm( dis.p, query.finishedSize(), args.temperature,
           oneQualityExpMatrix, dis.b, dis.j );
     }
     else{
-      centroid.setScoreMatrix( dis.m, args.temperature );
+      centroid->setScoreMatrix( dis.m, args.temperature );
     }
-    centroid.setOutputType( args.outputType );
+    centroid->setOutputType( args.outputType );
   }
 
   LOG( "finishing..." );
@@ -508,25 +438,25 @@ void alignFinish( const AlignmentPot& gappedAlns,
     const Alignment& aln = gappedAlns.items[i];
     if( args.outputType < 4 ){
       aln.write( text, query, strand, args.isTranslated(),
-          alph, args.outputFormat, out, args);
+          alph, args.outputFormat, args);
     }
     else{  // calculate match probabilities:
       Alignment probAln;
       AlignmentExtras extras;
       probAln.seed = aln.seed;
-      probAln.makeXdrop( gappedXdropAligner, centroid,
+      probAln.makeXdrop( gappedXdropAligner, *centroid,
           dis.a, dis.b, args.globality,
           dis.m, scoreMatrix.maxScore, gapCosts, dis.d,
           args.frameshiftCost, frameSize, dis.p, dis.t,
           dis.i, dis.j, alph, extras,
           args.gamma, args.outputType );
       probAln.write( text, query, strand, args.isTranslated(),
-          alph, args.outputFormat, out, args, extras );
+          alph, args.outputFormat, args, extras );
     }
   }
 }
 
-void makeQualityPssm( bool isApplyMasking ){
+void threadData::makeQualityPssm( bool isApplyMasking ){
   if( !isQuality( args.inputFormat ) || isQuality( referenceFormat ) ) return;
 
   LOG( "making PSSM..." );
@@ -548,7 +478,8 @@ void makeQualityPssm( bool isApplyMasking ){
 }
 
 // Scan one batch of query sequences against one database volume
-void scan( char strand, std::ostream& out ){
+void threadData::scan( char strand ){
+
   if( args.outputType == 0 ){  // we just want match counts
     countMatches( strand );
     return;
@@ -560,7 +491,7 @@ void scan( char strand, std::ostream& out ){
   LOG( "scanning..." );
 
   SegmentPairPot gaplessAlns;
-  alignGapless( gaplessAlns, strand, out );
+  alignGapless( gaplessAlns, strand );
   if( args.outputType == 1 ) return;  // we just want gapless alignments
 
   if( args.maskLowercase == 1 ) makeQualityPssm(false);
@@ -582,32 +513,34 @@ void scan( char strand, std::ostream& out ){
   }
 
   gappedAlns.sort();  // sort by score
-  alignFinish( gappedAlns, strand, out );
+  alignFinish( gappedAlns, strand );
 }
 
 // Scan one batch of query sequences against one database volume,
 // after optionally translating the query
-void translateAndScan( char strand, std::ostream& out ){
+void threadData::translateAndScan( char strand ){
+
   if( args.isTranslated() ){
     LOG( "translating..." );
     std::vector<uchar> translation( query.finishedSize() );
     geneticCode.translate( query.seqReader(),
-        query.seqReader() + query.finishedSize(),
-        &translation[0] );
+        query.seqReader() + query.finishedSize(), &translation[0] );
+
     query.swapSeq(translation);
-    scan( strand, out );
+
+    scan( strand );
     query.swapSeq(translation);
   }
-  else scan( strand, out );
+  else scan( strand );
 }
 
-void readIndex( const std::string& baseName, indexT seqCount ) {
+void threadData::readIndex( const std::string& baseName, indexT seqCount ) {
+
   LOG( "reading " << baseName << "..." );
   text.fromFiles( baseName, seqCount, isFastq( referenceFormat ) );
   for( unsigned x = 0; x < numOfIndexes; ++x ){
     if( numOfIndexes > 1 ){
-      suffixArrays[x].fromFiles( baseName + char('a' + x),
-          isCaseSensitiveSeeds, alph.encode );
+      suffixArrays[x].fromFiles( baseName + char('a' + x), isCaseSensitiveSeeds, alph.encode );
     }else{
       suffixArrays[x].fromFiles( baseName, isCaseSensitiveSeeds, alph.encode );
     }
@@ -615,7 +548,8 @@ void readIndex( const std::string& baseName, indexT seqCount ) {
 }
 
 // Read one database volume
-void readVolume( unsigned volumeNumber ){
+void threadData::readVolume( unsigned volumeNumber ){
+
   std::string baseName = args.lastdbName + stringify(volumeNumber);
   indexT seqCount = indexT(-1);
   indexT seqLen = indexT(-1);
@@ -624,7 +558,8 @@ void readVolume( unsigned volumeNumber ){
   readIndex( baseName, seqCount );
 }
 
-void reverseComplementPssm(){
+void threadData::reverseComplementPssm(){
+
   ScoreMatrixRow* beg = query.pssmWriter();
   ScoreMatrixRow* end = beg + query.finishedSize();
 
@@ -638,41 +573,51 @@ void reverseComplementPssm(){
   }
 }
 
-void reverseComplementQuery(){
+void threadData::reverseComplementQuery(){
   LOG( "reverse complementing..." );
   queryAlph.rc( query.seqWriter(), query.seqWriter() + query.finishedSize() );
   if( isQuality( args.inputFormat ) ){
     std::reverse( query.qualityWriter(),
-        query.qualityWriter() +
-        query.finishedSize() * query.qualsPerLetter() );
+        query.qualityWriter() + query.finishedSize() * query.qualsPerLetter() );
   }else if( args.inputFormat == sequenceFormat::pssm ){
     reverseComplementPssm();
   }
 }
 
 // Scan one batch of query sequences against all database volumes
-void scanAllVolumes( unsigned volumes, std::ostream& out ){
+void threadData::scanAllVolumes( unsigned volumes ){
+
   if( args.outputType == 0 ){
     matchCounts.clear();
     matchCounts.resize( query.finishedSequences() );
   }
 
+  //==============================================================================================
   if( volumes+1 == 0 ) volumes = 1;
 
   for( unsigned i = 0; i < volumes; ++i ){
     if( text.unfinishedSize() == 0 || volumes > 1 ) readVolume( i );
 
+    pthread_barrier_wait( &barr );  
+    //!! Semaphore to tell the output when we are ready
+    SEM_WAIT(writerSema);
+    threadsPassed++;
+    SEM_POST(writerSema);
+
+    //==============================================================================================
+
     if( args.strand == 2 && i > 0 ) reverseComplementQuery();
 
-    if( args.strand != 0 ) translateAndScan( '+', out );
+    if( args.strand != 0 ) translateAndScan( '+' );
 
     if( args.strand == 2 || (args.strand == 0 && i == 0) )
       reverseComplementQuery();
 
-    if( args.strand != 1 ) translateAndScan( '-', out );
+    if( args.strand != 1 ) translateAndScan( '-' );
   }
 
-  if( args.outputType == 0 ) writeCounts( out );
+  //!! Doesn't seem to do anything
+  //if( args.outputType == 0 ) writeCounts( out );
 
   LOG( "query batch done!" );
 }
@@ -714,12 +659,11 @@ void writeHeader( countT refSequences, countT refLetters, std::ostream& out ){
       out << "# name start alnSize strand seqSize alignment\n";
     }
   }
-
   out << "#\n";
 }
 
 // Read the next sequence, adding it to the MultiSequence
-std::istream& appendFromFasta( std::istream& in ){
+std::istream& threadData::appendFromFasta( std::istream& in ){
   indexT maxSeqLen = args.batchSize;
   if( maxSeqLen < args.batchSize ) maxSeqLen = indexT(-1);
   if( query.finishedSequences() == 0 ) maxSeqLen = indexT(-1);
@@ -751,9 +695,9 @@ std::istream& appendFromFasta( std::istream& in ){
   return in;
 }
 
-/** 
-  initialize the evalue calculator located in the lastex.cc file
-  */
+/* 
+   initialize the evalue calculator located in the lastex.cc file
+   */
 void  initializeEvalueCalulator(const std::string dbPrjFile, std::string dbfilePrj) {
   SequenceStatistics _stats1, _stats2;
 
@@ -766,10 +710,102 @@ void  initializeEvalueCalulator(const std::string dbPrjFile, std::string dbfileP
   makeEvaluer();
 }
 
+void* threadFunction(void *args){ 
+
+  threadData *data = (threadData*)args;
+  if( !data->query.isFinished() ){
+    data->scanAllVolumes( volumes );
+    data->callReinit();
+  }
+  SEM_WAIT(doneSema);
+  threadsDone++;
+  SEM_POST(doneSema);
+}
+
+int main( int argc, char** argv ) {
+
+  try {
+    lastal( argc, argv );
+    return EXIT_SUCCESS;
+  } catch( const std::bad_alloc& e ) {  // bad_alloc::what() may be unfriendly
+    std::cerr << "lastal: out of memory\n";
+    return EXIT_FAILURE;
+  } catch( const std::exception& e ) {
+    std::cerr << "lastal: " << e.what() << '\n';
+    return EXIT_FAILURE;
+  } catch( int i ) {
+    return i;
+  }
+}
+
+void threadData::callReinit(){
+
+  query.reinitForAppending();
+}
+
+void writerFunction(){
+
+  while(ok){
+    SEM_WAIT(writerSema);
+    if (threadsPassed == args.threadNum){
+      for( int i=0; i<args.threadNum; i++) {
+        threadData *data = threadDatas->at(i);
+
+        for(int j=0; j<data->outputVector.size(); j++){
+          std::cout << data->outputVector[j];
+        }
+      }
+      ok = 0;
+      SEM_POST(writerSema);
+    }
+    SEM_POST(writerSema);
+  } 
+  ok = 1;
+
+  while (done) {
+    SEM_WAIT(doneSema);
+
+    if( threadsDone == args.threadNum){
+      return;
+    }
+    SEM_POST(doneSema);
+  }
+}
+
 void lastal( int argc, char** argv ){
 
   args.fromArgs( argc, argv );
   std::string matrixFile;
+
+  //!! threadData
+  threadDatas = new std::vector<threadData*>();
+  threadDatas->reserve(args.threadNum);
+
+  for (int i=0; i<args.threadNum; i++){
+    threadData *thread_ptr = new threadData();
+    threadDatas->push_back(thread_ptr);
+  }
+  pthread_barrier_init( &barr, NULL, args.threadNum );
+  threads = (pthread_t*)malloc( sizeof(pthread_t)*args.threadNum );
+
+  //!! initialize semaphores
+
+#ifdef MAC_SEM
+  sem_unlink("/writerSema");
+  if ( ( writerSema = sem_open("/writerSema", O_CREAT, 0644, 1)) == SEM_FAILED ) {
+    perror("sem_open");
+    exit(EXIT_FAILURE);
+  }
+  sem_unlink("/doneSema");
+  if ( ( doneSema = sem_open("/doneSema", O_CREAT, 0644, 1)) == SEM_FAILED ) {
+    perror("sem_open");
+    exit(EXIT_FAILURE);
+  }
+#else
+  sem_init(&writerSema, 0, 1);
+  sem_init(&doneSema, 0, 1);
+#endif
+
 
   if( !args.matrixFile.empty() ){
     matrixFile = ScoreMatrix::stringFromName( args.matrixFile );
@@ -777,12 +813,11 @@ void lastal( int argc, char** argv ){
     args.fromArgs( argc, argv );  // command line overrides matrix file
   }
 
-  unsigned volumes = unsigned(-1);
+  //unsigned volumes = unsigned(-1);
   indexT minSeedLimit = 0;
-  countT refSequences = -1;
+  //countT refSequences = -1;
   countT refLetters = -1;
-  readOuterPrj( args.lastdbName + ".prj", volumes, minSeedLimit,
-      refSequences, refLetters );
+  readOuterPrj( args.lastdbName + ".prj", volumes, minSeedLimit, refSequences, refLetters );
 
   if( minSeedLimit > 1 ){
     if( args.outputType == 0 )
@@ -798,36 +833,22 @@ void lastal( int argc, char** argv ){
       isCaseSensitiveSeeds, isMultiVolume );
   makeScoreMatrix( matrixFile );
 
-
   gapCosts.assign( args.gapExistCost, args.gapExtendCost,
       args.insExistCost, args.insExtendCost, args.gapPairCost );
-  if( args.outputType > 0 ) calculateScoreStatistics();
+  if( args.outputType > 0 ) {
+    calculateScoreStatistics();
+  }
   args.setDefaultsFromMatrix( lambdaCalculator.lambda() );
   minScoreGapless = args.calcMinScoreGapless( refLetters, numOfIndexes );
-  if( !isMultiVolume ) args.minScoreGapless = minScoreGapless;
-  if( args.outputType > 0 ) makeQualityScorers();
-
-  if( args.isTranslated() ){
-    if( alph.letters == alph.dna )  // allow user-defined alphabet
-      ERR( "expected protein database, but got DNA" );
-    queryAlph.fromString( queryAlph.dna );
-    if( args.geneticCodeFile.empty() )
-      geneticCode.fromString( geneticCode.standard );
-    else
-      geneticCode.fromFile( args.geneticCodeFile );
-    geneticCode.codeTableSet( alph, queryAlph );
-    query.initForAppending(3);
+  if( !isMultiVolume ) {
+    args.minScoreGapless = minScoreGapless;
   }
-  else{
-    queryAlph = alph;
-    query.initForAppending(1);
+  if( args.outputType > 0 ) {
+    makeQualityScorers();
   }
-
-  queryAlph.tr( query.seqWriter(), query.seqWriter() + query.unfinishedSize() );
-
-  if( volumes+1 == 0 ) readIndex( args.lastdbName, refSequences );
 
   std::ofstream outFileStream;
+  //!! We need to reconfigure this output later but for now we will just leave it be.
   std::ostream& out = openOut( args.outFile, outFileStream );
   //writeHeader( refSequences, refLetters, out );
   out.precision(3);  // print non-integers more compactly
@@ -839,51 +860,35 @@ void lastal( int argc, char** argv ){
 
   initializeEvalueCalulator( args.lastdbName + ".prj", *inputBegin );
 
-  //=====================================================================================================
-
-  prepareThreadData();
-
+  for (int i=0; i<args.threadNum; i++){
+    threadDatas->at(i)->prepareThreadData();
+  }
 
   for( char** i = *inputBegin ? inputBegin : defaultInput; *i; ++i ){
     std::ifstream inFileStream;
     std::istream& in = openIn( *i, inFileStream );
-    //LOG( "reading " << *i << "..." );
 
-    while( appendFromFasta( in ) ){
-      if( !query.isFinished() ){
-        // this enables downstream parsers to read one batch at a time:
-        // out << "# batch " << queryBatchCount++ << "\n";
-        scanAllVolumes( volumes, out );
-        query.reinitForAppending();
+    while( !in ){
+
+      for(int j=0; j<args.threadNum; j++){
+        threadData *data = threadDatas->at(j);
+        data->appendFromFasta( in );
+        pthread_create(&threads[j], NULL, threadFunction, (void*) data);
       }
+      writerFunction();
     }
   }
 
-  if( query.finishedSequences() > 0 ){
-    //out << "# batch " << queryBatchCount << "\n";
-    scanAllVolumes( volumes, out );
-  }
+  for (int k=0; k<args.threadNum; k++){
+    threadData *data = threadDatas->at(k);
 
+    if( data->query.finishedSequences() > 0 ){
+      data->scanAllVolumes( volumes );
+    }
+  }
   out.precision(6);  // reset the precision to the default value
-  //out << "# CPU time: " << (std::clock() - startTime + 0.0) / CLOCKS_PER_SEC
-  //    << " seconds\n";
-  if (!flush(out)) ERR( "write error" );
 
-}
-
-int main( int argc, char** argv )
-  try{
-    lastal( argc, argv );
-    return EXIT_SUCCESS;
+  if (!flush(out)) { 
+    ERR( "write error" );
   }
-catch( const std::bad_alloc& e ) {  // bad_alloc::what() may be unfriendly
-  std::cerr << "lastal: out of memory\n";
-  return EXIT_FAILURE;
-}
-catch( const std::exception& e ) {
-  std::cerr << "lastal: " << e.what() << '\n';
-  return EXIT_FAILURE;
-}
-catch( int i ) {
-  return i;
 }

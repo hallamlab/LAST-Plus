@@ -55,6 +55,9 @@ struct Alphabet{
   void init();
   void addLetters( const std::string& lettersToAdd, unsigned& code );
   void makeComplement();
+  
+  //Alphabet& operator=(const Alphabet &alph) const;
+
 };
 
 std::ostream& operator<<( std::ostream& s, const Alphabet& a );

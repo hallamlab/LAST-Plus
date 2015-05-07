@@ -15,6 +15,8 @@
 
 using namespace cbrc;
 
+//!! Constructor
+
 void Alignment::fromSegmentPair( const SegmentPair& sp ){
   blocks.assign( 1, sp );
   score = sp.score;

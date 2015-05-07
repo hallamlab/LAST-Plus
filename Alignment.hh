@@ -68,8 +68,8 @@ namespace cbrc{
 
     void write( const MultiSequence& seq1, const MultiSequence& seq2,
         char strand, bool isTranslated, const Alphabet& alph,
-        int format, LastalArguments &args,
-        const AlignmentExtras& extras = AlignmentExtras()) const;
+        int format, LastalArguments &args, std::vector<std::string> *outputVector,
+        const AlignmentExtras& extras = AlignmentExtras() ) const;
 
     // data:
     std::vector<SegmentPair> blocks;  // the gapless blocks of the alignment
@@ -101,12 +101,12 @@ namespace cbrc{
         double gamma, int outputType );
 
     void writeTab( const MultiSequence& seq1, const MultiSequence& seq2,
-        char strand, bool isTranslated, const AlignmentExtras& extras ) const;
+        char strand, bool isTranslated, const AlignmentExtras& extras, std::vector<std::string> *outputVector ) const;
 
 
     void writeBlastOutput( const MultiSequence& seq1, const MultiSequence& seq2,
         char strand, bool isTranslated, const Alphabet& alph,
-        const AlignmentExtras& extras, LastalArguments &args ) const;
+        const AlignmentExtras& extras, std::vector<std::string> *outputVector, LastalArguments &args ) const;
 
     void writeMaf( const MultiSequence& seq1, const MultiSequence& seq2,
         char strand, bool isTranslated, const Alphabet& alph, const AlignmentExtras& extras ) const;

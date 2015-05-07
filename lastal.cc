@@ -24,6 +24,10 @@ bool done = 1;
 
 void threadData::prepareThreadData(){
 
+  for (int i=0; i<args.threadNum; i++){
+    outputVector = new std::vector< std::string >(); 
+  }
+
   for(int i=0; i<args.threadNum; i++){
 
     if( args.isTranslated() ){
@@ -313,7 +317,7 @@ void threadData::alignGapless( SegmentPairPot& gaplessAlns, char strand ){
         if( args.outputType == 1 ){  // we just want gapless alignments
           Alignment aln;
           aln.fromSegmentPair(sp);
-          aln.write( text, query, strand, args.isTranslated(), alph, args.outputFormat, args);
+          aln.write( text, query, strand, args.isTranslated(), alph, args.outputFormat, args, outputVector );
         }
         else{
           gaplessAlns.add(sp);  // add the gapless alignment to the pot
@@ -437,8 +441,7 @@ void threadData::alignFinish( const AlignmentPot& gappedAlns, char strand ){
   for( size_t i = 0; i < gappedAlns.size(); ++i ){
     const Alignment& aln = gappedAlns.items[i];
     if( args.outputType < 4 ){
-      aln.write( text, query, strand, args.isTranslated(),
-          alph, args.outputFormat, args);
+      aln.write( text, query, strand, args.isTranslated(), alph, args.outputFormat, args, outputVector);
     }
     else{  // calculate match probabilities:
       Alignment probAln;
@@ -451,7 +454,7 @@ void threadData::alignFinish( const AlignmentPot& gappedAlns, char strand ){
           dis.i, dis.j, alph, extras,
           args.gamma, args.outputType );
       probAln.write( text, query, strand, args.isTranslated(),
-          alph, args.outputFormat, args, extras );
+          alph, args.outputFormat, args, outputVector, extras );
     }
   }
 }
@@ -751,8 +754,8 @@ void writerFunction(){
       for( int i=0; i<args.threadNum; i++) {
         threadData *data = threadDatas->at(i);
 
-        for(int j=0; j<data->outputVector.size(); j++){
-          std::cout << data->outputVector[j];
+        for(int j=0; j<data->outputVector->size(); j++){
+          std::cout << data->outputVector->at(j);
         }
       }
       ok = 0;

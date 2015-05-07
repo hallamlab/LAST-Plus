@@ -106,8 +106,7 @@ struct threadData{
   QualityPssmMaker qualityPssmMaker;
   TwoQualityScoreMatrix twoQualityScoreMatrix;
   TwoQualityScoreMatrix twoQualityScoreMatrixMasked;
-  std::vector<std::string> outputVector;
-
+  std::vector< std::string > *outputVector;
 
   //void alignGapless( SegmentPairPot& gaplessAlns, char strand, std::ostream& out);
   void alignGapless( SegmentPairPot& gaplessAlns, char strand );

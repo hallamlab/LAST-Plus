@@ -209,6 +209,8 @@ void readInnerPrj( const std::string& fileName, indexT& seqCount, indexT& seqLen
 void writeHeader( countT refSequences, countT refLetters, std::ostream& out );
 void initializeEvalueCalulator(const std::string dbPrjFile, std::string dbfilePrj);
 
+void writerFunction( std::ostream& out );
+void* threadFunction( void *args ); 
 void lastal( int argc, char** argv );
 
 #endif

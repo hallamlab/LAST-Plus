@@ -736,7 +736,7 @@ void threadData::callReinit(){
   query.reinitForAppending();
 }
 
-void writerFunction(){
+void writerFunction( std::ostream& out ){
 
   while(ok){
     SEM_WAIT(writerSema);
@@ -745,7 +745,7 @@ void writerFunction(){
         threadData *data = threadDatas->at(i);
 
         for(int j=0; j<data->outputVector->size(); j++){
-          std::cout << data->outputVector->at(j);
+          out << data->outputVector->at(j);
         }
       }
       ok = 0;
@@ -759,6 +759,7 @@ void writerFunction(){
     SEM_WAIT(doneSema);
 
     if( threadsDone == args.threadNum){
+      SEM_POST(doneSema);
       return;
     }
     SEM_POST(doneSema);
@@ -800,6 +801,7 @@ void lastal( int argc, char** argv ){
 #endif
 
 
+//=============================================================================================
   if( !args.matrixFile.empty() ){
     matrixFile = ScoreMatrix::stringFromName( args.matrixFile );
     args.fromString( matrixFile );  // read options from the matrix file
@@ -841,9 +843,8 @@ void lastal( int argc, char** argv ){
   }
 
   std::ofstream outFileStream;
-  //!! We need to reconfigure this output later but for now we will just leave it be.
   std::ostream& out = openOut( args.outFile, outFileStream );
-  //writeHeader( refSequences, refLetters, out );
+  writeHeader( refSequences, refLetters, out );
   out.precision(3);  // print non-integers more compactly
   countT queryBatchCount = 0;
 
@@ -852,7 +853,7 @@ void lastal( int argc, char** argv ){
   char** inputBegin = argv + args.inputStart;
 
   initializeEvalueCalulator( args.lastdbName + ".prj", *inputBegin );
-
+//=============================================================================================
   for (int i=0; i<args.threadNum; i++){
     threadDatas->at(i)->prepareThreadData();
   }
@@ -868,7 +869,7 @@ void lastal( int argc, char** argv ){
         data->appendFromFasta( in );
         pthread_create(&threads[j], NULL, threadFunction, (void*) data);
       }
-      writerFunction();
+      writerFunction(out);
     }
   }
 

@@ -186,7 +186,6 @@ void Alignment::writeBlastOutput( const MultiSequence& seq1, const MultiSequence
        << bitscore;
        outputStream << "\n";
 
-       //std::cout << outputStream.str() << std::endl;
        outputVector->push_back( outputStream.str() );
   }
 }

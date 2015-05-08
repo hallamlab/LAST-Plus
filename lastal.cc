@@ -777,7 +777,6 @@ void writerFunction( std::ostream& out ){
 
         for(int j=0; j<data->outputVector->size(); j++){
           out << data->outputVector->at(j);
-          std::cout << data->outputVector->at(j);
         }
       }
       ok = 0;

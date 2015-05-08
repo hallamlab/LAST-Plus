@@ -141,7 +141,7 @@ struct Dispatcher{
   const TwoQualityScoreMatrix& t;
   int d;  // the maximum score drop
   int z;
-  Alphabet aa;
+  Alphabet *aa;
 
 
   //Dispatcher( Phase::Enum e ) :
@@ -163,7 +163,7 @@ struct Dispatcher{
         (e == Phase::gapped ) ? args.maxDropGapped : args.maxDropFinal ),
     z( (args.inputFormat == sequenceFormat::fasta) ? 0 :
         (referenceFormat  == sequenceFormat::fasta) ? 1 : 2 ),
-    aa( aa = alph ){}
+    aa( aa = &alph ){}
 
   //void shrinkToLongestIdenticalRun( SegmentPair& sp, const Dispatcher& dis );
   void shrinkToLongestIdenticalRun( SegmentPair& sp);

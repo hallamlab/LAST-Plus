@@ -73,7 +73,6 @@ void Alignment::write( const MultiSequence& seq1, const MultiSequence& seq2,
            std::vector<std::string> *outputVector, const AlignmentExtras& extras ) const{
 
   assert( !blocks.empty() );
-  std::cout << "Calling the function" << std::endl;
 
   if( format == 0 ) 
        writeTab( seq1, seq2, strand, isTranslated, extras, outputVector );
@@ -187,12 +186,9 @@ void Alignment::writeBlastOutput( const MultiSequence& seq1, const MultiSequence
        << bitscore;
        outputStream << "\n";
 
-       std::cout << outputStream.str() << std::endl;
-       std::cout << "Called this function once" << std::endl;
-  
+       //std::cout << outputStream.str() << std::endl;
        outputVector->push_back( outputStream.str() );
   }
-
 }
 
 size_t Alignment::countIdentities(std::string& seq1String, std::string& seq2String) const{

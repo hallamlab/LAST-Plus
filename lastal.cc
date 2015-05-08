@@ -365,7 +365,7 @@ void threadData::alignGapless( SegmentPairPot& gaplessAlns, char strand ){
 // seeds: there could be few or no identical matches...
 //void threadData::Dispatcher::shrinkToLongestIdenticalRun( SegmentPair& sp, const Dispatcher& dis ){
 void Dispatcher::shrinkToLongestIdenticalRun( SegmentPair& sp){
-  sp.maxIdenticalRun( a, b, aa.canonical );
+  sp.maxIdenticalRun( a, b, aa->canonical );
   sp.score = gaplessScore( sp.beg1(), sp.end1(), sp.beg2() );
 }
 

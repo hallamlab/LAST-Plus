@@ -9,7 +9,7 @@
 #include <stdexcept>
 #include <cassert>
 #include <cctype>  // toupper, tolower
-//#include <iostream>  // for debugging
+#include <iostream>  // for debugging
 
 #define ERR(x) throw std::runtime_error(x)
 
@@ -35,14 +35,14 @@ std::vector<std::string> CyclicSubsetSeed::fromName( const std::string& name ){
     // From MC Frith & L Noe (2014) Nucleic Acids Research,
     // Supplementary Table 12, second-last row.
     return fromMask( seedAlph,
-		     "1101T1T0T1T00TT1TT,"
-		     "1TTTTT010TT0TT01011TTT,"
-		     "1TTTT10010T011T0TTTT1,"
-		     "111T011T0T01T100,"
-		     "1T10T100TT01000TT01TT11,"
-		     "111T101TT000T0T10T00T1T,"
-		     "111100T011TTT00T0TT01T,"
-		     "1T1T10T1101101" );
+        "1101T1T0T1T00TT1TT,"
+        "1TTTTT010TT0TT01011TTT,"
+        "1TTTT10010T011T0TTTT1,"
+        "111T011T0T01T100,"
+        "1T10T100TT01000TT01TT11,"
+        "111T101TT000T0T10T00T1T,"
+        "111100T011TTT00T0TT01T,"
+        "1T1T10T1101101" );
   }
 
   std::string s = slurp( name );
@@ -51,8 +51,9 @@ std::vector<std::string> CyclicSubsetSeed::fromName( const std::string& name ){
 }
 
 void CyclicSubsetSeed::fromString( const std::string& s,
-				   bool isMaskLowercase,
-				   const uchar letterCode[] ){
+
+    bool isMaskLowercase,
+    const uchar letterCode[] ){
   std::istringstream iss(s);
   fromStream( iss, isMaskLowercase, letterCode );
 }
@@ -66,8 +67,9 @@ static bool isBlankOrComment( std::string line ){
 }
 
 void CyclicSubsetSeed::fromStream( std::istream& stream,
-				   bool isMaskLowercase,
-				   const uchar letterCode[] ){
+    bool isMaskLowercase,
+    const uchar letterCode[] ){
+
   clear();
   std::string line;
   while( std::getline( stream, line ) ){
@@ -88,7 +90,7 @@ static std::string exactSeed( const std::string& letters ){
 }
 
 std::vector<std::string> CyclicSubsetSeed::fromMask( const std::string& alph,
-						     const std::string& mask ){
+    const std::string& mask ){
   std::string es = exactSeed(alph);
   const char* seedAlph[256] = {0};
   seedAlph['1'] = es.c_str();
@@ -103,7 +105,7 @@ std::vector<std::string> CyclicSubsetSeed::fromMask( const std::string& alph,
 }
 
 std::vector<std::string> CyclicSubsetSeed::fromMask( const char* seedAlph[],
-						     const std::string& mask ){
+    const std::string& mask ){
   std::vector<std::string> v;
   int n = 0;
 
@@ -124,8 +126,8 @@ std::vector<std::string> CyclicSubsetSeed::fromMask( const char* seedAlph[],
 }
 
 void CyclicSubsetSeed::addLetter( std::vector<uchar>& numbersToSubsets,
-				  uchar letter, uchar subsetNum,
-				  const uchar letterCode[] ){
+    uchar letter, uchar subsetNum,
+    const uchar letterCode[] ){
   uchar number = letterCode[letter];
   if( number >= CyclicSubsetSeed::MAX_LETTERS )
     ERR( "bad symbol in subset-seed: " + stringify(letter) );
@@ -135,10 +137,11 @@ void CyclicSubsetSeed::addLetter( std::vector<uchar>& numbersToSubsets,
 }
 
 void CyclicSubsetSeed::appendPosition( std::istream& inputLine,
-				       bool isMaskLowercase,
-				       const uchar letterCode[] ){
+    bool isMaskLowercase, const uchar letterCode[] ){
+
   std::string inputWord;
   std::vector<std::string> subsetList;
+  //64,255
   std::vector<uchar> numbersToSubsets( MAX_LETTERS, DELIMITER );
 
   for( unsigned subsetNum = 0; inputLine >> inputWord; ++subsetNum ){
@@ -151,7 +154,7 @@ void CyclicSubsetSeed::appendPosition( std::istream& inputLine,
       addLetter( numbersToSubsets, upper, subsetNum, letterCode );
       subset += upper;
       if( !isMaskLowercase && lower != upper ){
-	addLetter( numbersToSubsets, lower, subsetNum, letterCode );
+        addLetter( numbersToSubsets, lower, subsetNum, letterCode );
       }
     }
 
@@ -161,11 +164,11 @@ void CyclicSubsetSeed::appendPosition( std::istream& inputLine,
 
   subsetLists.push_back( subsetList );
   subsetMaps.insert( subsetMaps.end(),
-		     numbersToSubsets.begin(), numbersToSubsets.end() );
+      numbersToSubsets.begin(), numbersToSubsets.end() );
 }
 
 void CyclicSubsetSeed::writePosition( std::ostream& out,
-				      unsigned position ) const{
+    unsigned position ) const{
   assert( position < subsetLists.size() );
   for( unsigned i = 0; i < subsetLists[position].size(); ++i ){
     if( i > 0 ) out << ' ';

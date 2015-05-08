@@ -15,9 +15,43 @@ int threadsDone = 0;
 bool ok = 1;
 bool done = 1;
 
-void threadData::prepareThreadData(){
+void threadData::prepareThreadData(std::string matrixFile){
 
   outputVector = new std::vector< std::string >(); 
+
+  //unsigned volumes = unsigned(-1);
+  indexT minSeedLimit = 0;
+  //countT refSequences = -1;
+  countT refLetters = -1;
+  readOuterPrj( args.lastdbName + ".prj", volumes, minSeedLimit, refSequences, refLetters );
+
+  if( minSeedLimit > 1 ){
+    if( args.outputType == 0 )
+      ERR( "can't use option -j 0: need to re-run lastdb with i <= 1" );
+    if( minSeedLimit > args.oneHitMultiplicity )
+      ERR( "can't use option -m < " + stringify(minSeedLimit) +
+          ": need to re-run lastdb with i <= " +
+          stringify(args.oneHitMultiplicity) );
+  }
+
+  bool isMultiVolume = (volumes+1 > 0 && volumes > 1);
+  args.setDefaultsFromAlphabet( alph.letters == alph.dna, alph.isProtein(),
+      isCaseSensitiveSeeds, isMultiVolume );
+  makeScoreMatrix( matrixFile );
+
+  gapCosts.assign( args.gapExistCost, args.gapExtendCost,
+      args.insExistCost, args.insExtendCost, args.gapPairCost );
+  if( args.outputType > 0 ) {
+    calculateScoreStatistics();
+  }
+  args.setDefaultsFromMatrix( lambdaCalculator.lambda() );
+  minScoreGapless = args.calcMinScoreGapless( refLetters, numOfIndexes );
+  if( !isMultiVolume ) {
+    args.minScoreGapless = minScoreGapless;
+  }
+  if( args.outputType > 0 ) {
+    makeQualityScorers();
+  }
 
   if( args.isTranslated() ){
     if( alph.letters == alph.dna ) { // allow user-defined alphabet
@@ -40,21 +74,11 @@ void threadData::prepareThreadData(){
   if( volumes+1 == 0 ) readIndex( args.lastdbName, refSequences );
 
   centroid = new Centroid(gappedXdropAligner);
-  this->alph = alph;
-  this->queryAlph = queryAlph;  
-  this->geneticCode = geneticCode;
-  this->matchCounts = matchCounts;
-  this->oneQualityScoreMatrix = oneQualityScoreMatrix;
-  this->oneQualityScoreMatrixMasked = oneQualityScoreMatrixMasked;
-  this->oneQualityExpMatrix = oneQualityExpMatrix;
-  this->qualityPssmMaker = qualityPssmMaker;
-  this->twoQualityScoreMatrix = twoQualityScoreMatrix;
-  this->twoQualityScoreMatrixMasked = twoQualityScoreMatrixMasked;
 }
 
 
 // Set up a scoring matrix, based on the user options
-void makeScoreMatrix( const std::string& matrixFile ){
+void threadData::makeScoreMatrix( const std::string& matrixFile ){
   if( !matrixFile.empty() ){
     scoreMatrix.fromString( matrixFile );
   }
@@ -63,8 +87,7 @@ void makeScoreMatrix( const std::string& matrixFile ){
     scoreMatrix.fromString( ScoreMatrix::stringFromName( b ) );
   }
   else{
-    scoreMatrix.matchMismatch( args.matchScore, args.mismatchCost,
-        alph.letters );
+    scoreMatrix.matchMismatch( args.matchScore, args.mismatchCost, alph.letters );
   }
 
   scoreMatrix.init( alph.encode );
@@ -78,7 +101,7 @@ void makeScoreMatrix( const std::string& matrixFile ){
   // maxScore = std::max(args.maxDropGapped, args.maxDropFinal) + 1;
 }
 
-void makeQualityScorers(){
+void threadData::makeQualityScorers(){
   const ScoreMatrixRow* m = scoreMatrix.caseSensitive;  // case isn't relevant
   double lambda = lambdaCalculator.lambda();
   const std::vector<double>& lp1 = lambdaCalculator.letterProbs1();
@@ -133,7 +156,7 @@ void makeQualityScorers(){
 
 // Calculate statistical parameters for the alignment scoring scheme
 // Meaningless for PSSMs, unless they have the same scale as the score matrix
-void calculateScoreStatistics(){
+void threadData::calculateScoreStatistics(){
   LOG( "calculating matrix probabilities..." );
   // the case-sensitivity of the matrix makes no difference here
   lambdaCalculator.calculate( scoreMatrix.caseSensitive, alph.size );
@@ -149,7 +172,7 @@ void calculateScoreStatistics(){
 }
 
 // Read the .prj file for the whole database
-void readOuterPrj( const std::string& fileName, unsigned& volumes, indexT& minSeedLimit,
+void threadData::readOuterPrj( const std::string& fileName, unsigned& volumes, indexT& minSeedLimit,
     countT& refSequences, countT& refLetters ){
 
   std::ifstream f( fileName.c_str() );
@@ -183,7 +206,7 @@ void readOuterPrj( const std::string& fileName, unsigned& volumes, indexT& minSe
 }
 
 // Read a per-volume .prj file, with info about a database volume
-void readInnerPrj( const std::string& fileName,
+void threadData::readInnerPrj( const std::string& fileName,
     indexT& seqCount, indexT& seqLen ){
   std::ifstream f( fileName.c_str() );
   if( !f ) ERR( "can't open file: " + fileName );
@@ -525,6 +548,7 @@ void threadData::translateAndScan( char strand ){
   else scan( strand );
 }
 
+// encode was never fixed...
 void threadData::readIndex( const std::string& baseName, indexT seqCount ) {
 
   LOG( "reading " << baseName << "..." );
@@ -610,6 +634,7 @@ void threadData::scanAllVolumes( unsigned volumes ){
   LOG( "query batch done!" );
 }
 
+/*
 void writeHeader( countT refSequences, countT refLetters, std::ostream& out ){
   out << "# LAST version " <<
 #include "version.hh"
@@ -627,7 +652,7 @@ void writeHeader( countT refSequences, countT refLetters, std::ostream& out ){
     if ( args.outputFormat != 2) {
       if( args.inputFormat != sequenceFormat::pssm || !args.matrixFile.empty() ){
         // we're not reading PSSMs, or we bothered to specify a matrix file
-        scoreMatrix.writeCommented( out );
+        //scoreMatrix.writeCommented( out );
         // Write lambda?
         out << "#\n";
       }
@@ -649,6 +674,7 @@ void writeHeader( countT refSequences, countT refLetters, std::ostream& out ){
   }
   out << "#\n";
 }
+*/
 
 // Read the next sequence, adding it to the MultiSequence
 std::istream& threadData::appendFromFasta( std::istream& in ){
@@ -684,9 +710,9 @@ std::istream& threadData::appendFromFasta( std::istream& in ){
 }
 
 /* 
-  initialize the evalue calculator located in the lastex.cc file
-*/
-void  initializeEvalueCalulator(const std::string dbPrjFile, std::string dbfilePrj) {
+   initialize the evalue calculator located in the lastex.cc file
+   */
+void  threadData::initializeEvalueCalulator(const std::string dbPrjFile, std::string dbfilePrj) {
   SequenceStatistics _stats1, _stats2;
 
   fastaFileSequenceStats(dbfilePrj,  &_stats1);
@@ -701,6 +727,7 @@ void  initializeEvalueCalulator(const std::string dbPrjFile, std::string dbfileP
 void* threadFunction(void *args){ 
 
   threadData *data = (threadData*)args;
+
   if( !data->query.isFinished() ){
     data->scanAllVolumes( volumes );
     data->callReinit();
@@ -722,7 +749,6 @@ void writerFunction( std::ostream& out ){
   while( ok ){
     SEM_WAIT(writerSema);
     if (threadsPassed == args.threadNum){
-
 
       for( int i=0; i<args.threadNum; i++) {
         threadData *data = threadDatas->at(i);
@@ -756,6 +782,11 @@ void lastal( int argc, char** argv ){
   args.fromArgs( argc, argv );
   std::string matrixFile;
 
+  if( !args.matrixFile.empty() ){
+    matrixFile = ScoreMatrix::stringFromName( args.matrixFile );
+    args.fromString( matrixFile );  // read options from the matrix file
+    args.fromArgs( argc, argv );  // command line overrides matrix file
+  }
   //!! threadData
   threadDatas = new std::vector<threadData*>();
   threadDatas->reserve(args.threadNum);
@@ -784,50 +815,9 @@ void lastal( int argc, char** argv ){
   sem_init(&doneSema, 0, 1);
 #endif
 
-
-  if( !args.matrixFile.empty() ){
-    matrixFile = ScoreMatrix::stringFromName( args.matrixFile );
-    args.fromString( matrixFile );  // read options from the matrix file
-    args.fromArgs( argc, argv );  // command line overrides matrix file
-  }
-
-  //unsigned volumes = unsigned(-1);
-  indexT minSeedLimit = 0;
-  //countT refSequences = -1;
-  countT refLetters = -1;
-  readOuterPrj( args.lastdbName + ".prj", volumes, minSeedLimit, refSequences, refLetters );
-
-  if( minSeedLimit > 1 ){
-    if( args.outputType == 0 )
-      ERR( "can't use option -j 0: need to re-run lastdb with i <= 1" );
-    if( minSeedLimit > args.oneHitMultiplicity )
-      ERR( "can't use option -m < " + stringify(minSeedLimit) +
-          ": need to re-run lastdb with i <= " +
-          stringify(args.oneHitMultiplicity) );
-  }
-
-  bool isMultiVolume = (volumes+1 > 0 && volumes > 1);
-  args.setDefaultsFromAlphabet( alph.letters == alph.dna, alph.isProtein(),
-      isCaseSensitiveSeeds, isMultiVolume );
-  makeScoreMatrix( matrixFile );
-
-  gapCosts.assign( args.gapExistCost, args.gapExtendCost,
-      args.insExistCost, args.insExtendCost, args.gapPairCost );
-  if( args.outputType > 0 ) {
-    calculateScoreStatistics();
-  }
-  args.setDefaultsFromMatrix( lambdaCalculator.lambda() );
-  minScoreGapless = args.calcMinScoreGapless( refLetters, numOfIndexes );
-  if( !isMultiVolume ) {
-    args.minScoreGapless = minScoreGapless;
-  }
-  if( args.outputType > 0 ) {
-    makeQualityScorers();
-  }
-
   std::ofstream outFileStream;
   std::ostream& out = openOut( args.outFile, outFileStream );
-  writeHeader( refSequences, refLetters, out );
+  //writeHeader( refSequences, refLetters, out );
   out.precision(3);  // print non-integers more compactly
   countT queryBatchCount = 0;
 
@@ -835,10 +825,9 @@ void lastal( int argc, char** argv ){
   char* defaultInput[] = { defaultInputName, 0 };
   char** inputBegin = argv + args.inputStart;
 
-  initializeEvalueCalulator( args.lastdbName + ".prj", *inputBegin );
-
   for (int i=0; i<args.threadNum; i++){
-    threadDatas->at(i)->prepareThreadData();
+    threadDatas->at(i)->prepareThreadData(matrixFile);
+    threadDatas->at(i)->initializeEvalueCalulator( args.lastdbName + ".prj", *inputBegin );
   }
 
   for( char** i = *inputBegin ? inputBegin : defaultInput; *i; ++i ){

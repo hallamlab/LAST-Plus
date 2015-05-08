@@ -74,22 +74,22 @@ namespace Phase{
 namespace {
 
   LastalArguments args;
-  Alphabet alph;
-  Alphabet queryAlph;  // for translated alignment
-  GeneticCode geneticCode;
+  //Alphabet alph;
+  //Alphabet queryAlph;  // for translated alignment
+  //GeneticCode geneticCode;
   const unsigned maxNumOfIndexes = 16;
-  SubsetSuffixArray suffixArrays[maxNumOfIndexes];
-  ScoreMatrix scoreMatrix;
-  GeneralizedAffineGapCosts gapCosts;
-  LambdaCalculator lambdaCalculator;
-  std::vector< std::vector<countT> > matchCounts;  // used if outputType == 0
-  OneQualityScoreMatrix oneQualityScoreMatrix;
-  OneQualityScoreMatrix oneQualityScoreMatrixMasked;
-  OneQualityExpMatrix oneQualityExpMatrix;
-  QualityPssmMaker qualityPssmMaker;
-  sequenceFormat::Enum referenceFormat;  // defaults to 0
-  TwoQualityScoreMatrix twoQualityScoreMatrix;
-  TwoQualityScoreMatrix twoQualityScoreMatrixMasked;
+  //SubsetSuffixArray suffixArrays[maxNumOfIndexes];
+  //ScoreMatrix scoreMatrix;
+  //GeneralizedAffineGapCosts gapCosts;
+  //LambdaCalculator lambdaCalculator;
+  //std::vector< std::vector<countT> > matchCounts;  // used if outputType == 0
+  //OneQualityScoreMatrix oneQualityScoreMatrix;
+  //OneQualityScoreMatrix oneQualityScoreMatrixMasked;
+  //OneQualityExpMatrix oneQualityExpMatrix;
+  //QualityPssmMaker qualityPssmMaker;
+  //sequenceFormat::Enum referenceFormat;  // defaults to 0
+  //TwoQualityScoreMatrix twoQualityScoreMatrix;
+  //TwoQualityScoreMatrix twoQualityScoreMatrixMasked;
   int minScoreGapless;
   int isCaseSensitiveSeeds = -1;  // initialize it to an "error" value
   unsigned numOfIndexes = 1;  // assume this value, if unspecified
@@ -106,6 +106,10 @@ struct threadData{
   MultiSequence query;  // sequence that hasn't been indexed by lastdb
   MultiSequence text;  // sequence that has been indexed by lastdb
   std::vector< std::vector<countT> > matchCounts;  // used if outputType == 0
+  GeneralizedAffineGapCosts gapCosts;
+  LambdaCalculator lambdaCalculator;
+  ScoreMatrix scoreMatrix;
+  sequenceFormat::Enum referenceFormat;  // defaults to 0
   OneQualityScoreMatrix oneQualityScoreMatrix;
   OneQualityScoreMatrix oneQualityScoreMatrixMasked;
   OneQualityExpMatrix oneQualityExpMatrix;
@@ -128,7 +132,7 @@ struct threadData{
   void reverseComplementQuery();
   //void scanAllVolumes( unsigned volumes, std::ostream& out );
   void scanAllVolumes( unsigned volumes );
-  void prepareThreadData();
+  void prepareThreadData(std::string matrixFile);
   void readIndex( const std::string& baseName, indexT seqCount );
   void readVolume( unsigned volumeNumber );
   void countMatches( char strand );
@@ -136,6 +140,17 @@ struct threadData{
   void writeCounts();
   std::istream& appendFromFasta( std::istream& in );
   void callReinit();
+
+
+void makeScoreMatrix( const std::string& matrixFile) ;
+void makeQualityScorers();
+void calculateScoreStatistics();
+void readOuterPrj( const std::string& fileName, unsigned& volumes, indexT& minSeedLimit,
+    countT& refSequences, countT& refLetters );
+void readInnerPrj( const std::string& fileName, indexT& seqCount, indexT& seqLen );
+void initializeEvalueCalulator(const std::string dbPrjFile, std::string dbfilePrj);
+//void writeHeader( countT refSequences, countT refLetters, std::ostream& out );
+
 
 };
 
@@ -206,14 +221,17 @@ struct Dispatcher: public threadData{
   }
 };
 
+/*
 void makeScoreMatrix( const std::string& matrixFile) ;
 void makeQualityScorers();
 void calculateScoreStatistics();
 void readOuterPrj( const std::string& fileName, unsigned& volumes, indexT& minSeedLimit,
     countT& refSequences, countT& refLetters );
 void readInnerPrj( const std::string& fileName, indexT& seqCount, indexT& seqLen );
-void writeHeader( countT refSequences, countT refLetters, std::ostream& out );
 void initializeEvalueCalulator(const std::string dbPrjFile, std::string dbfilePrj);
+*/
+
+//void writeHeader( countT refSequences, countT refLetters, std::ostream& out );
 
 void writerFunction( std::ostream& out );
 void* threadFunction( void *args ); 

@@ -45,13 +45,13 @@
 
 
 #ifdef MAC_SEM
-  typedef *sem_t SEM_T;
-  #define SEM_POST(x) sem_post(x)
-  #define SEM_WAIT(x) sem_wait(X)
+typedef *sem_t SEM_T;
+#define SEM_POST(x) sem_post(x)
+#define SEM_WAIT(x) sem_wait(X)
 #else
-  typedef sem_t SEM_T;
-  #define SEM_POST(x) sem_post(&x)
-  #define SEM_WAIT(x) sem_wait(&x)
+typedef sem_t SEM_T;
+#define SEM_POST(x) sem_post(&x)
+#define SEM_WAIT(x) sem_wait(&x)
 #endif
 
 
@@ -65,34 +65,17 @@ using namespace cbrc;
 typedef MultiSequence::indexT indexT;
 typedef unsigned long long countT;
 
-
-namespace Phase{ 
-  enum Enum{ gapless, gapped, final }; 
-}
-
-
 namespace {
 
   LastalArguments args;
-  //Alphabet alph;
-  //Alphabet queryAlph;  // for translated alignment
-  //GeneticCode geneticCode;
   const unsigned maxNumOfIndexes = 16;
-  //SubsetSuffixArray suffixArrays[maxNumOfIndexes];
-  //ScoreMatrix scoreMatrix;
-  //GeneralizedAffineGapCosts gapCosts;
-  //LambdaCalculator lambdaCalculator;
-  //std::vector< std::vector<countT> > matchCounts;  // used if outputType == 0
-  //OneQualityScoreMatrix oneQualityScoreMatrix;
-  //OneQualityScoreMatrix oneQualityScoreMatrixMasked;
-  //OneQualityExpMatrix oneQualityExpMatrix;
-  //QualityPssmMaker qualityPssmMaker;
-  //sequenceFormat::Enum referenceFormat;  // defaults to 0
-  //TwoQualityScoreMatrix twoQualityScoreMatrix;
-  //TwoQualityScoreMatrix twoQualityScoreMatrixMasked;
   int minScoreGapless;
   int isCaseSensitiveSeeds = -1;  // initialize it to an "error" value
   unsigned numOfIndexes = 1;  // assume this value, if unspecified
+}
+
+namespace Phase{ 
+  enum Enum{ gapless, gapped, final }; 
 }
 
 struct threadData{
@@ -118,43 +101,36 @@ struct threadData{
   TwoQualityScoreMatrix twoQualityScoreMatrixMasked;
   std::vector< std::string > *outputVector;
 
-  //void alignGapless( SegmentPairPot& gaplessAlns, char strand, std::ostream& out);
   void alignGapless( SegmentPairPot& gaplessAlns, char strand );
   void alignGapped( AlignmentPot& gappedAlns, SegmentPairPot& gaplessAlns, Phase::Enum phase );
-  //void alignFinish( const AlignmentPot& gappedAlns, char strand, std::ostream& out );
   void alignFinish( const AlignmentPot& gappedAlns, char strand );
   void makeQualityPssm( bool isApplyMasking );
-  //void scan( char strand, std::ostream& out );
   void scan( char strand );
-  //void translateAndScan( char strand, std::ostream& out);
   void translateAndScan( char strand );
   void reverseComplementPssm();
   void reverseComplementQuery();
-  //void scanAllVolumes( unsigned volumes, std::ostream& out );
   void scanAllVolumes( unsigned volumes );
   void prepareThreadData(std::string matrixFile, char** inputBegin );
   void readIndex( const std::string& baseName, indexT seqCount );
   void readVolume( unsigned volumeNumber );
   void countMatches( char strand );
-  //void writeCounts( std::ostream& out );
   void writeCounts();
   std::istream& appendFromFasta( std::istream& in );
   void callReinit();
 
 
-void makeScoreMatrix( const std::string& matrixFile) ;
-void makeQualityScorers();
-void calculateScoreStatistics();
-void readOuterPrj( const std::string& fileName, unsigned& volumes, indexT& minSeedLimit,
-    countT& refSequences, countT& refLetters );
-void readInnerPrj( const std::string& fileName, indexT& seqCount, indexT& seqLen );
-void initializeEvalueCalulator(const std::string dbPrjFile, std::string dbfilePrj);
-//void writeHeader( countT refSequences, countT refLetters, std::ostream& out );
-
-
+  void makeScoreMatrix( const std::string& matrixFile) ;
+  void makeQualityScorers();
+  void calculateScoreStatistics();
+  void readOuterPrj( const std::string& fileName, unsigned& volumes, indexT& minSeedLimit,
+      countT& refSequences, countT& refLetters );
+  void readInnerPrj( const std::string& fileName, indexT& seqCount, indexT& seqLen );
+  void initializeEvalueCalulator(const std::string dbPrjFile, std::string dbfilePrj);
+  //void writeHeader( countT refSequences, countT refLetters, std::ostream& out );
 };
 
-struct Dispatcher: public threadData{
+//struct Dispatcher: public threadData{
+struct Dispatcher{
 
   const uchar* a;  // the reference sequence
   const uchar* b;  // the query sequence
@@ -165,8 +141,15 @@ struct Dispatcher: public threadData{
   const TwoQualityScoreMatrix& t;
   int d;  // the maximum score drop
   int z;
+  Alphabet aa;
 
-  Dispatcher( Phase::Enum e ) :
+
+  //Dispatcher( Phase::Enum e ) :
+  Dispatcher( Phase::Enum e, MultiSequence &text, MultiSequence &query,
+              ScoreMatrix &scoreMatrix, TwoQualityScoreMatrix &twoQualityScoreMatrix, 
+              TwoQualityScoreMatrix &twoQualityScoreMatrixMasked, 
+              sequenceFormat::Enum referenceFormat, Alphabet &alph) :
+
     a( text.seqReader() ),
     b( query.seqReader() ),
     i( text.qualityReader() ),
@@ -179,7 +162,8 @@ struct Dispatcher: public threadData{
     d( (e == Phase::gapless) ? args.maxDropGapless :
         (e == Phase::gapped ) ? args.maxDropGapped : args.maxDropFinal ),
     z( (args.inputFormat == sequenceFormat::fasta) ? 0 :
-        (referenceFormat  == sequenceFormat::fasta) ? 1 : 2 ){}
+        (referenceFormat  == sequenceFormat::fasta) ? 1 : 2 ),
+    aa( aa = alph ){}
 
   //void shrinkToLongestIdenticalRun( SegmentPair& sp, const Dispatcher& dis );
   void shrinkToLongestIdenticalRun( SegmentPair& sp);
@@ -220,16 +204,6 @@ struct Dispatcher: public threadData{
     return gaplessTwoQualityAlignmentScore( a+x, a+e, i+x, b+y, j+y, t );
   }
 };
-
-/*
-void makeScoreMatrix( const std::string& matrixFile) ;
-void makeQualityScorers();
-void calculateScoreStatistics();
-void readOuterPrj( const std::string& fileName, unsigned& volumes, indexT& minSeedLimit,
-    countT& refSequences, countT& refLetters );
-void readInnerPrj( const std::string& fileName, indexT& seqCount, indexT& seqLen );
-void initializeEvalueCalulator(const std::string dbPrjFile, std::string dbfilePrj);
-*/
 
 //void writeHeader( countT refSequences, countT refLetters, std::ostream& out );
 

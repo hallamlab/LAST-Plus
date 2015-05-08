@@ -284,7 +284,14 @@ void threadData::alignGapless( SegmentPairPot& gaplessAlns, char strand ){
 
   // The problem is that this Dispatcher object does not know about the query and such...
   // It needs to be told about this information somehow...
-  Dispatcher dis( Phase::gapless );
+  /*
+  Dispatcher( Phase::Enum e, const MultiSequence &text, const MultiSequence &query,
+              const ScoreMatrix &scoreMatrix , const TwoQualityScoreMatrix &twoQualityScoreMatrix, 
+              const TwoQualityScoreMatrix &twoQualityScoreMatrixMasked, sequenceFormat::Enum referenceFormat) :
+  */
+  //Dispatcher dis( Phase::gapless );
+  Dispatcher dis( Phase::gapless, text, query, scoreMatrix, twoQualityScoreMatrix, twoQualityScoreMatrixMasked, 
+                  referenceFormat, alph );
   DiagonalTable dt;  // record already-covered positions on each diagonal
   countT matchCount = 0, gaplessExtensionCount = 0, gaplessAlignmentCount = 0;
 
@@ -358,14 +365,16 @@ void threadData::alignGapless( SegmentPairPot& gaplessAlns, char strand ){
 // seeds: there could be few or no identical matches...
 //void threadData::Dispatcher::shrinkToLongestIdenticalRun( SegmentPair& sp, const Dispatcher& dis ){
 void Dispatcher::shrinkToLongestIdenticalRun( SegmentPair& sp){
-  sp.maxIdenticalRun( a, b, alph.canonical );
+  sp.maxIdenticalRun( a, b, aa.canonical );
   sp.score = gaplessScore( sp.beg1(), sp.end1(), sp.beg2() );
 }
 
 // Do gapped extensions of the gapless alignments
 void threadData::alignGapped( AlignmentPot& gappedAlns, SegmentPairPot& gaplessAlns, Phase::Enum phase ){
 
-  Dispatcher dis(phase);
+  //Dispatcher dis(phase);
+  Dispatcher dis( phase, text, query, scoreMatrix, twoQualityScoreMatrix, twoQualityScoreMatrixMasked, 
+                  referenceFormat, alph );
   indexT frameSize = args.isTranslated() ? (query.finishedSize() / 3) : 0;
   countT gappedExtensionCount = 0, gappedAlignmentCount = 0;
 
@@ -439,7 +448,9 @@ void threadData::alignGapped( AlignmentPot& gappedAlns, SegmentPairPot& gaplessA
 // probabilities and re-aligning using the gamma-centroid algorithm
 void threadData::alignFinish( const AlignmentPot& gappedAlns, char strand ){
 
-  Dispatcher dis( Phase::final );
+  //Dispatcher dis( Phase::final );
+  Dispatcher dis( Phase::final, text, query, scoreMatrix, twoQualityScoreMatrix, twoQualityScoreMatrixMasked, 
+                  referenceFormat, alph );
   indexT frameSize = args.isTranslated() ? (query.finishedSize() / 3) : 0;
 
   if( args.outputType > 3 ){

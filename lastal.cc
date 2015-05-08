@@ -684,8 +684,8 @@ std::istream& threadData::appendFromFasta( std::istream& in ){
 }
 
 /* 
-   initialize the evalue calculator located in the lastex.cc file
-   */
+  initialize the evalue calculator located in the lastex.cc file
+*/
 void  initializeEvalueCalulator(const std::string dbPrjFile, std::string dbfilePrj) {
   SequenceStatistics _stats1, _stats2;
 
@@ -708,22 +708,7 @@ void* threadFunction(void *args){
   SEM_WAIT(doneSema);
   threadsDone++;
   SEM_POST(doneSema);
-}
-
-int main( int argc, char** argv ) {
-
-  try {
-    lastal( argc, argv );
-    return EXIT_SUCCESS;
-  } catch( const std::bad_alloc& e ) {  // bad_alloc::what() may be unfriendly
-    std::cerr << "lastal: out of memory\n";
-    return EXIT_FAILURE;
-  } catch( const std::exception& e ) {
-    std::cerr << "lastal: " << e.what() << '\n';
-    return EXIT_FAILURE;
-  } catch( int i ) {
-    return i;
-  }
+  pthread_exit( NULL );
 }
 
 void threadData::callReinit(){
@@ -734,7 +719,7 @@ void threadData::callReinit(){
 void writerFunction( std::ostream& out ){
 
   // Write out all of the output
-  while(ok){
+  while( ok ){
     SEM_WAIT(writerSema);
     if (threadsPassed == args.threadNum){
 
@@ -779,10 +764,10 @@ void lastal( int argc, char** argv ){
     threadData *thread_ptr = new threadData();
     threadDatas->push_back(thread_ptr);
   }
+
   pthread_barrier_init( &barr, NULL, args.threadNum );
   pthread_t thread;
-  threads = new std::vector<pthread_t>(thread, args.threadNum);
-
+  threads = new std::vector<pthread_t>( args.threadNum, thread );
 #ifdef MAC_SEM
   sem_unlink("/writerSema");
   if ( ( writerSema = sem_open("/writerSema", O_CREAT, 0644, 1)) == SEM_FAILED ) {
@@ -851,7 +836,7 @@ void lastal( int argc, char** argv ){
   char** inputBegin = argv + args.inputStart;
 
   initializeEvalueCalulator( args.lastdbName + ".prj", *inputBegin );
-  //=============================================================================================
+
   for (int i=0; i<args.threadNum; i++){
     threadDatas->at(i)->prepareThreadData();
   }
@@ -882,5 +867,23 @@ void lastal( int argc, char** argv ){
 
   if (!flush(out)) { 
     ERR( "write error" );
+  }
+}
+
+int main( int argc, char** argv ) {
+
+  try {
+    lastal( argc, argv );
+    return EXIT_SUCCESS;
+  } catch( const std::bad_alloc& e ) {  // bad_alloc::what() may be unfriendly
+    std::cerr << "lastal: out of memory\n";
+    std::cout << e.what() << std::endl; 
+    return EXIT_FAILURE;
+  } catch( const std::exception& e ) {
+    std::cerr << "lastal: " << e.what() << '\n';
+    std::cout << e.what() << std::endl;
+    return EXIT_FAILURE;
+  } catch( int i ) {
+    return i;
   }
 }

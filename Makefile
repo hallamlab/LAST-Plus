@@ -1,12 +1,12 @@
 CXX = g++
 CC  = gcc
 
-#CXXFLAGS = -O3 -Wall -Wextra -Wcast-qual -Wswitch-enum -Wundef	\
+#CXXFLAGS = -O3 -pthread -Wall -Wextra -Wcast-qual -Wswitch-enum -Wundef	\
 #-Wcast-align -Wno-long-long -ansi -pedantic -m64 #-g
 
 CXXFLAGS = -O0 -g -w -m64 -pthread
 
-CFLAGS = -Wall -O0 -g -m64  -pthread# -g
+CFLAGS = -O0 -g -w -m64 -pthread
 
 DBOBJ = Alphabet.o MultiSequence.o CyclicSubsetSeed.o	\
 SubsetSuffixArray.o LastdbArguments.o io.o fileMap.o	\

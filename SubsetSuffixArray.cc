@@ -4,6 +4,7 @@
 #include "io.hh"
 #include <cassert>
 #include <sstream>
+#include <iostream>
 
 using namespace cbrc;
 

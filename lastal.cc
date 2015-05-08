@@ -282,6 +282,8 @@ void threadData::countMatches( char strand ){
 // Find query matches to the suffix array, and do gapless extensions
 void threadData::alignGapless( SegmentPairPot& gaplessAlns, char strand ){
 
+  // The problem is that this Dispatcher object does not know about the query and such...
+  // It needs to be told about this information somehow...
   Dispatcher dis( Phase::gapless );
   DiagonalTable dt;  // record already-covered positions on each diagonal
   countT matchCount = 0, gaplessExtensionCount = 0, gaplessAlignmentCount = 0;
@@ -292,8 +294,12 @@ void threadData::alignGapless( SegmentPairPot& gaplessAlns, char strand ){
 
       const indexT* beg;
       const indexT* end;
-      suffixArrays[x].match( beg, end, dis.b + i, dis.a,
-          args.oneHitMultiplicity, args.minHitDepth );
+      
+//void SubsetSuffixArray::match( const indexT*& beg, const indexT*& end,
+//                               const uchar* queryPtr, const uchar* text,
+//                               indexT maxHits, indexT minDepth ) const {
+
+      suffixArrays[x].match( beg, end, dis.b + i, dis.a, args.oneHitMultiplicity, args.minHitDepth );
       matchCount += end - beg;
 
       // Tried: if we hit a delimiter when using contiguous seeds, then
@@ -613,12 +619,10 @@ void threadData::scanAllVolumes( unsigned volumes ){
   for( unsigned i = 0; i < volumes; ++i ){
     if( text.unfinishedSize() == 0 || volumes > 1 ) readVolume( i );
 
-    std::cout << "Waiting at the barrier" << std::endl;
     pthread_barrier_wait( &barr );  
     //!! Semaphore to tell the output when we are ready
     SEM_WAIT(writerSema);
     threadsPassed++;
-    std::cout << threadsPassed << std::endl;
     SEM_POST(writerSema);
 
     if( args.strand == 2 && i > 0 ) reverseComplementQuery();
@@ -710,8 +714,6 @@ std::istream& threadData::appendFromFasta( std::istream& in ){
         query.qualityReader() + query.unfinishedSize(),
         qualityOffset( args.inputFormat ) );
 
-  std::cout << query.isFinished() << std::endl;
-
   return in;
 }
 
@@ -732,7 +734,6 @@ void  threadData::initializeEvalueCalulator(const std::string dbPrjFile, std::st
 
 void* threadFunction(void *args){ 
 
-  std::cout << "entered the threadFunction" << std::endl; 
   threadData *data = (threadData*)args;
 
   //!! We never even enter this function... this is why we are waiting forever.
@@ -742,12 +743,10 @@ void* threadFunction(void *args){
   } else if (data->query.isFinished() > 0 ) {
     data->scanAllVolumes( volumes );
   }
-  std::cout << "Waiting for the doneSema" << std::endl;
   SEM_WAIT(doneSema);
   threadsDone++;
   SEM_POST(doneSema);
   pthread_exit( NULL );
-  std::cout << "exited the threadFunction" << std::endl; 
 }
 
 void threadData::callReinit(){
@@ -757,7 +756,6 @@ void threadData::callReinit(){
 
 void writerFunction( std::ostream& out ){
 
-  std::cout << "Entered the writerFunction" << std::endl;
   // Write out all of the output
   while( ok ){
     SEM_WAIT(writerSema);

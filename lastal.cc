@@ -15,7 +15,7 @@ int threadsDone = 0;
 bool ok = 1;
 bool done = 1;
 
-void threadData::prepareThreadData(std::string matrixFile){
+void threadData::prepareThreadData(std::string matrixFile, char** inputBegin){
 
   outputVector = new std::vector< std::string >(); 
 
@@ -23,9 +23,10 @@ void threadData::prepareThreadData(std::string matrixFile){
   indexT minSeedLimit = 0;
   //countT refSequences = -1;
   countT refLetters = -1;
+
   readOuterPrj( args.lastdbName + ".prj", volumes, minSeedLimit, refSequences, refLetters );
 
-  if( minSeedLimit > 1 ){
+  if( minSeedLimit > 1 ) {
     if( args.outputType == 0 )
       ERR( "can't use option -j 0: need to re-run lastdb with i <= 1" );
     if( minSeedLimit > args.oneHitMultiplicity )
@@ -71,9 +72,12 @@ void threadData::prepareThreadData(std::string matrixFile){
   }
   queryAlph.tr( query.seqWriter(), query.seqWriter() + query.unfinishedSize() );
 
-  if( volumes+1 == 0 ) readIndex( args.lastdbName, refSequences );
+  if( volumes+1 == 0 ) {
+    readIndex( args.lastdbName, refSequences );
+  }
 
   centroid = new Centroid(gappedXdropAligner);
+  initializeEvalueCalulator( args.lastdbName + ".prj", *inputBegin );
 }
 
 
@@ -126,29 +130,26 @@ void threadData::makeQualityScorers(){
           oneQualityScoreMatrix : oneQualityScoreMatrixMasked;
         oneQualityExpMatrix.init( m, args.temperature );
       }
-    }
-    else if( args.inputFormat == sequenceFormat::prb ){
+    } else if( args.inputFormat == sequenceFormat::prb ){
       bool isMatchMismatch = (args.matrixFile.empty() && args.matchScore > 0);
       qualityPssmMaker.init( m, alph.size, lambda, isMatchMismatch,
           args.matchScore, -args.mismatchCost,
           offset2, alph.canonical );
     }
-  }
-  else{
+  } else {
     if( isFastq( args.inputFormat ) ){
-      if( args.maskLowercase > 0 )
+      if ( args.maskLowercase > 0 )
         twoQualityScoreMatrixMasked.init( m, lambda, &lp1[0], &lp2[0],
             isPhred1, offset1, isPhred2, offset2,
             alph.canonical, true);
-      if( args.maskLowercase < 3 )
+      if ( args.maskLowercase < 3 )
         twoQualityScoreMatrix.init( m, lambda, &lp1[0], &lp2[0],
             isPhred1, offset1, isPhred2, offset2,
             alph.canonical, false );
-      if( args.outputType > 3 ){
+      if ( args.outputType > 3 ){
         ERR( "fastq-versus-fastq column probabilities not implemented" );
       }
-    }
-    else{
+    } else {
       ERR( "when the reference is fastq, the query must also be fastq" );
     }
   }
@@ -280,8 +281,6 @@ void threadData::countMatches( char strand ){
 
 // Find query matches to the suffix array, and do gapless extensions
 void threadData::alignGapless( SegmentPairPot& gaplessAlns, char strand ){
-
-  std::cout << "calling alignGapless" << std::endl;
 
   Dispatcher dis( Phase::gapless );
   DiagonalTable dt;  // record already-covered positions on each diagonal
@@ -614,10 +613,12 @@ void threadData::scanAllVolumes( unsigned volumes ){
   for( unsigned i = 0; i < volumes; ++i ){
     if( text.unfinishedSize() == 0 || volumes > 1 ) readVolume( i );
 
+    std::cout << "Waiting at the barrier" << std::endl;
     pthread_barrier_wait( &barr );  
     //!! Semaphore to tell the output when we are ready
     SEM_WAIT(writerSema);
     threadsPassed++;
+    std::cout << threadsPassed << std::endl;
     SEM_POST(writerSema);
 
     if( args.strand == 2 && i > 0 ) reverseComplementQuery();
@@ -637,49 +638,50 @@ void threadData::scanAllVolumes( unsigned volumes ){
 }
 
 /*
-void writeHeader( countT refSequences, countT refLetters, std::ostream& out ){
-  out << "# LAST version " <<
+   void writeHeader( countT refSequences, countT refLetters, std::ostream& out ){
+   out << "# LAST version " <<
 #include "version.hh"
-    << "\n";
-  out << "#\n";
-  args.writeCommented( out );
-  out << "# Reference sequences=" << refSequences
-    << " normal letters=" << refLetters << "\n";
-  out << "#\n";
+<< "\n";
+out << "#\n";
+args.writeCommented( out );
+out << "# Reference sequences=" << refSequences
+<< " normal letters=" << refLetters << "\n";
+out << "#\n";
 
-  if( args.outputType == 0 ){  // we just want hit counts
-    out << "# length\tcount\n";
-  }
-  else{  // we want alignments
-    if ( args.outputFormat != 2) {
-      if( args.inputFormat != sequenceFormat::pssm || !args.matrixFile.empty() ){
-        // we're not reading PSSMs, or we bothered to specify a matrix file
-        //scoreMatrix.writeCommented( out );
-        // Write lambda?
-        out << "#\n";
-      }
-      out << "# Coordinates are 0-based.  For - strand matches, coordinates\n";
-      out << "# in the reverse complement of the 2nd sequence are used.\n";
-      out << "#\n";
-    }
+if( args.outputType == 0 ){  // we just want hit counts
+out << "# length\tcount\n";
+}
+else{  // we want alignments
+if ( args.outputFormat != 2) {
+if( args.inputFormat != sequenceFormat::pssm || !args.matrixFile.empty() ){
+// we're not reading PSSMs, or we bothered to specify a matrix file
+//scoreMatrix.writeCommented( out );
+// Write lambda?
+out << "#\n";
+}
+out << "# Coordinates are 0-based.  For - strand matches, coordinates\n";
+out << "# in the reverse complement of the 2nd sequence are used.\n";
+out << "#\n";
+}
 
-    if( args.outputFormat == 0 ){  // tabular format
-      out << "# score\tname1\tstart1\talnSize1\tstrand1\tseqSize1\t"
-        << "name2\tstart2\talnSize2\tstrand2\tseqSize2\tblocks\n";
-    }
-    else if( args.outputFormat == 2 ) { //blast-like format
-      out << "# Q_ID\tS_ID\tIDENT\tALIGN_LEN\tMISMATCHES\tGAPS\tQ_BEG\tQ_END\tS_BEG\tS_END\tE_VAL\tBIT_SCORE\n";
-    }
-    else{  // MAF format
-      out << "# name start alnSize strand seqSize alignment\n";
-    }
-  }
-  out << "#\n";
+if( args.outputFormat == 0 ){  // tabular format
+out << "# score\tname1\tstart1\talnSize1\tstrand1\tseqSize1\t"
+<< "name2\tstart2\talnSize2\tstrand2\tseqSize2\tblocks\n";
+}
+else if( args.outputFormat == 2 ) { //blast-like format
+out << "# Q_ID\tS_ID\tIDENT\tALIGN_LEN\tMISMATCHES\tGAPS\tQ_BEG\tQ_END\tS_BEG\tS_END\tE_VAL\tBIT_SCORE\n";
+}
+else{  // MAF format
+out << "# name start alnSize strand seqSize alignment\n";
+}
+}
+out << "#\n";
 }
 */
 
 // Read the next sequence, adding it to the MultiSequence
 std::istream& threadData::appendFromFasta( std::istream& in ){
+
   indexT maxSeqLen = args.batchSize;
   if( maxSeqLen < args.batchSize ) maxSeqLen = indexT(-1);
   if( query.finishedSequences() == 0 ) maxSeqLen = indexT(-1);
@@ -708,6 +710,8 @@ std::istream& threadData::appendFromFasta( std::istream& in ){
         query.qualityReader() + query.unfinishedSize(),
         qualityOffset( args.inputFormat ) );
 
+  std::cout << query.isFinished() << std::endl;
+
   return in;
 }
 
@@ -728,16 +732,22 @@ void  threadData::initializeEvalueCalulator(const std::string dbPrjFile, std::st
 
 void* threadFunction(void *args){ 
 
+  std::cout << "entered the threadFunction" << std::endl; 
   threadData *data = (threadData*)args;
 
+  //!! We never even enter this function... this is why we are waiting forever.
   if( !data->query.isFinished() ){
     data->scanAllVolumes( volumes );
     data->callReinit();
+  } else if (data->query.isFinished() > 0 ) {
+    data->scanAllVolumes( volumes );
   }
+  std::cout << "Waiting for the doneSema" << std::endl;
   SEM_WAIT(doneSema);
   threadsDone++;
   SEM_POST(doneSema);
   pthread_exit( NULL );
+  std::cout << "exited the threadFunction" << std::endl; 
 }
 
 void threadData::callReinit(){
@@ -747,6 +757,7 @@ void threadData::callReinit(){
 
 void writerFunction( std::ostream& out ){
 
+  std::cout << "Entered the writerFunction" << std::endl;
   // Write out all of the output
   while( ok ){
     SEM_WAIT(writerSema);
@@ -801,7 +812,8 @@ void lastal( int argc, char** argv ){
 
   pthread_barrier_init( &barr, NULL, args.threadNum );
   pthread_t thread;
-  threads = new std::vector<pthread_t>( args.threadNum, thread );
+  threads = new std::vector< pthread_t >( args.threadNum, thread );
+
 #ifdef MAC_SEM
   sem_unlink("/writerSema");
   if ( ( writerSema = sem_open("/writerSema", O_CREAT, 0644, 1)) == SEM_FAILED ) {
@@ -829,16 +841,14 @@ void lastal( int argc, char** argv ){
   char** inputBegin = argv + args.inputStart;
 
   for (int i=0; i<args.threadNum; i++){
-    threadDatas->at(i)->prepareThreadData(matrixFile);
-    threadDatas->at(i)->initializeEvalueCalulator( args.lastdbName + ".prj", *inputBegin );
+    threadDatas->at(i)->prepareThreadData(matrixFile, inputBegin);
   }
 
-  for( char** i = *inputBegin ? inputBegin : defaultInput; *i; ++i ){
+  for( char** i = *inputBegin ? inputBegin : defaultInput; *i; ++i ) {
     std::ifstream inFileStream;
     std::istream& in = openIn( *i, inFileStream );
 
     while( in ){
-      std::cout << "lalalala" << std::endl;
 
       for(int j=0; j<args.threadNum; j++){
         threadData *data = threadDatas->at(j);
@@ -849,6 +859,7 @@ void lastal( int argc, char** argv ){
     }
   }
 
+  /*
   for (int k=0; k<args.threadNum; k++){
     threadData *data = threadDatas->at(k);
 
@@ -856,6 +867,7 @@ void lastal( int argc, char** argv ){
       data->scanAllVolumes( volumes );
     }
   }
+  */
   out.precision(6);  // reset the precision to the default value
 
   if (!flush(out)) { 

@@ -132,7 +132,7 @@ struct threadData{
   void reverseComplementQuery();
   //void scanAllVolumes( unsigned volumes, std::ostream& out );
   void scanAllVolumes( unsigned volumes );
-  void prepareThreadData(std::string matrixFile);
+  void prepareThreadData(std::string matrixFile, char** inputBegin );
   void readIndex( const std::string& baseName, indexT seqCount );
   void readVolume( unsigned volumeNumber );
   void countMatches( char strand );

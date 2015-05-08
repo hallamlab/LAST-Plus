@@ -13,6 +13,7 @@
 #include <cmath>
 #include "lastex.hh"
 #include "gumbel_params/sls_pvalues.hpp"
+#include "semaphores.hh"
 
 
 // make C++ tolerable:

@@ -41,18 +41,7 @@
 
 #include <cstdlib>
 #include <pthread.h>
-#include <semaphore.h>
-
-
-#ifdef MAC_SEM
-typedef *sem_t SEM_T;
-#define SEM_POST(x) sem_post(x)
-#define SEM_WAIT(x) sem_wait(X)
-#else
-typedef sem_t SEM_T;
-#define SEM_POST(x) sem_post(&x)
-#define SEM_WAIT(x) sem_wait(&x)
-#endif
+#include "semaphores.hh"
 
 
 #define ERR(x) throw std::runtime_error(x)

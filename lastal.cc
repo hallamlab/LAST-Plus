@@ -4,8 +4,8 @@
 #include "lastal.hh"
 
 std::vector<threadData*> *threadDatas;
+std::vector<pthread_t> *threads;
 pthread_barrier_t barr;
-pthread_t *threads;
 unsigned volumes = unsigned(-1);
 countT refSequences = -1;
 SEM_T writerSema;
@@ -17,44 +17,39 @@ bool done = 1;
 
 void threadData::prepareThreadData(){
 
-  for (int i=0; i<args.threadNum; i++){
-    outputVector = new std::vector< std::string >(); 
-  }
+  outputVector = new std::vector< std::string >(); 
 
-  for(int i=0; i<args.threadNum; i++){
-
-    if( args.isTranslated() ){
-      if( alph.letters == alph.dna ) { // allow user-defined alphabet
-        ERR( "expected protein database, but got DNA" );
-      }
-      queryAlph.fromString( queryAlph.dna );
-      if( args.geneticCodeFile.empty() ) {
-        geneticCode.fromString( geneticCode.standard );
-      } else {
-        geneticCode.fromFile( args.geneticCodeFile );
-      }
-      geneticCode.codeTableSet( alph, queryAlph );
-      query.initForAppending(3);
-    } else {
-      queryAlph = alph;
-      query.initForAppending(1);
+  if( args.isTranslated() ){
+    if( alph.letters == alph.dna ) { // allow user-defined alphabet
+      ERR( "expected protein database, but got DNA" );
     }
-    queryAlph.tr( query.seqWriter(), query.seqWriter() + query.unfinishedSize() );
-
-    if( volumes+1 == 0 ) readIndex( args.lastdbName, refSequences );
-
-    centroid = new Centroid(gappedXdropAligner);
-    this->alph = alph;
-    this->queryAlph = queryAlph;  
-    this->geneticCode = geneticCode;
-    this->matchCounts = matchCounts;
-    this->oneQualityScoreMatrix = oneQualityScoreMatrix;
-    this->oneQualityScoreMatrixMasked = oneQualityScoreMatrixMasked;
-    this->oneQualityExpMatrix = oneQualityExpMatrix;
-    this->qualityPssmMaker = qualityPssmMaker;
-    this->twoQualityScoreMatrix = twoQualityScoreMatrix;
-    this->twoQualityScoreMatrixMasked = twoQualityScoreMatrixMasked;
+    queryAlph.fromString( queryAlph.dna );
+    if( args.geneticCodeFile.empty() ) {
+      geneticCode.fromString( geneticCode.standard );
+    } else {
+      geneticCode.fromFile( args.geneticCodeFile );
+    }
+    geneticCode.codeTableSet( alph, queryAlph );
+    query.initForAppending(3);
+  } else {
+    queryAlph = alph;
+    query.initForAppending(1);
   }
+  queryAlph.tr( query.seqWriter(), query.seqWriter() + query.unfinishedSize() );
+
+  if( volumes+1 == 0 ) readIndex( args.lastdbName, refSequences );
+
+  centroid = new Centroid(gappedXdropAligner);
+  this->alph = alph;
+  this->queryAlph = queryAlph;  
+  this->geneticCode = geneticCode;
+  this->matchCounts = matchCounts;
+  this->oneQualityScoreMatrix = oneQualityScoreMatrix;
+  this->oneQualityScoreMatrixMasked = oneQualityScoreMatrixMasked;
+  this->oneQualityExpMatrix = oneQualityExpMatrix;
+  this->qualityPssmMaker = qualityPssmMaker;
+  this->twoQualityScoreMatrix = twoQualityScoreMatrix;
+  this->twoQualityScoreMatrixMasked = twoQualityScoreMatrixMasked;
 }
 
 
@@ -738,9 +733,12 @@ void threadData::callReinit(){
 
 void writerFunction( std::ostream& out ){
 
+  // Write out all of the output
   while(ok){
     SEM_WAIT(writerSema);
     if (threadsPassed == args.threadNum){
+
+
       for( int i=0; i<args.threadNum; i++) {
         threadData *data = threadDatas->at(i);
 
@@ -755,6 +753,8 @@ void writerFunction( std::ostream& out ){
   } 
   ok = 1;
 
+  // Wait until the threads are all done before 
+  // exiting and launching more threads
   while (done) {
     SEM_WAIT(doneSema);
 
@@ -780,9 +780,8 @@ void lastal( int argc, char** argv ){
     threadDatas->push_back(thread_ptr);
   }
   pthread_barrier_init( &barr, NULL, args.threadNum );
-  threads = (pthread_t*)malloc( sizeof(pthread_t)*args.threadNum );
-
-  //!! initialize semaphores
+  pthread_t thread;
+  threads = new std::vector<pthread_t>(thread, args.threadNum);
 
 #ifdef MAC_SEM
   sem_unlink("/writerSema");
@@ -801,7 +800,6 @@ void lastal( int argc, char** argv ){
 #endif
 
 
-//=============================================================================================
   if( !args.matrixFile.empty() ){
     matrixFile = ScoreMatrix::stringFromName( args.matrixFile );
     args.fromString( matrixFile );  // read options from the matrix file
@@ -853,7 +851,7 @@ void lastal( int argc, char** argv ){
   char** inputBegin = argv + args.inputStart;
 
   initializeEvalueCalulator( args.lastdbName + ".prj", *inputBegin );
-//=============================================================================================
+  //=============================================================================================
   for (int i=0; i<args.threadNum; i++){
     threadDatas->at(i)->prepareThreadData();
   }
@@ -867,7 +865,7 @@ void lastal( int argc, char** argv ){
       for(int j=0; j<args.threadNum; j++){
         threadData *data = threadDatas->at(j);
         data->appendFromFasta( in );
-        pthread_create(&threads[j], NULL, threadFunction, (void*) data);
+        pthread_create(&threads->at(j), NULL, threadFunction, (void*) data);
       }
       writerFunction(out);
     }

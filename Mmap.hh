@@ -59,8 +59,8 @@ private:
   T* end_;
 
   // prevent copying:
-  //Mmap( const Mmap& );
-  //Mmap& operator=( const Mmap& );
+  Mmap( const Mmap& );
+  Mmap& operator=( const Mmap& );
 };
 
 template<typename T>

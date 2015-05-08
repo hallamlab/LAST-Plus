@@ -1,6 +1,7 @@
 #ifndef __LASTAL_HH
 #define __LASTAL_HH
 
+
 #include "LastalArguments.hh"
 #include "QualityPssmMaker.hh"
 #include "OneQualityScoreMatrix.hh"
@@ -53,17 +54,22 @@
   #define SEM_WAIT(x) sem_wait(&x)
 #endif
 
+
 #define ERR(x) throw std::runtime_error(x)
 #define LOG(x) if( args.verbosity > 0 ) std::cerr << "lastal: " << x << '\n'
 
+
 using namespace cbrc;
+
 
 typedef MultiSequence::indexT indexT;
 typedef unsigned long long countT;
 
+
 namespace Phase{ 
   enum Enum{ gapless, gapped, final }; 
 }
+
 
 namespace {
 

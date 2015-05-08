@@ -4,7 +4,7 @@
 #include "io.hh"
 #include <cassert>
 #include <sstream>
-//#include <iostream>  // for debugging
+#include <iostream>  // for debugging
 
 using namespace cbrc;
 
@@ -25,6 +25,7 @@ void SubsetSuffixArray::clearPositions(){
   index.v.clear();
 }
 
+//!!
 void SubsetSuffixArray::fromFiles( const std::string& baseName,
 				   bool isMaskLowercase,
 				   const uchar letterCode[] ){
@@ -45,7 +46,10 @@ void SubsetSuffixArray::fromFiles( const std::string& baseName,
     if( word == "specialcharacters" ) iss >> unindexedPositions;
     if( word == "prefixlength" ) iss >> bucketDepth;
     if( word == "subsetseed" ){
+      //!! Here is our problem...
+      std::cout << "Calling Append position" << std::endl;
       seed.appendPosition( iss, isMaskLowercase, letterCode );
+      std::cout << "Called Append position" << std::endl;
     }
   }
 

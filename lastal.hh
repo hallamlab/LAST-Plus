@@ -100,6 +100,8 @@ struct threadData{
   TwoQualityScoreMatrix twoQualityScoreMatrix;
   TwoQualityScoreMatrix twoQualityScoreMatrixMasked;
   std::vector< std::string > *outputVector;
+  int identifier;
+
 
   void alignGapless( SegmentPairPot& gaplessAlns, char strand );
   void alignGapped( AlignmentPot& gappedAlns, SegmentPairPot& gaplessAlns, Phase::Enum phase );
@@ -110,7 +112,7 @@ struct threadData{
   void reverseComplementPssm();
   void reverseComplementQuery();
   void scanAllVolumes( unsigned volumes );
-  void prepareThreadData(std::string matrixFile, char** inputBegin );
+  void prepareThreadData(std::string matrixFile, char** inputBegin, int identifier );
   void readIndex( const std::string& baseName, indexT seqCount );
   void readVolume( unsigned volumeNumber );
   void countMatches( char strand );

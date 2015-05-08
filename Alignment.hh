@@ -35,6 +35,11 @@ namespace cbrc{
 
   struct Alignment{
 
+
+    Alignment( int identifier ) {
+      this->identifier = identifier;
+    }
+
     // make a single-block alignment:
     void fromSegmentPair( const SegmentPair& sp );
 
@@ -75,6 +80,7 @@ namespace cbrc{
     std::vector<SegmentPair> blocks;  // the gapless blocks of the alignment
     int score;
     SegmentPair seed;  // the alignment remembers its seed
+    int identifier; // which thread do I belong to
 
     size_t beg1() const{ return blocks.front().beg1(); }
     size_t beg2() const{ return blocks.front().beg2(); }

@@ -71,7 +71,9 @@ static void writeSignedDifference( size_t x, size_t y, std::ostream& os ){
 void Alignment::write( const MultiSequence& seq1, const MultiSequence& seq2,
 		       char strand, bool isTranslated, const Alphabet& alph, int format, LastalArguments &args, 
            std::vector<std::string> *outputVector, const AlignmentExtras& extras ) const{
+
   assert( !blocks.empty() );
+  std::cout << "Calling the function" << std::endl;
 
   if( format == 0 ) 
        writeTab( seq1, seq2, strand, isTranslated, extras, outputVector );
@@ -184,6 +186,9 @@ void Alignment::writeBlastOutput( const MultiSequence& seq1, const MultiSequence
        << evalue2 << tab
        << bitscore;
        outputStream << "\n";
+
+       std::cout << outputStream.str() << std::endl;
+       std::cout << "Called this function once" << std::endl;
   
        outputVector->push_back( outputStream.str() );
   }

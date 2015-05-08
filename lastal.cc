@@ -281,6 +281,8 @@ void threadData::countMatches( char strand ){
 // Find query matches to the suffix array, and do gapless extensions
 void threadData::alignGapless( SegmentPairPot& gaplessAlns, char strand ){
 
+  std::cout << "calling alignGapless" << std::endl;
+
   Dispatcher dis( Phase::gapless );
   DiagonalTable dt;  // record already-covered positions on each diagonal
   countT matchCount = 0, gaplessExtensionCount = 0, gaplessAlignmentCount = 0;
@@ -755,6 +757,7 @@ void writerFunction( std::ostream& out ){
 
         for(int j=0; j<data->outputVector->size(); j++){
           out << data->outputVector->at(j);
+          std::cout << data->outputVector->at(j);
         }
       }
       ok = 0;
@@ -834,7 +837,8 @@ void lastal( int argc, char** argv ){
     std::ifstream inFileStream;
     std::istream& in = openIn( *i, inFileStream );
 
-    while( !in ){
+    while( in ){
+      std::cout << "lalalala" << std::endl;
 
       for(int j=0; j<args.threadNum; j++){
         threadData *data = threadDatas->at(j);

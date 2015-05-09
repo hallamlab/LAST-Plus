@@ -47,6 +47,7 @@ bool  isFastaFileProtein(std::string fastaFile) {
 
   unsigned int sequenceCount =0;
   unsigned int lettersTotal =0;
+  std::cout << "Calling the first function" << std::endl;
   while( sequenceCount < 5 &&  multi.appendFromFasta(in, 10000000) ) {
          alph.tr( multi.seqWriter() + multi.seqBeg(0), multi.seqWriter() + multi.seqEnd(0) );
          alph.count( multi.seqReader() + multi.seqBeg(0), multi.seqReader() + multi.seqEnd(0), &letterCounts[0] );
@@ -91,6 +92,7 @@ void fastaFileSequenceStats(std::string fastaFile,  SequenceStatistics *stats ){
   multi.reinitForAppending();
 
   sequenceCount =0;
+  std::cout << "Calling the second function" << std::endl;
   while(  multi.appendFromFasta(in, 1000000000) ) {
          alph.tr( multi.seqWriter() + multi.seqBeg(0), multi.seqWriter() + multi.seqEnd(0) );
          alph.count( multi.seqReader() + multi.seqBeg(0), multi.seqReader() + multi.seqEnd(0), &letterCounts[0] );

@@ -189,6 +189,8 @@ void Alignment::writeBlastOutput( const MultiSequence& seq1, const MultiSequence
        SEM_WAIT( outputSemaphores->at(identifier) );
        outputVector->push_back( outputStream.str() );
        SEM_POST( outputSemaphores->at(identifier) );
+
+       std::cout << outputStream.str() << std::endl;
   }
 }
 

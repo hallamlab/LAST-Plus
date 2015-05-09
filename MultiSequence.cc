@@ -7,6 +7,7 @@
 #include <cassert>
 #include <cctype>  // isspace
 #include <iterator>  // istreambuf_iterator
+#include <iostream>
 
 using namespace cbrc;
 
@@ -74,8 +75,11 @@ std::istream& MultiSequence::readFastaName( std::istream& stream ){
   return stream;
 }
 
-std::istream&
-MultiSequence::appendFromFasta( std::istream& stream, indexT maxSeqLen ){
+std::istream& MultiSequence::appendFromFasta( std::istream& stream, indexT maxSeqLen ){
+
+  //!!
+  std::cout << "query.appendFromFasta has been called" << std::endl;
+
   if( isFinished() ){
     char c = '>';
     stream >> c;

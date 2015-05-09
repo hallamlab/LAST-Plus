@@ -15,8 +15,6 @@
 
 using namespace cbrc;
 
-//!! Constructor
-
 void Alignment::fromSegmentPair( const SegmentPair& sp ){
   blocks.assign( 1, sp );
   score = sp.score;
@@ -230,8 +228,8 @@ void Alignment::extend( std::vector< SegmentPair >& chunks,
                         const TwoQualityScoreMatrix& sm2qual,
                         const uchar* qual1, const uchar* qual2,
 			const Alphabet& alph, AlignmentExtras& extras,
-			double gamma, int outputType ){
-  if( frameSize ){
+			double gamma, int outputType ) {
+  if( frameSize ) {
     assert( outputType < 4 );
     assert( !globality );
     assert( !pssm2 );

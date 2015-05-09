@@ -57,6 +57,7 @@ typedef unsigned long long countT;
 namespace {
 
   LastalArguments args;
+  LambdaCalculator lambdaCalculator;
   const unsigned maxNumOfIndexes = 16;
   int minScoreGapless;
   int isCaseSensitiveSeeds = -1;  // initialize it to an "error" value
@@ -79,7 +80,6 @@ struct threadData{
   MultiSequence text;  // sequence that has been indexed by lastdb
   std::vector< std::vector<countT> > matchCounts;  // used if outputType == 0
   GeneralizedAffineGapCosts gapCosts;
-  LambdaCalculator lambdaCalculator;
   ScoreMatrix scoreMatrix;
   sequenceFormat::Enum referenceFormat;  // defaults to 0
   OneQualityScoreMatrix oneQualityScoreMatrix;
@@ -101,7 +101,7 @@ struct threadData{
   void reverseComplementPssm();
   void reverseComplementQuery();
   void scanAllVolumes( unsigned volumes );
-  void prepareThreadData(std::string matrixFile, char** inputBegin, int identifier );
+  void prepareThreadData(std::string matrixFile, int identifier );
   void readIndex( const std::string& baseName, indexT seqCount );
   void readVolume( unsigned volumeNumber );
   void countMatches( char strand );
@@ -116,12 +116,12 @@ struct threadData{
   void readOuterPrj( const std::string& fileName, unsigned& volumes, indexT& minSeedLimit,
       countT& refSequences, countT& refLetters );
   void readInnerPrj( const std::string& fileName, indexT& seqCount, indexT& seqLen );
-  void initializeEvalueCalulator(const std::string dbPrjFile, std::string dbfilePrj);
+  //void initializeEvalueCalulator(const std::string dbPrjFile, std::string dbfilePrj);
   //void writeHeader( countT refSequences, countT refLetters, std::ostream& out );
 };
 
-//struct Dispatcher: public threadData{
 struct Dispatcher{
+
 
   const uchar* a;  // the reference sequence
   const uchar* b;  // the query sequence
@@ -135,28 +135,26 @@ struct Dispatcher{
   Alphabet *aa;
 
 
-  //Dispatcher( Phase::Enum e ) :
   Dispatcher( Phase::Enum e, MultiSequence &text, MultiSequence &query,
               ScoreMatrix &scoreMatrix, TwoQualityScoreMatrix &twoQualityScoreMatrix, 
               TwoQualityScoreMatrix &twoQualityScoreMatrixMasked, 
               sequenceFormat::Enum referenceFormat, Alphabet &alph) :
 
-    a( text.seqReader() ),
-    b( query.seqReader() ),
-    i( text.qualityReader() ),
-    j( query.qualityReader() ),
-    p( query.pssmReader() ),
-    m( (e < args.maskLowercase) ?
-        scoreMatrix.caseSensitive : scoreMatrix.caseInsensitive ),
-    t( (e < args.maskLowercase) ?
-        twoQualityScoreMatrixMasked : twoQualityScoreMatrix ),
-    d( (e == Phase::gapless) ? args.maxDropGapless :
-        (e == Phase::gapped ) ? args.maxDropGapped : args.maxDropFinal ),
-    z( (args.inputFormat == sequenceFormat::fasta) ? 0 :
-        (referenceFormat  == sequenceFormat::fasta) ? 1 : 2 ),
-    aa( aa = &alph ){}
+    a  ( text.seqReader() ),
+    b  ( query.seqReader() ),
+    i  ( text.qualityReader() ),
+    j  ( query.qualityReader() ),
+    p  ( query.pssmReader() ),
+    m  ( (e < args.maskLowercase) ?
+          scoreMatrix.caseSensitive : scoreMatrix.caseInsensitive ),
+    t  ( (e < args.maskLowercase) ?
+          twoQualityScoreMatrixMasked : twoQualityScoreMatrix ),
+    d  ( (e == Phase::gapless) ? args.maxDropGapless :
+         (e == Phase::gapped ) ? args.maxDropGapped : args.maxDropFinal ),
+    z  ( (args.inputFormat == sequenceFormat::fasta) ? 0 :
+         (referenceFormat  == sequenceFormat::fasta) ? 1 : 2 ),
+    aa ( aa = &alph ){}
 
-  //void shrinkToLongestIdenticalRun( SegmentPair& sp, const Dispatcher& dis );
   void shrinkToLongestIdenticalRun( SegmentPair& sp);
 
   int forwardGaplessScore( indexT x, indexT y ) const{
@@ -200,6 +198,7 @@ struct Dispatcher{
 
 void writerFunction( std::ostream& out );
 void* threadFunction( void *args ); 
+void initializeEvalueCalulator(const std::string dbPrjFile, ScoreMatrix &scoreMatrix, std::string dbfilePrj);
 void lastal( int argc, char** argv );
 
 #endif

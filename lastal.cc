@@ -6,15 +6,12 @@
 std::vector<threadData*> *threadDatas;
 std::vector<pthread_t> *threads;
 std::vector<SEM_T> *outputSemaphores;
-pthread_barrier_t barr;
+//pthread_barrier_t barr;
 unsigned volumes = unsigned(-1);
 countT refSequences = -1;
 SEM_T ioSema;
 SEM_T doneSema;
-int threadsPassed = 0;
 int threadsDone = 0;
-bool ok = 1;
-bool done = 1;
 
 void threadData::prepareThreadData(std::string matrixFile, int identifier ){
 
@@ -617,18 +614,6 @@ void threadData::scanAllVolumes( unsigned volumes ){
   for( unsigned i = 0; i < volumes; ++i ){
     if( text.unfinishedSize() == 0 || volumes > 1 ) readVolume( i );
 
-    //!! HERE ARE OUR PROBLEMS!!!
-    //pthread_barrier_wait( &barr );  
-
-    //!! Semaphore to tell the output when we are ready
-    /*
-       std::cout << "Thread : " << identifier << " is waiting at the ioSema" << std::endl;
-       SEM_WAIT( ioSema );
-       threadsPassed++;
-       SEM_POST( ioSema );
-       std::cout << "Thread : " << identifier << " is after at the ioSema" << std::endl;
-       */
-
     if( args.strand == 2 && i > 0 ) reverseComplementQuery();
 
     if( args.strand != 0 ) translateAndScan( '+' );
@@ -751,12 +736,9 @@ void* threadFunction(void *args){
      data->scanAllVolumes( volumes );
      }
      */
-  //std::cout << "Thread : " << data->identifier << " is waiting at the doneSema" << std::endl;
-  //SEM_WAIT(doneSema);
-
+  SEM_WAIT(doneSema);
   threadsDone++;
-  //SEM_POST(doneSema);
-  //std::cout << "Thread : " << data->identifier << " is after at the doneSema" << std::endl;
+  SEM_POST(doneSema);
   pthread_exit( NULL );
 }
 
@@ -767,41 +749,62 @@ void threadData::callReinit(){
 
 void writerFunction( std::ostream& out ){
 
-  /*
+  //std::cout << "Entering the writerFunction" << std::endl;
   // Write out all of the output
-  while( ok ){
-  //SEM_WAIT(ioSema);
+  while( true ){
+    //SEM_WAIT(ioSema);
+    SEM_WAIT(doneSema);
+    int tmp = threadsDone;
+    SEM_POST(doneSema);
 
-  if (threadsPassed == args.threadNum){
+    if (tmp == args.threadNum){
 
-  for( int i=0; i<args.threadNum; i++) {
-  threadData *data = threadDatas->at(i);
-
-  //SEM_WAIT( outputSemaphores->at( i ) );
-  for(int j=0; j<data->outputVector->size(); j++){
-  out << data->outputVector->at( j );
-  }
-  //SEM_POST( outputSemaphores->at( i ) );
-  }
-  ok = 0;
-  }
-  //SEM_POST(ioSema);
-  } 
-  ok = 1;
-  */
-  // Wait until the threads are all done before 
-  // exiting and launching more threads
-  /*
-  while (done) {
-    //SEM_WAIT(doneSema);
-
-    if( threadsDone == args.threadNum){
-      //SEM_POST(doneSema);
-      return;
+      /*
+      for( int i=0; i<args.threadNum; i++) {
+        threadData *data = threadDatas->at(i);
+        SEM_WAIT( outputSemaphores->at( i ) );
+        
+        for(int j=0; j<data->outputVector->size(); j++){
+          out << data->outputVector->at( j );
+        }
+        SEM_POST( outputSemaphores->at( i ) );
+      }
+      */
+      threadsDone = 0;
+      break;
     }
-    //SEM_POST(doneSema);
-  }
+    //SEM_POST(ioSema);
+  } 
+  //std::cout << "Exiting the writerFunction" << std::endl;
+}
+
+void writerFunctionFinal( std::ostream& out ){
+
+  //std::cout << "Entering the writerFunctionFinal" << std::endl;
+  /*
+  while( true ){
+    SEM_WAIT(doneSema);
+    int tmp = threadsDone;
+    SEM_POST(doneSema);
+
+    std::cout << threadsDone << " : " << args.threadNum << std::endl;
+    if (tmp == args.threadNum){
+
+      for( int i=0; i<args.threadNum; i++) {
+        threadData *data = threadDatas->at(i);
+        SEM_WAIT( outputSemaphores->at( i ) );
+        
+        for(int j=0; j<data->outputVector->size(); j++){
+          out << data->outputVector->at( j );
+        }
+        SEM_POST( outputSemaphores->at( i ) );
+      }
+      threadsDone = 0;
+      break;
+    }
+  } 
   */
+  //std::cout << "Exiting the writerFunctionFinal" << std::endl;
 }
 
 void readerFunction( std::istream& in ){
@@ -821,7 +824,7 @@ void finishAlignment( std::ostream& out ){
       data->scanAllVolumes( volumes );
     }
   }
-  writerFunction(out);
+  writerFunctionFinal(out);
 }
 
 void initializeThreads(){
@@ -834,7 +837,7 @@ void initializeThreads(){
     threadDatas->push_back(thread_ptr);
   }
 
-  pthread_barrier_init( &barr, NULL, args.threadNum );
+  //pthread_barrier_init( &barr, NULL, args.threadNum );
   pthread_t thread;
   threads = new std::vector< pthread_t >( args.threadNum, thread );
 }

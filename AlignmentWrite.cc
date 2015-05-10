@@ -186,11 +186,16 @@ void Alignment::writeBlastOutput( const MultiSequence& seq1, const MultiSequence
        << evalue2 << tab
        << bitscore;
        outputStream << "\n";
+
+       /*
        SEM_WAIT( outputSemaphores->at(identifier) );
        outputVector->push_back( outputStream.str() );
        SEM_POST( outputSemaphores->at(identifier) );
+       */
 
+       SEM_WAIT( outputSemaphores->at(identifier) );
        std::cout << outputStream.str() << std::endl;
+       SEM_POST( outputSemaphores->at(identifier) );
   }
 }
 

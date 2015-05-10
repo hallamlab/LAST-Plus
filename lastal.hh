@@ -197,6 +197,7 @@ struct Dispatcher{
 //void writeHeader( countT refSequences, countT refLetters, std::ostream& out );
 
 void writerFunction( std::ostream& out );
+void writerFunctionFinal( std::ostream& out );
 void readerFunction( std::istream& in );
 void finishAlignment( std::ostream& out );
 void* threadFunction( void *args ); 

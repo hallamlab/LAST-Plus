@@ -695,10 +695,6 @@ std::istream& threadData::appendFromFasta( std::istream& in ) {
 
   size_t oldUnfinishedSize = query.unfinishedSize();
 
-  //!!
-  std::cout << maxSeqLen << std::endl;
-
-
   /**/ if( args.inputFormat == sequenceFormat::fasta ) {
     query.appendFromFasta( in, maxSeqLen );
   } else if( args.inputFormat == sequenceFormat::prb ) {
@@ -795,6 +791,7 @@ void writerFunction( std::ostream& out ){
   */
   // Wait until the threads are all done before 
   // exiting and launching more threads
+  /*
   while (done) {
     //SEM_WAIT(doneSema);
 
@@ -804,6 +801,7 @@ void writerFunction( std::ostream& out ){
     }
     //SEM_POST(doneSema);
   }
+  */
 }
 
 void readerFunction( std::istream& in ){
@@ -826,17 +824,8 @@ void finishAlignment( std::ostream& out ){
   writerFunction(out);
 }
 
-void lastal( int argc, char** argv ){
+void initializeThreads(){
 
-  args.fromArgs( argc, argv );
-  std::string matrixFile;
-
-  if( !args.matrixFile.empty() ){
-    matrixFile = ScoreMatrix::stringFromName( args.matrixFile );
-    args.fromString( matrixFile );  // read options from the matrix file
-    args.fromArgs( argc, argv );  // command line overrides matrix file
-  }
-  //!! threadData
   threadDatas = new std::vector<threadData*>();
   threadDatas->reserve(args.threadNum);
 
@@ -848,6 +837,9 @@ void lastal( int argc, char** argv ){
   pthread_barrier_init( &barr, NULL, args.threadNum );
   pthread_t thread;
   threads = new std::vector< pthread_t >( args.threadNum, thread );
+}
+
+void initializeSemaphores(){
 
   //!! Initialize the semaphores
   outputSemaphores = new std::vector< SEM_T >();
@@ -880,6 +872,21 @@ void lastal( int argc, char** argv ){
   sem_init(&ioSema, 0, 1);
   sem_init(&doneSema, 0, 1);
 #endif
+}
+
+void lastal( int argc, char** argv ){
+
+  args.fromArgs( argc, argv );
+  std::string matrixFile;
+
+  if( !args.matrixFile.empty() ){
+    matrixFile = ScoreMatrix::stringFromName( args.matrixFile );
+    args.fromString( matrixFile );  // read options from the matrix file
+    args.fromArgs( argc, argv );  // command line overrides matrix file
+  }
+
+  initializeThreads();
+  initializeSemaphores();
 
   std::ofstream outFileStream;
   std::ostream& out = openOut( args.outFile, outFileStream );

@@ -200,6 +200,8 @@ void writerFunction( std::ostream& out );
 void readerFunction( std::istream& in );
 void finishAlignment( std::ostream& out );
 void* threadFunction( void *args ); 
+void initializeThreads();
+void initializeSemaphores();
 void initializeEvalueCalulator(const std::string dbPrjFile, ScoreMatrix &scoreMatrix, std::string dbfilePrj);
 void lastal( int argc, char** argv );
 

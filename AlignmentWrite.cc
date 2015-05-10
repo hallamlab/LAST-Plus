@@ -71,14 +71,14 @@ static void writeSignedDifference( size_t x, size_t y, std::ostream& os ){
 
 void Alignment::write( const MultiSequence& seq1, const MultiSequence& seq2,
 		       char strand, bool isTranslated, const Alphabet& alph, int format, LastalArguments &args, 
-           std::vector<std::string> *outputVector, const AlignmentExtras& extras ) const{
+           outputStruct *output, const AlignmentExtras& extras ) const{
 
   assert( !blocks.empty() );
 
   if( format == 0 ) 
-       writeTab( seq1, seq2, strand, isTranslated, extras, outputVector );
+       writeTab( seq1, seq2, strand, isTranslated, extras, output );
   else if( format == 2 )  {
-       writeBlastOutput( seq1, seq2, strand, isTranslated, alph, extras, outputVector, args );
+       writeBlastOutput( seq1, seq2, strand, isTranslated, alph, extras, output, args );
   }
   else 
        writeMaf( seq1, seq2, strand, isTranslated, alph, extras );
@@ -88,7 +88,7 @@ void Alignment::write( const MultiSequence& seq1, const MultiSequence& seq2,
 //!!
 void Alignment::writeBlastOutput( const MultiSequence& seq1, const MultiSequence& seq2,
               char strand, bool isTranslated, const Alphabet& alph, 
-			        const AlignmentExtras& extras, std::vector<std::string> *outputVector, LastalArguments &args ) const{
+			        const AlignmentExtras& extras, outputStruct *output, LastalArguments &args ) const{
 
   std::stringstream outputStream;
 
@@ -187,14 +187,9 @@ void Alignment::writeBlastOutput( const MultiSequence& seq1, const MultiSequence
        << bitscore;
        outputStream << "\n";
 
-       /*
+       
        SEM_WAIT( outputSemaphores->at(identifier) );
-       outputVector->push_back( outputStream.str() );
-       SEM_POST( outputSemaphores->at(identifier) );
-       */
-
-       SEM_WAIT( outputSemaphores->at(identifier) );
-       std::cout << outputStream.str() << std::endl;
+       output->outputVector->push_back( outputStream.str() );
        SEM_POST( outputSemaphores->at(identifier) );
   }
 }
@@ -232,7 +227,7 @@ size_t Alignment::countGaps(std::string& sequence) const {
 }
 
 void Alignment::writeTab( const MultiSequence& seq1, const MultiSequence& seq2,
-			  char strand, bool isTranslated, const AlignmentExtras& extras, std::vector<std::string> *outputVector ) const{
+			  char strand, bool isTranslated, const AlignmentExtras& extras, outputStruct *output ) const{
 
   std::stringstream outputStream;
 
@@ -284,7 +279,7 @@ void Alignment::writeTab( const MultiSequence& seq1, const MultiSequence& seq2,
   if( fullScore > 0 ) outputStream << "\tfullScore=" << fullScore;
 
   outputStream << '\n';
-  outputVector->push_back( outputStream.str() );
+  output->outputVector->push_back( outputStream.str() );
 }
 
 void Alignment::writeMaf( const MultiSequence& seq1, const MultiSequence& seq2,

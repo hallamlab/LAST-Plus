@@ -1,21 +1,29 @@
 // Copyright 2008, 2009, 2010, 2011, 2012, 2013, 2014 Martin C. Frith
 // BLAST-like pair-wise sequence alignment, using suffix arrays.
 
+/*
+ *  The output printing is not wait free between rounds. A reader/writer mechanism, similar to what
+ *  I implemented for the MPI code needs to be implemented here to allow wait free slave work.
+ */
+
+
+
+
 #include "lastal.hh"
 
 std::vector<threadData*> *threadDatas;
 std::vector<pthread_t> *threads;
 std::vector<SEM_T> *outputSemaphores;
-//pthread_barrier_t barr;
 unsigned volumes = unsigned(-1);
 countT refSequences = -1;
 SEM_T ioSema;
-SEM_T doneSema;
+//SEM_T doneSema;
 int threadsDone = 0;
 
 void threadData::prepareThreadData(std::string matrixFile, int identifier ){
 
-  outputVector = new std::vector< std::string >(); 
+
+  output = new outputStruct();
 
   //unsigned volumes = unsigned(-1);
   indexT minSeedLimit = 0;
@@ -327,7 +335,7 @@ void threadData::alignGapless( SegmentPairPot& gaplessAlns, char strand ){
         if( args.outputType == 1 ){  // we just want gapless alignments
           Alignment aln(identifier);
           aln.fromSegmentPair(sp);
-          aln.write( text, query, strand, args.isTranslated(), alph, args.outputFormat, args, outputVector );
+          aln.write( text, query, strand, args.isTranslated(), alph, args.outputFormat, args, output );
         }
         else{
           gaplessAlns.add(sp);  // add the gapless alignment to the pot
@@ -453,7 +461,7 @@ void threadData::alignFinish( const AlignmentPot& gappedAlns, char strand ){
   for( size_t i = 0; i < gappedAlns.size(); ++i ){
     const Alignment& aln = gappedAlns.items[i];
     if( args.outputType < 4 ){
-      aln.write( text, query, strand, args.isTranslated(), alph, args.outputFormat, args, outputVector);
+      aln.write( text, query, strand, args.isTranslated(), alph, args.outputFormat, args, output );
     }
     else{  // calculate match probabilities:
       Alignment probAln(identifier);
@@ -466,7 +474,7 @@ void threadData::alignFinish( const AlignmentPot& gappedAlns, char strand ){
           dis.i, dis.j, alph, extras,
           args.gamma, args.outputType );
       probAln.write( text, query, strand, args.isTranslated(),
-          alph, args.outputFormat, args, outputVector, extras );
+          alph, args.outputFormat, args, output, extras );
     }
   }
 }
@@ -724,9 +732,6 @@ void* threadFunction(void *args){
 
   threadData *data = (threadData*)args;
 
-  //!! We never even enter this function... this is why we are waiting forever.
-  //!! We need to extract the writer semaphore from the scanAllVolumes function so that in the case 
-  //that we dont call this function the rest of the algorithm can actually proceed as planned
   if( !data->query.isFinished() ){
     data->scanAllVolumes( volumes );
     data->callReinit();
@@ -736,9 +741,9 @@ void* threadFunction(void *args){
      data->scanAllVolumes( volumes );
      }
      */
-  SEM_WAIT(doneSema);
-  threadsDone++;
-  SEM_POST(doneSema);
+  SEM_WAIT( outputSemaphores->at( data->identifier ) );
+  data->output->done = true;
+  SEM_POST( outputSemaphores->at( data->identifier ) );
   pthread_exit( NULL );
 }
 
@@ -749,62 +754,34 @@ void threadData::callReinit(){
 
 void writerFunction( std::ostream& out ){
 
-  //std::cout << "Entering the writerFunction" << std::endl;
-  // Write out all of the output
-  while( true ){
-    //SEM_WAIT(ioSema);
-    SEM_WAIT(doneSema);
-    int tmp = threadsDone;
-    SEM_POST(doneSema);
+  std::list< int > outputs;
+  for (int i=0; i<args.threadNum; i++){
+    outputs.push_back(i);
+  }
 
-    if (tmp == args.threadNum){
+  while(true){
 
-      /*
-      for( int i=0; i<args.threadNum; i++) {
-        threadData *data = threadDatas->at(i);
-        SEM_WAIT( outputSemaphores->at( i ) );
-        
-        for(int j=0; j<data->outputVector->size(); j++){
-          out << data->outputVector->at( j );
+    for (int i=0; i<outputs.size(); i++){
+      threadData *data = threadDatas->at(i);
+
+      SEM_WAIT( outputSemaphores->at( i ) );
+      bool tmp = data->output->done;
+      SEM_POST( outputSemaphores->at( i ) );
+
+      if (tmp == true){
+
+        //SEM_WAIT( ioSema );
+        for(int j=0; j<data->output->outputVector->size(); j++){
+          out << data->output->outputVector->at( j );
         }
-        SEM_POST( outputSemaphores->at( i ) );
+        //SEM_POST( ioSema );
+        outputs.remove(i);
       }
-      */
-      threadsDone = 0;
+    }
+    if (outputs.size() == 0){
       break;
     }
-    //SEM_POST(ioSema);
-  } 
-  //std::cout << "Exiting the writerFunction" << std::endl;
-}
-
-void writerFunctionFinal( std::ostream& out ){
-
-  //std::cout << "Entering the writerFunctionFinal" << std::endl;
-  /*
-  while( true ){
-    SEM_WAIT(doneSema);
-    int tmp = threadsDone;
-    SEM_POST(doneSema);
-
-    std::cout << threadsDone << " : " << args.threadNum << std::endl;
-    if (tmp == args.threadNum){
-
-      for( int i=0; i<args.threadNum; i++) {
-        threadData *data = threadDatas->at(i);
-        SEM_WAIT( outputSemaphores->at( i ) );
-        
-        for(int j=0; j<data->outputVector->size(); j++){
-          out << data->outputVector->at( j );
-        }
-        SEM_POST( outputSemaphores->at( i ) );
-      }
-      threadsDone = 0;
-      break;
-    }
-  } 
-  */
-  //std::cout << "Exiting the writerFunctionFinal" << std::endl;
+  }
 }
 
 void readerFunction( std::istream& in ){
@@ -824,7 +801,7 @@ void finishAlignment( std::ostream& out ){
       data->scanAllVolumes( volumes );
     }
   }
-  writerFunctionFinal(out);
+  writerFunction(out);
 }
 
 void initializeThreads(){
@@ -837,7 +814,6 @@ void initializeThreads(){
     threadDatas->push_back(thread_ptr);
   }
 
-  //pthread_barrier_init( &barr, NULL, args.threadNum );
   pthread_t thread;
   threads = new std::vector< pthread_t >( args.threadNum, thread );
 }
@@ -866,14 +842,16 @@ void initializeSemaphores(){
     perror("sem_open");
     exit(EXIT_FAILURE);
   }
+  /*
   sem_unlink("/doneSema");
   if ( ( doneSema = sem_open("/doneSema", O_CREAT, 0644, 1)) == SEM_FAILED ) {
     perror("sem_open");
     exit(EXIT_FAILURE);
   }
+  */
 #else
   sem_init(&ioSema, 0, 1);
-  sem_init(&doneSema, 0, 1);
+  //sem_init(&doneSema, 0, 1);
 #endif
 }
 

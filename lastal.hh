@@ -37,11 +37,13 @@
 #include <cstdlib>  // EXIT_SUCCESS, EXIT_FAILURE
 #include <string>
 #include <vector>
+#include <list>
 
 
 #include <cstdlib>
 #include <pthread.h>
 #include "semaphores.hh"
+#include "outputStruct.hh"
 
 
 #define ERR(x) throw std::runtime_error(x)
@@ -65,6 +67,7 @@ namespace {
 }
 
 namespace Phase{ 
+
   enum Enum{ gapless, gapped, final }; 
 }
 
@@ -88,7 +91,7 @@ struct threadData{
   QualityPssmMaker qualityPssmMaker;
   TwoQualityScoreMatrix twoQualityScoreMatrix;
   TwoQualityScoreMatrix twoQualityScoreMatrixMasked;
-  std::vector< std::string > *outputVector;
+  outputStruct *output;
   int identifier;
 
 
@@ -136,9 +139,9 @@ struct Dispatcher{
 
 
   Dispatcher( Phase::Enum e, MultiSequence &text, MultiSequence &query,
-              ScoreMatrix &scoreMatrix, TwoQualityScoreMatrix &twoQualityScoreMatrix, 
-              TwoQualityScoreMatrix &twoQualityScoreMatrixMasked, 
-              sequenceFormat::Enum referenceFormat, Alphabet &alph) :
+      ScoreMatrix &scoreMatrix, TwoQualityScoreMatrix &twoQualityScoreMatrix, 
+      TwoQualityScoreMatrix &twoQualityScoreMatrixMasked, 
+      sequenceFormat::Enum referenceFormat, Alphabet &alph) :
 
     a  ( text.seqReader() ),
     b  ( query.seqReader() ),
@@ -146,13 +149,13 @@ struct Dispatcher{
     j  ( query.qualityReader() ),
     p  ( query.pssmReader() ),
     m  ( (e < args.maskLowercase) ?
-          scoreMatrix.caseSensitive : scoreMatrix.caseInsensitive ),
+        scoreMatrix.caseSensitive : scoreMatrix.caseInsensitive ),
     t  ( (e < args.maskLowercase) ?
-          twoQualityScoreMatrixMasked : twoQualityScoreMatrix ),
+        twoQualityScoreMatrixMasked : twoQualityScoreMatrix ),
     d  ( (e == Phase::gapless) ? args.maxDropGapless :
-         (e == Phase::gapped ) ? args.maxDropGapped : args.maxDropFinal ),
+        (e == Phase::gapped ) ? args.maxDropGapped : args.maxDropFinal ),
     z  ( (args.inputFormat == sequenceFormat::fasta) ? 0 :
-         (referenceFormat  == sequenceFormat::fasta) ? 1 : 2 ),
+        (referenceFormat  == sequenceFormat::fasta) ? 1 : 2 ),
     aa ( aa = &alph ){}
 
   void shrinkToLongestIdenticalRun( SegmentPair& sp);
@@ -197,7 +200,6 @@ struct Dispatcher{
 //void writeHeader( countT refSequences, countT refLetters, std::ostream& out );
 
 void writerFunction( std::ostream& out );
-void writerFunctionFinal( std::ostream& out );
 void readerFunction( std::istream& in );
 void finishAlignment( std::ostream& out );
 void* threadFunction( void *args ); 

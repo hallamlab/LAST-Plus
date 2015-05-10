@@ -7,11 +7,14 @@
 #include "ScoreMatrixRow.hh"
 #include "SegmentPair.hh"
 #include "LastalArguments.hh"
+
 #include <stddef.h>  // size_t
 #include <string>
 #include <vector>
 #include <iosfwd>
 #include <iostream>
+
+#include "outputStruct.hh"
 
 namespace cbrc{
 
@@ -73,7 +76,7 @@ namespace cbrc{
 
     void write( const MultiSequence& seq1, const MultiSequence& seq2,
         char strand, bool isTranslated, const Alphabet& alph,
-        int format, LastalArguments &args, std::vector<std::string> *outputVector,
+        int format, LastalArguments &args, outputStruct *outputStruct,
         const AlignmentExtras& extras = AlignmentExtras() ) const;
 
     // data:
@@ -107,12 +110,12 @@ namespace cbrc{
         double gamma, int outputType );
 
     void writeTab( const MultiSequence& seq1, const MultiSequence& seq2,
-        char strand, bool isTranslated, const AlignmentExtras& extras, std::vector<std::string> *outputVector ) const;
+        char strand, bool isTranslated, const AlignmentExtras& extras, outputStruct *output ) const;
 
 
     void writeBlastOutput( const MultiSequence& seq1, const MultiSequence& seq2,
         char strand, bool isTranslated, const Alphabet& alph,
-        const AlignmentExtras& extras, std::vector<std::string> *outputVector, LastalArguments &args ) const;
+        const AlignmentExtras& extras, outputStruct *output, LastalArguments &args ) const;
 
     void writeMaf( const MultiSequence& seq1, const MultiSequence& seq2,
         char strand, bool isTranslated, const Alphabet& alph, const AlignmentExtras& extras ) const;

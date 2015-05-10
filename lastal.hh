@@ -197,6 +197,8 @@ struct Dispatcher{
 //void writeHeader( countT refSequences, countT refLetters, std::ostream& out );
 
 void writerFunction( std::ostream& out );
+void readerFunction( std::istream& in );
+void finishAlignment( std::ostream& out );
 void* threadFunction( void *args ); 
 void initializeEvalueCalulator(const std::string dbPrjFile, ScoreMatrix &scoreMatrix, std::string dbfilePrj);
 void lastal( int argc, char** argv );

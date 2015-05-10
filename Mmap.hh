@@ -15,6 +15,8 @@
 #include "fileMap.hh"
 #include "stringify.hh"
 
+#include "semaphores.hh"
+
 namespace cbrc{
 
 template<typename T>
@@ -65,6 +67,8 @@ private:
 
 template<typename T>
 void Mmap<T>::open( const std::string& fileName, std::size_t s ){
+
+  //SEM_WAIT( ioSema );
   close();
 
   std::size_t bytes = s * sizeof(T);
@@ -78,6 +82,7 @@ void Mmap<T>::open( const std::string& fileName, std::size_t s ){
 
   begin_ = static_cast<T*>(m);
   end_ = begin_ + s;
+  //SEM_POST( ioSema );
 }
 
 template<typename T>

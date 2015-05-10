@@ -1,8 +1,6 @@
 // Copyright 2008, 2009, 2010, 2011, 2012, 2013, 2014 Martin C. Frith
 // BLAST-like pair-wise sequence alignment, using suffix arrays.
 
-// initialize lambda calculator is the problem here it should only be conducted once to obtain the lambda value, then this value can be used by everybody else.
-
 #include "lastal.hh"
 
 std::vector<threadData*> *threadDatas;
@@ -11,7 +9,7 @@ std::vector<SEM_T> *outputSemaphores;
 pthread_barrier_t barr;
 unsigned volumes = unsigned(-1);
 countT refSequences = -1;
-SEM_T writerSema;
+SEM_T ioSema;
 SEM_T doneSema;
 int threadsPassed = 0;
 int threadsDone = 0;
@@ -556,6 +554,7 @@ void threadData::translateAndScan( char strand ){
 
 void threadData::readIndex( const std::string& baseName, indexT seqCount ) {
 
+  SEM_POST( ioSema );
   LOG( "reading " << baseName << "..." );
   text.fromFiles( baseName, seqCount, isFastq( referenceFormat ) );
   for( unsigned x = 0; x < numOfIndexes; ++x ){
@@ -565,6 +564,7 @@ void threadData::readIndex( const std::string& baseName, indexT seqCount ) {
       suffixArrays[x].fromFiles( baseName, isCaseSensitiveSeeds, alph.encode );
     }
   }
+  SEM_POST( ioSema );
 }
 
 // Read one database volume
@@ -622,12 +622,12 @@ void threadData::scanAllVolumes( unsigned volumes ){
 
     //!! Semaphore to tell the output when we are ready
     /*
-    std::cout << "Thread : " << identifier << " is waiting at the writerSema" << std::endl;
-    SEM_WAIT( writerSema );
-    threadsPassed++;
-    SEM_POST( writerSema );
-    std::cout << "Thread : " << identifier << " is after at the writerSema" << std::endl;
-    */
+       std::cout << "Thread : " << identifier << " is waiting at the ioSema" << std::endl;
+       SEM_WAIT( ioSema );
+       threadsPassed++;
+       SEM_POST( ioSema );
+       std::cout << "Thread : " << identifier << " is after at the ioSema" << std::endl;
+       */
 
     if( args.strand == 2 && i > 0 ) reverseComplementQuery();
 
@@ -755,13 +755,12 @@ void* threadFunction(void *args){
      data->scanAllVolumes( volumes );
      }
      */
-  /*
-  std::cout << "Thread : " << data->identifier << " is waiting at the doneSema" << std::endl;
-  SEM_WAIT(doneSema);
+  //std::cout << "Thread : " << data->identifier << " is waiting at the doneSema" << std::endl;
+  //SEM_WAIT(doneSema);
+
   threadsDone++;
-  SEM_POST(doneSema);
-  std::cout << "Thread : " << data->identifier << " is after at the doneSema" << std::endl;
-  */
+  //SEM_POST(doneSema);
+  //std::cout << "Thread : " << data->identifier << " is after at the doneSema" << std::endl;
   pthread_exit( NULL );
 }
 
@@ -772,27 +771,28 @@ void threadData::callReinit(){
 
 void writerFunction( std::ostream& out ){
 
+  /*
   // Write out all of the output
   while( ok ){
-    //SEM_WAIT(writerSema);
+  //SEM_WAIT(ioSema);
 
-    if (threadsPassed == args.threadNum){
+  if (threadsPassed == args.threadNum){
 
-      for( int i=0; i<args.threadNum; i++) {
-        threadData *data = threadDatas->at(i);
+  for( int i=0; i<args.threadNum; i++) {
+  threadData *data = threadDatas->at(i);
 
-        //SEM_WAIT( outputSemaphores->at( i ) );
-        for(int j=0; j<data->outputVector->size(); j++){
-          out << data->outputVector->at( j );
-        }
-        //SEM_POST( outputSemaphores->at( i ) );
-      }
-      ok = 0;
-    }
-    //SEM_POST(writerSema);
+  //SEM_WAIT( outputSemaphores->at( i ) );
+  for(int j=0; j<data->outputVector->size(); j++){
+  out << data->outputVector->at( j );
+  }
+  //SEM_POST( outputSemaphores->at( i ) );
+  }
+  ok = 0;
+  }
+  //SEM_POST(ioSema);
   } 
   ok = 1;
-
+  */
   // Wait until the threads are all done before 
   // exiting and launching more threads
   while (done) {
@@ -804,6 +804,26 @@ void writerFunction( std::ostream& out ){
     }
     //SEM_POST(doneSema);
   }
+}
+
+void readerFunction( std::istream& in ){
+
+  for(int j=0; j<args.threadNum; j++){
+    threadData *data = threadDatas->at(j);
+    data->appendFromFasta( in );
+    pthread_create(&threads->at(j), NULL, threadFunction, (void*) data);
+  }
+}
+
+void finishAlignment( std::ostream& out ){
+
+  for(int j=0; j<args.threadNum; j++){
+    threadData *data = threadDatas->at(j);
+    if (data->query.isFinished() != 0 ) {
+      data->scanAllVolumes( volumes );
+    }
+  }
+  writerFunction(out);
 }
 
 void lastal( int argc, char** argv ){
@@ -846,8 +866,8 @@ void lastal( int argc, char** argv ){
   }
 
 #ifdef MAC_SEM
-  sem_unlink("/writerSema");
-  if ( ( writerSema = sem_open("/writerSema", O_CREAT, 0644, 1)) == SEM_FAILED ) {
+  sem_unlink("/ioSema");
+  if ( ( ioSema = sem_open("/ioSema", O_CREAT, 0644, 1)) == SEM_FAILED ) {
     perror("sem_open");
     exit(EXIT_FAILURE);
   }
@@ -857,7 +877,7 @@ void lastal( int argc, char** argv ){
     exit(EXIT_FAILURE);
   }
 #else
-  sem_init(&writerSema, 0, 1);
+  sem_init(&ioSema, 0, 1);
   sem_init(&doneSema, 0, 1);
 #endif
 
@@ -881,21 +901,10 @@ void lastal( int argc, char** argv ){
     initializeEvalueCalulator( args.lastdbName + ".prj", threadDatas->at(0)->scoreMatrix, *inputBegin );
 
     while( in ){
-
-      for(int j=0; j<args.threadNum; j++){
-        threadData *data = threadDatas->at(j);
-        data->appendFromFasta( in );
-        pthread_create(&threads->at(j), NULL, threadFunction, (void*) data);
-      }
-      //writerFunction(out);
+      readerFunction(in);
+      writerFunction(out);
     }
-    for(int j=0; j<args.threadNum; j++){
-      threadData *data = threadDatas->at(j);
-      if (data->query.isFinished() != 0 ) {
-        data->scanAllVolumes( volumes );
-      }
-    }
-    //writerFunction(out);
+    finishAlignment(out);
   }
 
   out.precision(6);  // reset the precision to the default value

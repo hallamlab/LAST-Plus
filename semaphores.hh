@@ -2,6 +2,7 @@
 #define __SEMAPHORES_HH
 
 #include <semaphore.h>
+#include <vector>
 
 #ifdef MAC_SEM
   typedef *sem_t SEM_T;
@@ -14,5 +15,6 @@
 #endif
 
 extern std::vector<SEM_T> *outputSemaphores;
+extern SEM_T ioSema;
 
 #endif

@@ -28,6 +28,7 @@ void MultiSequence::reinitForAppending(){
   if( !names.v.empty() ) nameEnds.v.push_back( names.v.size() );
 }
 
+//!! IO FUNCTION
 void MultiSequence::fromFiles( const std::string& baseName, indexT seqCount,
                                std::size_t qualitiesPerLetter ){
   ends.m.open( baseName + ".ssp", seqCount + 1 );

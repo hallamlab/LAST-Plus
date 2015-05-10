@@ -25,7 +25,7 @@ void SubsetSuffixArray::clearPositions(){
   index.v.clear();
 }
 
-//!!
+//!! IO function
 void SubsetSuffixArray::fromFiles( const std::string& baseName,
 				   bool isMaskLowercase,
 				   const uchar letterCode[] ){

@@ -735,13 +735,14 @@ void* threadFunction(void *args){
   struct threadData *data = (struct threadData*)args;
 
   if( !data->query.isFinished() ){
+    std::cout << "THREAD_FUNCTION TRUE" << std::endl;
     data->scanAllVolumes( volumes );
     data->callReinit();
   } 
   SEM_WAIT( outputSemaphores->at( data->identifier ) );
   data->output->done = true;
   SEM_POST( outputSemaphores->at( data->identifier ) );
-  pthread_exit( NULL );
+  std::cout << "Exiting the thread : " << data->identifier << std::endl;
 }
 
 void* threadFunctionFinish(void *args){ 
@@ -749,14 +750,14 @@ void* threadFunctionFinish(void *args){
   struct threadData *data = (struct threadData*)args;
 
   if( !data->query.finishedSequences() > 0 ){
-    std::cout << "TRUE" << std::endl;
+    std::cout << "THREAD_FUNCTION_FINAL TRUE" << std::endl;
     data->scanAllVolumes( volumes );
   } 
   std::cout << data->output->outputVector->size() << std::endl;
   SEM_WAIT( outputSemaphores->at( data->identifier ) );
   data->output->done = true;
   SEM_POST( outputSemaphores->at( data->identifier ) );
-  pthread_exit( NULL );
+  std::cout << "Exiting the thread : " << data->identifier << std::endl;
 }
 
 void writerFunction( std::ostream& out ){
@@ -802,17 +803,6 @@ void readerFunction( std::istream& in ){
 
 void finishAlignment( std::ostream& out ){
 
-  /*
-  for(int j=0; j<args.threadNum; j++){
-    threadData *data = threadDatas->at(j);
-
-    if (data->query.isFinished() != 0 ) {
-      data->scanAllVolumes( volumes );
-    }
-  }
-  writerFunction(out);
-  */
-
   for (int j=0; j<args.threadNum; j++){
     threadData *data = threadDatas->at(j);
     pthread_create(&threads->at(j), NULL, threadFunctionFinish, (void*) data);
@@ -844,19 +834,19 @@ void initializeSemaphores(){
   outputSemaphores = new std::vector< SEM_T >();
   for ( int i=0; i<args.threadNum; i++ ) {
     SEM_T outputSemaphore;
-#ifdef MAC_SEM
+#ifdef __APPLE__
     sem_unlink("/outputSemaphore");
     if ( ( outputSemaphore = sem_open("/outputSemaphore", O_CREAT, 0644, 1)) == SEM_FAILED ) {
       perror("sem_open");
       exit(EXIT_FAILURE);
     }
-#else
+#elif __linux
     sem_init(&outputSemaphore, 0, 1);
 #endif
     outputSemaphores->push_back( outputSemaphore );
   }
 
-#ifdef MAC_SEM
+#ifdef __APPLE__
   sem_unlink("/ioSema");
   if ( ( ioSema = sem_open("/ioSema", O_CREAT, 0644, 1)) == SEM_FAILED ) {
     perror("sem_open");
@@ -869,7 +859,7 @@ void initializeSemaphores(){
     exit(EXIT_FAILURE);
   }
   */
-#else
+#elif __linux
   sem_init(&ioSema, 0, 1);
   //sem_init(&doneSema, 0, 1);
 #endif
@@ -915,6 +905,7 @@ void lastal( int argc, char** argv ){
     finishAlignment(out);
   }
 
+  std::cout << "Finishing lastal" << std::endl;
   if (!flush(out)) { 
     ERR( "write error" );
   }
@@ -924,6 +915,7 @@ int main( int argc, char** argv ) {
 
   try {
     lastal( argc, argv );
+    std::cout << "EXITED FROM THE LASTAL TRY BLOCK" << std::endl;
     return EXIT_SUCCESS;
   } catch( const std::bad_alloc& e ) {  // bad_alloc::what() may be unfriendly
     std::cerr << "lastal: out of memory\n";

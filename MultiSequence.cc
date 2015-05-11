@@ -121,6 +121,9 @@ bool MultiSequence::isFinishable( indexT maxSeqLen ) const{
 }
 
 MultiSequence::indexT MultiSequence::whichSequence( indexT coordinate ) const{
+  std::cout << ends.begin() << std::endl;
+  std::cout << ends.end() << std::endl;
+  std::cout << coordinate << std::endl;
   const indexT* u = std::upper_bound( ends.begin(), ends.end(), coordinate );
   assert( u != ends.begin() && u != ends.end() );
   return u - ends.begin() - 1;

@@ -6,9 +6,6 @@
  *  I implemented for the MPI code needs to be implemented here to allow wait free slave work.
  */
 
-
-
-
 #include "lastal.hh"
 
 std::vector<threadData*> *threadDatas;
@@ -21,7 +18,6 @@ SEM_T ioSema;
 int threadsDone = 0;
 
 void threadData::prepareThreadData(std::string matrixFile, int identifier ){
-
 
   output = new outputStruct();
 
@@ -407,6 +403,7 @@ void threadData::alignGapped( AlignmentPot& gappedAlns, SegmentPairPot& gaplessA
     dis.shrinkToLongestIdenticalRun( aln.seed );
 
     // do gapped extension from each end of the seed:
+    // third...
     aln.makeXdrop( gappedXdropAligner, *centroid, dis.a, dis.b, args.globality,
         dis.m, scoreMatrix.maxScore, gapCosts, dis.d,
         args.frameshiftCost, frameSize, dis.p,
@@ -728,28 +725,38 @@ void initializeEvalueCalulator(const std::string dbPrjFile, ScoreMatrix &scoreMa
   makeEvaluer();
 }
 
+void threadData::callReinit(){
+
+  query.reinitForAppending();
+}
+
 void* threadFunction(void *args){ 
 
-  threadData *data = (threadData*)args;
+  struct threadData *data = (struct threadData*)args;
 
   if( !data->query.isFinished() ){
     data->scanAllVolumes( volumes );
     data->callReinit();
   } 
-  /*
-     else if (data->query.isFinished() != 0 ) {
-     data->scanAllVolumes( volumes );
-     }
-     */
   SEM_WAIT( outputSemaphores->at( data->identifier ) );
   data->output->done = true;
   SEM_POST( outputSemaphores->at( data->identifier ) );
   pthread_exit( NULL );
 }
 
-void threadData::callReinit(){
+void* threadFunctionFinish(void *args){ 
 
-  query.reinitForAppending();
+  struct threadData *data = (struct threadData*)args;
+
+  if( !data->query.finishedSequences() > 0 ){
+    std::cout << "TRUE" << std::endl;
+    data->scanAllVolumes( volumes );
+  } 
+  std::cout << data->output->outputVector->size() << std::endl;
+  SEM_WAIT( outputSemaphores->at( data->identifier ) );
+  data->output->done = true;
+  SEM_POST( outputSemaphores->at( data->identifier ) );
+  pthread_exit( NULL );
 }
 
 void writerFunction( std::ostream& out ){
@@ -795,13 +802,26 @@ void readerFunction( std::istream& in ){
 
 void finishAlignment( std::ostream& out ){
 
+  /*
   for(int j=0; j<args.threadNum; j++){
     threadData *data = threadDatas->at(j);
+
     if (data->query.isFinished() != 0 ) {
       data->scanAllVolumes( volumes );
     }
   }
   writerFunction(out);
+  */
+
+  for (int j=0; j<args.threadNum; j++){
+    threadData *data = threadDatas->at(j);
+    pthread_create(&threads->at(j), NULL, threadFunctionFinish, (void*) data);
+  }
+
+  for (int k=0; k<args.threadNum; k++){
+    pthread_join( threads->at(k), NULL );
+  }
+  writerFunction( out );
 }
 
 void initializeThreads(){
@@ -879,7 +899,7 @@ void lastal( int argc, char** argv ){
   char* defaultInput[] = { defaultInputName, 0 };
   char** inputBegin = argv + args.inputStart;
 
-  for (int i=0; i<args.threadNum; i++){
+  for (int i=0; i<args.threadNum; i++) {
     threadDatas->at(i)->prepareThreadData(matrixFile, i);
   }
 
@@ -894,8 +914,6 @@ void lastal( int argc, char** argv ){
     }
     finishAlignment(out);
   }
-
-  out.precision(6);  // reset the precision to the default value
 
   if (!flush(out)) { 
     ERR( "write error" );

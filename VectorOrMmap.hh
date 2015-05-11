@@ -8,26 +8,28 @@
 #include "Mmap.hh"
 
 #include <vector>
+#include <iostream>
 
 namespace cbrc{
 
-template<typename T>
-struct VectorOrMmap{
-  std::vector<T> v;
-  Mmap<T> m;
+  template<typename T>
+    struct VectorOrMmap{
+      std::vector<T> v;
+      Mmap<T> m;
 
-  const T* begin() const { return v.empty() ? m.begin() : &v.front();    }
-  const T* end()   const { return v.empty() ? m.end()   : &v.back() + 1; }
+      const T* begin() const { return v.empty() ? m.begin() : &v.front();    }
 
-  std::size_t size() const { return v.empty() ? m.size() : v.size(); }
+      const T* end()   const { return v.empty() ? m.end()   : &v.back() + 1; }
 
-  bool empty() const { return v.empty() && m.empty(); }
+      std::size_t size() const { return v.empty() ? m.size() : v.size(); }
 
-  const T& front() const { return v.empty() ? m.front() : v.front(); }
-  const T& back()  const { return v.empty() ? m.back()  : v.back();  }
+      bool empty() const { return v.empty() && m.empty(); }
 
-  const T& operator[](std::size_t i) const { return v.empty() ? m[i] : v[i]; }
-};
+      const T& front() const { return v.empty() ? m.front() : v.front(); }
+      const T& back()  const { return v.empty() ? m.back()  : v.back();  }
+
+      const T& operator[](std::size_t i) const { return v.empty() ? m[i] : v[i]; }
+    };
 
 }  // end namespace
 

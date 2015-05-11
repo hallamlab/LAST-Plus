@@ -48,7 +48,7 @@
 
 #include "GappedXdropAligner.hh"
 #include "GappedXdropAlignerInl.hh"
-//#include <iostream>  // for debugging
+#include <iostream>  // for debugging
 
 namespace cbrc {
 
@@ -86,6 +86,7 @@ void GappedXdropAligner::initAntidiagonal(std::size_t seq1beg,
   scoreEnds.push_back(newEnd);
 }
 
+//!! Here is where the segfault is propegating from. The sequences are unknown for some reason...
 int GappedXdropAligner::align(const uchar *seq1,
                               const uchar *seq2,
                               bool isForward,
@@ -98,6 +99,7 @@ int GappedXdropAligner::align(const uchar *seq1,
                               int gapUnalignedCost,
                               int maxScoreDrop,
                               int maxMatchScore) {
+
   bool isAffine =
     insExistenceCost == delExistenceCost &&
     insExtensionCost == delExtensionCost &&

@@ -80,6 +80,7 @@ void Alignment::makeXdrop( GappedXdropAligner& aligner, Centroid& centroid,
                            const uchar* qual1, const uchar* qual2,
 			   const Alphabet& alph, AlignmentExtras& extras,
 			   double gamma, int outputType ){
+
   score = seed.score;
   if( outputType > 3 ) extras.fullScore = seed.score;
 
@@ -229,6 +230,12 @@ void Alignment::extend( std::vector< SegmentPair >& chunks,
                         const uchar* qual1, const uchar* qual2,
 			const Alphabet& alph, AlignmentExtras& extras,
 			double gamma, int outputType ) {
+
+
+//  std::cout << "This is seq 1: " << seq1 << std::endl;
+//  std::cout << "This is seq 2: " << seq2 << std::endl;
+
+
   if( frameSize ) {
     assert( outputType < 4 );
     assert( !globality );

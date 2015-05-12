@@ -884,6 +884,7 @@ void lastal( int argc, char** argv ){
           while( data->appendFromFasta( in ) ){
            if( !data->query.isFinished() ){
              pthread_create(&threads->at( id ), NULL, threadFunction, (void*) data);
+             break;
            } 
           }
           SEM_POST( ioSema );

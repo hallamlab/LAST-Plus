@@ -15,7 +15,6 @@
 #endif
 
 
-extern std::vector<SEM_T> *outputSemaphores;
 extern SEM_T ioSema;
 
 #endif

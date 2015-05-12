@@ -37,8 +37,8 @@
 #include <cstdlib>  // EXIT_SUCCESS, EXIT_FAILURE
 #include <string>
 #include <vector>
-#include <list>
 #include <queue>
+#include <set>
 
 
 #include <cstdlib>

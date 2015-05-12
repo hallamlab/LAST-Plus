@@ -1,21 +1,19 @@
 // Copyright 2008, 2009, 2010, 2011, 2012, 2013, 2014 Martin C. Frith
 // BLAST-like pair-wise sequence alignment, using suffix arrays.
 
-/*
- *  The output printing is not wait free between rounds. A reader/writer mechanism, similar to what
- *  I implemented for the MPI code needs to be implemented here to allow wait free slave work.
- */
-
 #include "lastal.hh"
 
 std::vector<threadData*> *threadDatas;
 std::vector<pthread_t> *threads;
-std::vector<SEM_T> *outputSemaphores;
+std::queue< int > waiting;
+std::set< int > working;
+SEM_T ioSema;
+SEM_T workingSema;
+SEM_T waitingQueueSema;
+SEM_T workingQueueSema;
 unsigned volumes = unsigned(-1);
 countT refSequences = -1;
-SEM_T ioSema;
-SEM_T doneSema;
-int threadsDone = 0;
+
 
 void threadData::prepareThreadData(std::string matrixFile, int identifier ){
 
@@ -730,90 +728,35 @@ void threadData::callReinit(){
   query.reinitForAppending();
 }
 
-void* threadFunction(void *args){ 
+void* threadFunction(void* args){
 
   struct threadData *data = (struct threadData*)args;
-
-  //if( !data->query.isFinished() ){
-    std::cout << "THREAD_FUNCTION TRUE" << std::endl;
-    data->scanAllVolumes( volumes );
-    data->callReinit();
-  //} 
-
-  data->output->done = true;
-  //std::cout << "Exiting the threadFunction : " << data->identifier << std::endl;
-}
-
-void* threadFunctionFinish(void *args){ 
-
-  struct threadData *data = (struct threadData*)args;
-
-  //if( !data->query.finishedSequences() > 0 ){
-    std::cout << "THREAD_FUNCTION_FINAL TRUE" << std::endl;
-    data->scanAllVolumes( volumes );
-  //} 
-  data->output->done = true;
-  //std::cout << "Exiting the threadFunctionFinish : " << data->identifier << std::endl;
-}
-
-void writerFunction( std::ostream& out ){
-
-  std::list< int > outputs;
-  for (int i=0; i<args.threadNum; i++){
-    outputs.push_back(i);
-  }
-
-  while(true){
-
-    for (int i=0; i<outputs.size(); i++){
-      threadData *data = threadDatas->at(i);
-
-      SEM_WAIT( outputSemaphores->at( i ) );
-      bool tmp = data->output->done;
-      SEM_POST( outputSemaphores->at( i ) );
-
-      if (tmp == true){
-
-        SEM_WAIT( ioSema );
-        for(int j=0; j<data->output->outputVector->size(); j++){
-          out << data->output->outputVector->at( j );
-        }
+  SEM_WAIT( workingSema );
+  
+  SEM_WAIT( workingQueueSema );
+  working.insert( data->identifier );
+  SEM_POST( workingQueueSema );
+  
+  data->scanAllVolumes( volumes );
+  data->callReinit();
+  /*
+  
+           SEM_WAIT( ioSema );
+           for(int j=0; j < data->output->outputVector->size(); j++){
+           out << data->output->outputVector->at( j );
+           }
+           SEM_POST( ioSema );
         data->output->outputVector->clear();
-        SEM_POST( ioSema );
-        outputs.remove(i);
-      }
-    }
-    if (outputs.size() == 0){
-      break;
-    }
-  }
-}
+        */
+  SEM_WAIT( workingQueueSema );
+  working.erase( data->identifier );
+  SEM_POST( workingQueueSema );
 
-//!! This just keeps spawning more, this seems to be our problem...
-void readerFunction( std::istream& in ){
+  SEM_WAIT( waitingQueueSema );
+  waiting.push( data->identifier );
+  SEM_POST( waitingQueueSema );
 
-  for(int j=0; j<args.threadNum; j++){
-    struct threadData *data = threadDatas->at(j);
-    data->appendFromFasta( in );
-    pthread_create(&threads->at(j), NULL, threadFunction, (void*) data);
-  }
-  for(int j=0; j<args.threadNum; j++){
-    pthread_join( threads->at(j), NULL );
-  }
-}
-
-void finishAlignment( std::ostream& out ){
-
-  std::cout << "calling finish Alignment" << std::endl;
-
-  for (int j=0; j<args.threadNum; j++){
-    threadData *data = threadDatas->at(j);
-    pthread_create(&threads->at(j), NULL, threadFunctionFinish, (void*) data);
-  }
-  for (int k=0; k<args.threadNum; k++){
-    pthread_join( threads->at(k), NULL );
-  }
-  writerFunction( out );
+  SEM_POST( workingSema );
 }
 
 void initializeThreads(){
@@ -833,32 +776,33 @@ void initializeThreads(){
 void initializeSemaphores(){
 
   //!! Initialize the semaphores
-  outputSemaphores = new std::vector< SEM_T >();
-  for ( int i=0; i<args.threadNum; i++ ) {
-    SEM_T outputSemaphore;
 #ifdef __APPLE__
-    sem_unlink("/outputSemaphore");
-    if ( ( outputSemaphore = sem_open("/outputSemaphore", O_CREAT, 0644, 1)) == SEM_FAILED ) {
-      perror("sem_open");
-      exit(EXIT_FAILURE);
-    }
-    sem_unlink("/ioSema");
-    if ( ( ioSema = sem_open("/ioSema", O_CREAT, 0644, 1)) == SEM_FAILED ) {
-      perror("sem_open");
-      exit(EXIT_FAILURE);
-    }
-    sem_unlink("/doneSema");
-    if ( ( doneSema = sem_open("/doneSema", O_CREAT, 0644, 1)) == SEM_FAILED ) {
-      perror("sem_open");
-      exit(EXIT_FAILURE);
-    }
-#elif __linux
-    sem_init(&outputSemaphore, 0, 1);
-    sem_init(&ioSema, 0, 1);
-    sem_init(&doneSema, 0, 1);
-#endif
-    outputSemaphores->push_back( outputSemaphore );
+  sem_unlink("/ioSema");
+  if ( ( ioSema = sem_open("/ioSema", O_CREAT, 0644, 1)) == SEM_FAILED ) {
+    perror("sem_open");
+    exit(EXIT_FAILURE);
   }
+  sem_unlink("/workingSema");
+  if ( ( workingSema = sem_open("/workingSema", O_CREAT, 0644, 1)) == SEM_FAILED ) {
+    perror("sem_open");
+    exit(EXIT_FAILURE);
+  }
+  sem_unlink("/waitingQueueSema");
+  if ( ( waitingQueueSema = sem_open("/waitingQueueSema", O_CREAT, 0644, 1)) == SEM_FAILED ) {
+    perror("sem_open");
+    exit(EXIT_FAILURE);
+  }
+  sem_unlink("/workingQueueSema");
+  if ( ( workingQueueSema = sem_open("/workingQueueSema", O_CREAT, 0644, 1)) == SEM_FAILED ) {
+    perror("sem_open");
+    exit(EXIT_FAILURE);
+  }
+#elif __linux
+  sem_init(&ioSema, 0, 1);
+  sem_init(&workingSema, 0, args.threadNum);;
+  sem_init(&waitingQueueSema, 0, 1);
+  sem_init(&workingQueueSema, 0, 1);
+#endif
 }
 
 void lastal( int argc, char** argv ){
@@ -894,11 +838,43 @@ void lastal( int argc, char** argv ){
     std::istream& in = openIn( *i, inFileStream );
     initializeEvalueCalulator( args.lastdbName + ".prj", threadDatas->at(0)->scoreMatrix, *inputBegin );
 
-    while( in ){
-      readerFunction(in);
-      writerFunction(out);
+    for (int j=0; j<args.threadNum; j++){
+      waiting.push( j );
     }
-    finishAlignment(out);
+
+    int io1 = waiting.size();
+    int io2 = working.size();
+    int id;
+
+    do {
+      SEM_WAIT( workingSema );
+
+      if( io1 > 0 && in ){
+        SEM_WAIT( waitingQueueSema );  
+        for (int k=0; k<waiting.size(); k++){
+          id = waiting.front();
+          waiting.pop();
+          SEM_POST( waitingQueueSema );  
+
+          struct threadData *data = threadDatas->at( id );
+          SEM_WAIT( ioSema );
+          data->appendFromFasta( in );
+          SEM_POST( ioSema );
+          pthread_create(&threads->at( id ), NULL, threadFunction, (void*) data);
+        }
+      }
+
+      SEM_WAIT( waitingQueueSema );
+      io1 = waiting.size();
+      SEM_POST( waitingQueueSema );
+      SEM_WAIT( workingQueueSema ); 
+      io2 = working.size();
+      SEM_POST( workingQueueSema);
+
+      SEM_POST( workingSema );
+
+    //} while( ( io1 > 0 || io2 > 0 ) && in );
+    } while( in );
   }
 
   if (!flush(out)) { 

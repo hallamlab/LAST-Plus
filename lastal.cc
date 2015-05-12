@@ -14,7 +14,7 @@ std::vector<SEM_T> *outputSemaphores;
 unsigned volumes = unsigned(-1);
 countT refSequences = -1;
 SEM_T ioSema;
-//SEM_T doneSema;
+SEM_T doneSema;
 int threadsDone = 0;
 
 void threadData::prepareThreadData(std::string matrixFile, int identifier ){
@@ -556,7 +556,7 @@ void threadData::translateAndScan( char strand ){
 
 void threadData::readIndex( const std::string& baseName, indexT seqCount ) {
 
-  SEM_POST( ioSema );
+  SEM_WAIT( ioSema );
   LOG( "reading " << baseName << "..." );
   text.fromFiles( baseName, seqCount, isFastq( referenceFormat ) );
   for( unsigned x = 0; x < numOfIndexes; ++x ){
@@ -778,11 +778,11 @@ void writerFunction( std::ostream& out ){
 
       if (tmp == true){
 
-        //SEM_WAIT( ioSema );
+        SEM_WAIT( ioSema );
         for(int j=0; j<data->output->outputVector->size(); j++){
           out << data->output->outputVector->at( j );
         }
-        //SEM_POST( ioSema );
+        SEM_POST( ioSema );
         outputs.remove(i);
       }
     }
@@ -840,29 +840,23 @@ void initializeSemaphores(){
       perror("sem_open");
       exit(EXIT_FAILURE);
     }
+    sem_unlink("/ioSema");
+    if ( ( ioSema = sem_open("/ioSema", O_CREAT, 0644, 1)) == SEM_FAILED ) {
+      perror("sem_open");
+      exit(EXIT_FAILURE);
+    }
+    sem_unlink("/doneSema");
+    if ( ( doneSema = sem_open("/doneSema", O_CREAT, 0644, 1)) == SEM_FAILED ) {
+      perror("sem_open");
+      exit(EXIT_FAILURE);
+    }
 #elif __linux
     sem_init(&outputSemaphore, 0, 1);
+    sem_init(&ioSema, 0, 1);
+    sem_init(&doneSema, 0, 1);
 #endif
     outputSemaphores->push_back( outputSemaphore );
   }
-
-#ifdef __APPLE__
-  sem_unlink("/ioSema");
-  if ( ( ioSema = sem_open("/ioSema", O_CREAT, 0644, 1)) == SEM_FAILED ) {
-    perror("sem_open");
-    exit(EXIT_FAILURE);
-  }
-  /*
-  sem_unlink("/doneSema");
-  if ( ( doneSema = sem_open("/doneSema", O_CREAT, 0644, 1)) == SEM_FAILED ) {
-    perror("sem_open");
-    exit(EXIT_FAILURE);
-  }
-  */
-#elif __linux
-  sem_init(&ioSema, 0, 1);
-  //sem_init(&doneSema, 0, 1);
-#endif
 }
 
 void lastal( int argc, char** argv ){

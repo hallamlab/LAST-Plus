@@ -875,6 +875,11 @@ void lastal( int argc, char** argv ){
 
     //} while( ( io1 > 0 || io2 > 0 ) && in );
     } while( in );
+
+    for (int j=0; j<args.threadNum; j++){
+      pthread_join( threads->at( j ), NULL);
+    }
+
   }
 
   if (!flush(out)) { 

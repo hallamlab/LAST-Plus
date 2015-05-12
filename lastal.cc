@@ -759,6 +759,28 @@ void* threadFunction(void* args){
   SEM_POST( workingSema );
 }
 
+void* threadFunctionFinish(void* args){
+
+  struct threadData *data = (struct threadData*)args;
+  SEM_WAIT( workingSema );
+  
+  SEM_WAIT( workingQueueSema );
+  working.insert( data->identifier );
+  SEM_POST( workingQueueSema );
+  
+  data->scanAllVolumes( volumes );
+
+  SEM_WAIT( workingQueueSema );
+  working.erase( data->identifier );
+  SEM_POST( workingQueueSema );
+
+  SEM_WAIT( waitingQueueSema );
+  waiting.push( data->identifier );
+  SEM_POST( waitingQueueSema );
+
+  SEM_POST( workingSema );
+}
+
 void initializeThreads(){
 
   threadDatas = new std::vector<threadData*>();
@@ -858,9 +880,14 @@ void lastal( int argc, char** argv ){
 
           struct threadData *data = threadDatas->at( id );
           SEM_WAIT( ioSema );
-          data->appendFromFasta( in );
+          //data->appendFromFasta( in );
+          while( data->appendFromFasta( in ) ){
+           if( !data->query.isFinished() ){
+             pthread_create(&threads->at( id ), NULL, threadFunction, (void*) data);
+           } 
+          }
           SEM_POST( ioSema );
-          pthread_create(&threads->at( id ), NULL, threadFunction, (void*) data);
+          //pthread_create(&threads->at( id ), NULL, threadFunction, (void*) data);
         }
       }
 
@@ -877,6 +904,9 @@ void lastal( int argc, char** argv ){
     } while( in );
 
     for (int j=0; j<args.threadNum; j++){
+      pthread_join( threads->at( j ), NULL);
+      struct threadData *data = threadDatas->at( j );
+      pthread_create(&threads->at( id ), NULL, threadFunctionFinish, (void*) data);
       pthread_join( threads->at( j ), NULL);
     }
 

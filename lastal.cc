@@ -734,30 +734,26 @@ void* threadFunction(void *args){
 
   struct threadData *data = (struct threadData*)args;
 
-  if( !data->query.isFinished() ){
+  //if( !data->query.isFinished() ){
     std::cout << "THREAD_FUNCTION TRUE" << std::endl;
     data->scanAllVolumes( volumes );
     data->callReinit();
-  } 
-  SEM_WAIT( outputSemaphores->at( data->identifier ) );
+  //} 
+
   data->output->done = true;
-  SEM_POST( outputSemaphores->at( data->identifier ) );
-  std::cout << "Exiting the thread : " << data->identifier << std::endl;
+  //std::cout << "Exiting the threadFunction : " << data->identifier << std::endl;
 }
 
 void* threadFunctionFinish(void *args){ 
 
   struct threadData *data = (struct threadData*)args;
 
-  if( !data->query.finishedSequences() > 0 ){
+  //if( !data->query.finishedSequences() > 0 ){
     std::cout << "THREAD_FUNCTION_FINAL TRUE" << std::endl;
     data->scanAllVolumes( volumes );
-  } 
-  std::cout << data->output->outputVector->size() << std::endl;
-  SEM_WAIT( outputSemaphores->at( data->identifier ) );
+  //} 
   data->output->done = true;
-  SEM_POST( outputSemaphores->at( data->identifier ) );
-  std::cout << "Exiting the thread : " << data->identifier << std::endl;
+  //std::cout << "Exiting the threadFunctionFinish : " << data->identifier << std::endl;
 }
 
 void writerFunction( std::ostream& out ){
@@ -782,6 +778,7 @@ void writerFunction( std::ostream& out ){
         for(int j=0; j<data->output->outputVector->size(); j++){
           out << data->output->outputVector->at( j );
         }
+        data->output->outputVector->clear();
         SEM_POST( ioSema );
         outputs.remove(i);
       }
@@ -792,22 +789,27 @@ void writerFunction( std::ostream& out ){
   }
 }
 
+//!! This just keeps spawning more, this seems to be our problem...
 void readerFunction( std::istream& in ){
 
   for(int j=0; j<args.threadNum; j++){
-    threadData *data = threadDatas->at(j);
+    struct threadData *data = threadDatas->at(j);
     data->appendFromFasta( in );
     pthread_create(&threads->at(j), NULL, threadFunction, (void*) data);
+  }
+  for(int j=0; j<args.threadNum; j++){
+    pthread_join( threads->at(j), NULL );
   }
 }
 
 void finishAlignment( std::ostream& out ){
 
+  std::cout << "calling finish Alignment" << std::endl;
+
   for (int j=0; j<args.threadNum; j++){
     threadData *data = threadDatas->at(j);
     pthread_create(&threads->at(j), NULL, threadFunctionFinish, (void*) data);
   }
-
   for (int k=0; k<args.threadNum; k++){
     pthread_join( threads->at(k), NULL );
   }
@@ -899,7 +901,6 @@ void lastal( int argc, char** argv ){
     finishAlignment(out);
   }
 
-  std::cout << "Finishing lastal" << std::endl;
   if (!flush(out)) { 
     ERR( "write error" );
   }
@@ -909,7 +910,6 @@ int main( int argc, char** argv ) {
 
   try {
     lastal( argc, argv );
-    std::cout << "EXITED FROM THE LASTAL TRY BLOCK" << std::endl;
     return EXIT_SUCCESS;
   } catch( const std::bad_alloc& e ) {  // bad_alloc::what() may be unfriendly
     std::cerr << "lastal: out of memory\n";

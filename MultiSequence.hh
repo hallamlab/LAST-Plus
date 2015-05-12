@@ -111,7 +111,8 @@ class MultiSequence{
   std::size_t qualsPerLetter() const
   { return qualityScores.size() / seq.size(); }
 
- private:
+ //private:
+  public:
   indexT padSize;  // number of delimiter chars between sequences
   VectorOrMmap<uchar> seq;  // concatenated sequences
   VectorOrMmap<indexT> ends;  // coordinates of ends of delimiter pads

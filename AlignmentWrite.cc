@@ -96,8 +96,8 @@ void Alignment::writeBlastOutput( const MultiSequence& seq1, const MultiSequence
 
   size_t alnBeg1 = beg1();
   size_t alnEnd1 = end1();
-  size_t w1 = seq1.whichSequence(alnBeg1);
-  size_t seqStart1 = seq1.seqBeg(w1);
+  size_t w1 = user.whichSequence(alnBeg1, seq1);
+  size_t seqStart1 = user.seqBeg(w1, seq1);
 
   size_t size2 = seq2.finishedSize();
   size_t frameSize2 = isTranslated ? (size2 / 3) : 0;
@@ -106,13 +106,13 @@ void Alignment::writeBlastOutput( const MultiSequence& seq1, const MultiSequence
   size_t w2 = seq2.whichSequence( strand == '+' ? alnBeg2 : size2 - alnBeg2 );
   size_t seqStart2 = strand == '+' ? seq2.seqBeg(w2) : size2 - seq2.seqEnd(w2);
 
-  const std::string n1 = seq1.seqName(w1);
+  const std::string n1 = user.seqName(w1, seq1);
   const std::string n2 = seq2.seqName(w2);
   size_t b1 = alnBeg1 - seqStart1;
   size_t b2 = alnBeg2 - seqStart2;
   size_t r1 = alnEnd1 - alnBeg1;
   size_t r2 = alnEnd2 - alnBeg2;
-  size_t s1 = seq1.seqLen(w1);
+  size_t s1 = user.seqLen(w1, seq1);
   size_t s2 = seq2.seqLen(w2);
 
   const int nw = std::max( n1.size(), n2.size() );
@@ -142,10 +142,10 @@ void Alignment::writeBlastOutput( const MultiSequence& seq1, const MultiSequence
   dest = sprintChar( dest, '+' );
   dest = sprintSize( dest, s1, sw );
   
-  writeTopSeq( seq1.seqReader(), alph, frameSize2, dest );
-  std::string seq1String = getSequence(line, lineLen);
+  writeTopSeq( user.seqReader(seq1), alph, frameSize2, dest );
+  std::string userString = getSequence(line, lineLen);
   
-  gaps += countGaps(seq1String);
+  gaps += countGaps(userString);
  
   dest = sprintChar( line, 's' );
   dest = sprintLeft( dest, n2.c_str(), nw );
@@ -158,8 +158,8 @@ void Alignment::writeBlastOutput( const MultiSequence& seq1, const MultiSequence
   std::string seq2String = getSequence(line, lineLen);
 
   gaps += countGaps(seq2String);
-  size_t identityCount = countIdentities(seq1String, seq2String);
-  identities = 100*identityCount/seq1String.length();  
+  size_t identityCount = countIdentities(userString, seq2String);
+  identities = 100*identityCount/userString.length();
   mismatches = alignLength - gaps - identityCount;
 
   evalue = evalueForSequences(score,s1, s2);
@@ -174,7 +174,7 @@ void Alignment::writeBlastOutput( const MultiSequence& seq1, const MultiSequence
   if(bitscore >= args.scoreCutoff && evalue2 <= args.evalueCutoff){
   
     outputStream << seq2.seqName(w2) << tab
-       << seq1.seqName(w1) << tab
+       << user.seqName(w1, seq1) << tab
        << identities << tab
        << alignLength << tab
        << mismatches << tab

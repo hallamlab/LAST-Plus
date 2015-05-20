@@ -119,7 +119,6 @@ struct threadData{
   std::istream& appendFromFasta( std::istream& in );
   void callReinit();
 
-
   void makeScoreMatrix( const std::string& matrixFile) ;
   void makeQualityScorers();
   void calculateScoreStatistics();
@@ -131,7 +130,6 @@ struct threadData{
 };
 
 struct Dispatcher{
-
 
   const uchar* a;  // the reference sequence
   const uchar* b;  // the query sequence

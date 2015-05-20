@@ -15,6 +15,7 @@
 #include <iostream>
 
 #include "outputStruct.hh"
+#include "MultiSequenceUser.hh"
 
 namespace cbrc{
 
@@ -82,8 +83,9 @@ namespace cbrc{
     // data:
     std::vector<SegmentPair> blocks;  // the gapless blocks of the alignment
     int score;
+	  int identifier; // which thread do I belong to
     SegmentPair seed;  // the alignment remembers its seed
-    int identifier; // which thread do I belong to
+	  MultiSequenceUser user;
 
     size_t beg1() const{ return blocks.front().beg1(); }
     size_t beg2() const{ return blocks.front().beg2(); }

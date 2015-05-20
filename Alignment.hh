@@ -14,7 +14,6 @@
 #include <iosfwd>
 #include <iostream>
 
-#include "outputStruct.hh"
 #include "MultiSequenceUser.hh"
 
 namespace cbrc{
@@ -77,7 +76,7 @@ namespace cbrc{
 
     void write( const MultiSequence& seq1, const MultiSequence& seq2,
         char strand, bool isTranslated, const Alphabet& alph,
-        int format, LastalArguments &args, outputStruct *outputStruct,
+        int format, LastalArguments &args, std::vector<std::string> *outputVector,
         const AlignmentExtras& extras = AlignmentExtras() ) const;
 
     // data:
@@ -112,12 +111,14 @@ namespace cbrc{
         double gamma, int outputType );
 
     void writeTab( const MultiSequence& seq1, const MultiSequence& seq2,
-        char strand, bool isTranslated, const AlignmentExtras& extras, outputStruct *output ) const;
+        char strand, bool isTranslated, const AlignmentExtras& extras, std::vector<std::string>
+                   *outputVector ) const;
 
 
     void writeBlastOutput( const MultiSequence& seq1, const MultiSequence& seq2,
         char strand, bool isTranslated, const Alphabet& alph,
-        const AlignmentExtras& extras, outputStruct *output, LastalArguments &args ) const;
+        const AlignmentExtras& extras, std::vector<std::string> *outputVector, LastalArguments
+                                                                                  &args ) const;
 
     void writeMaf( const MultiSequence& seq1, const MultiSequence& seq2,
         char strand, bool isTranslated, const Alphabet& alph, const AlignmentExtras& extras ) const;

@@ -1,7 +1,6 @@
 #ifndef __LASTAL_HH
 #define __LASTAL_HH
 
-
 #include "LastalArguments.hh"
 #include "QualityPssmMaker.hh"
 #include "OneQualityScoreMatrix.hh"
@@ -37,24 +36,20 @@
 #include <cstdlib>  // EXIT_SUCCESS, EXIT_FAILURE
 #include <string>
 #include <vector>
+
 #include <queue>
 #include <set>
-
 
 #include <cstdlib>
 #include <pthread.h>
 #include "semaphores.hh"
-#include "outputStruct.hh"
 #include "SubsetSuffixArrayUser.hh"
 #include "MultiSequenceUser.hh"
-
 
 #define ERR(x) throw std::runtime_error(x)
 #define LOG(x) if( args.verbosity > 0 ) std::cerr << "lastal: " << x << '\n'
 
-
 using namespace cbrc;
-
 
 typedef MultiSequence::indexT indexT;
 typedef unsigned long long countT;
@@ -88,6 +83,7 @@ struct threadData{
   Centroid *centroid;
   MultiSequence query;  // sequence that hasn't been indexed by lastdb
   std::vector< std::vector<countT> > matchCounts;  // used if outputType == 0
+	std::vector<std::string> *outputVector;
   GeneralizedAffineGapCosts gapCosts;
   ScoreMatrix scoreMatrix;
   sequenceFormat::Enum referenceFormat;  // defaults to 0
@@ -97,9 +93,7 @@ struct threadData{
   QualityPssmMaker qualityPssmMaker;
   TwoQualityScoreMatrix twoQualityScoreMatrix;
   TwoQualityScoreMatrix twoQualityScoreMatrixMasked;
-  outputStruct *output;
   int identifier;
-
 
   void alignGapless( SegmentPairPot& gaplessAlns, char strand );
   void alignGapped( AlignmentPot& gappedAlns, SegmentPairPot& gaplessAlns, Phase::Enum phase );
@@ -199,8 +193,6 @@ struct Dispatcher{
     return gaplessTwoQualityAlignmentScore( a+x, a+e, i+x, b+y, j+y, t );
   }
 };
-
-//void writeHeader( countT refSequences, countT refLetters, std::ostream& out );
 
 void writerFunction( std::ostream& out );
 void readerFunction( std::istream& in );

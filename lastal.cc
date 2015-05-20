@@ -5,6 +5,7 @@
 
 std::vector<threadData *> *threadDatas;
 std::vector<pthread_t> *threads;
+
 std::queue<int> waiting;
 std::set<int> working;
 
@@ -20,7 +21,7 @@ countT refLetters = -1;
 
 void threadData::prepareThreadData(std::string matrixFile, int identifier) {
 
-	output = new outputStruct();
+	outputVector = new std::vector<std::string>();
 
 	//unsigned volumes = unsigned(-1);
 	indexT minSeedLimit = 0;
@@ -335,7 +336,8 @@ void threadData::alignGapless(SegmentPairPot &gaplessAlns, char strand) {
 				if (args.outputType == 1) {  // we just want gapless alignments
 					Alignment aln(identifier);
 					aln.fromSegmentPair(sp);
-					aln.write(text, query, strand, args.isTranslated(), alph, args.outputFormat, args, output);
+					aln.write(text, query, strand, args.isTranslated(), alph, args.outputFormat, args,
+					          outputVector);
 				}
 				else {
 					gaplessAlns.add(sp);  // add the gapless alignment to the pot
@@ -463,7 +465,7 @@ void threadData::alignFinish(const AlignmentPot &gappedAlns, char strand) {
 	for (size_t i = 0; i < gappedAlns.size(); ++i) {
 		const Alignment &aln = gappedAlns.items[i];
 		if (args.outputType < 4) {
-			aln.write(text, query, strand, args.isTranslated(), alph, args.outputFormat, args, output);
+			aln.write(text, query, strand, args.isTranslated(), alph, args.outputFormat, args, outputVector);
 		}
 		else {  // calculate match probabilities:
 			Alignment probAln(identifier);
@@ -476,7 +478,7 @@ void threadData::alignFinish(const AlignmentPot &gappedAlns, char strand) {
 			                  dis.i, dis.j, alph, extras,
 			                  args.gamma, args.outputType);
 			probAln.write(text, query, strand, args.isTranslated(),
-			              alph, args.outputFormat, args, output, extras);
+			              alph, args.outputFormat, args, outputVector, extras);
 		}
 	}
 }

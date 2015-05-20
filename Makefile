@@ -10,7 +10,7 @@ SubsetSuffixArray.o LastdbArguments.o io.o fileMap.o	\
 SubsetSuffixArraySort.o MultiSequenceQual.o lastdb.o
 
 ALOBJ = Alphabet.o MultiSequence.o CyclicSubsetSeed.o			\
-SubsetSuffixArray.o LastalArguments.o io.o fileMap.o ScoreMatrix.o	\
+SubsetSuffixArrayUser.o SubsetSuffixArray.o LastalArguments.o io.o fileMap.o ScoreMatrix.o	\
 DiagonalTable.o SegmentPair.o Alignment.o GappedXdropAligner.o		\
 SegmentPairPot.o AlignmentPot.o GeneralizedAffineGapCosts.o		\
 Centroid.o LambdaCalculator.o TwoQualityScoreMatrix.o			\
@@ -150,6 +150,7 @@ SegmentPairPot.o: SegmentPairPot.cc SegmentPairPot.hh SegmentPair.hh
 SubsetSuffixArray.o: SubsetSuffixArray.cc SubsetSuffixArray.hh \
  CyclicSubsetSeed.hh VectorOrMmap.hh Mmap.hh fileMap.hh stringify.hh \
  io.hh
+SubsetSuffixArrayUser.o: SubsetSuffixArrayUser.cc SubsetSuffixArrayUser.hh 
 SubsetSuffixArraySort.o: SubsetSuffixArraySort.cc SubsetSuffixArray.hh \
  CyclicSubsetSeed.hh VectorOrMmap.hh Mmap.hh fileMap.hh stringify.hh
 TwoQualityScoreMatrix.o: TwoQualityScoreMatrix.cc \

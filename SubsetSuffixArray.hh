@@ -70,7 +70,8 @@ namespace cbrc{
       void countMatches( std::vector<unsigned long long>& counts,
           const uchar* queryPtr, const uchar* text ) const;
 
-    private:
+    //private:
+public:
       CyclicSubsetSeed seed;
       VectorOrMmap<indexT> index;  // sorted indices
       VectorOrMmap<indexT> buckets;

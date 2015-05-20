@@ -7,13 +7,15 @@ std::vector<threadData*> *threadDatas;
 std::vector<pthread_t> *threads;
 std::queue< int > waiting;
 std::set< int > working;
+
 SEM_T ioSema;
 SEM_T workingSema;
 SEM_T waitingQueueSema;
 SEM_T workingQueueSema;
-unsigned volumes = unsigned(-1);
-countT refSequences = -1;
 
+unsigned volumes = unsigned(-1);
+
+countT refSequences = -1;
 
 void threadData::prepareThreadData(std::string matrixFile, int identifier ){
 
@@ -274,7 +276,8 @@ void threadData::countMatches( char strand ){
     }
 
     for( unsigned x = 0; x < numOfIndexes; ++x )
-      suffixArrays[x].countMatches( matchCounts[seqNum], query.seqReader() + i, text.seqReader() );
+      //suffixArrays[x].countMatches( matchCounts[seqNum], query.seqReader() + i, text.seqReader() );
+      subsetUser.countMatches( matchCounts[seqNum], query.seqReader() + i, text.seqReader(), suffixArrays[x] );
   }
 }
 
@@ -293,7 +296,11 @@ void threadData::alignGapless( SegmentPairPot& gaplessAlns, char strand ){
       const indexT* beg;
       const indexT* end;
 
+/*
       suffixArrays[x].match( beg, end, dis.b + i, dis.a, args.oneHitMultiplicity, args.minHitDepth );
+      matchCount += end - beg;
+*/
+      subsetUser.match( beg, end, dis.b + i, dis.a, args.oneHitMultiplicity, args.minHitDepth, suffixArrays[x] );
       matchCount += end - beg;
 
       // Tried: if we hit a delimiter when using contiguous seeds, then

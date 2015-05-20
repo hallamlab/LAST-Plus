@@ -8,3 +8,4 @@ last-split
 a
 *.swp
 core
+TestData/*

@@ -45,6 +45,7 @@
 #include <pthread.h>
 #include "semaphores.hh"
 #include "outputStruct.hh"
+#include "SubsetSuffixArrayUser.hh"
 
 
 #define ERR(x) throw std::runtime_error(x)
@@ -65,6 +66,10 @@ namespace {
   int minScoreGapless;
   int isCaseSensitiveSeeds = -1;  // initialize it to an "error" value
   unsigned numOfIndexes = 1;  // assume this value, if unspecified
+
+  SubsetSuffixArray suffixArrays[16];
+  MultiSequence text;
+
 }
 
 namespace Phase{ 
@@ -77,7 +82,8 @@ struct threadData{
   Alphabet alph;
   Alphabet queryAlph;  // for translated alignment
   GeneticCode geneticCode;
-  SubsetSuffixArray suffixArrays[16];
+  //SubsetSuffixArray suffixArrays[16];
+  SubsetSuffixArrayUser subsetUser;
   GappedXdropAligner gappedXdropAligner;
   Centroid *centroid;
   MultiSequence query;  // sequence that hasn't been indexed by lastdb

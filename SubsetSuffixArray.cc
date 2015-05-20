@@ -111,7 +111,7 @@ void SubsetSuffixArray::match( const indexT*& beg, const indexT*& end,
       bucketPtr += subset * step;
       bucketBeg = *bucketPtr;
       bucketEnd = *(bucketPtr + step);
-      subsetMap = seed.nextMap( subsetMap );
+      subsetMap = seed.nextMap( subsetMap + 64 );
     }else{  // we hit a delimiter in the query, so finish without any matches:
       bucketBeg = bucketEnd;
     }
@@ -127,7 +127,7 @@ void SubsetSuffixArray::match( const indexT*& beg, const indexT*& end,
     if( subset < CyclicSubsetSeed::DELIMITER ){
       equalRange( beg, end, text+depth, subsetMap, subset );
       ++depth;
-      subsetMap = seed.nextMap( subsetMap );
+      subsetMap = seed.nextMap( subsetMap + 64 );
     }else{  // we hit a delimiter in the query, so finish without any matches:
       beg = end;
     }
@@ -157,7 +157,7 @@ void SubsetSuffixArray::countMatches( std::vector<unsigned long long>& counts,
     bucketPtr += subset * step;
     bucketBeg = *bucketPtr;
     bucketEnd = *(bucketPtr + step);
-    subsetMap = seed.nextMap( subsetMap );
+    subsetMap = seed.nextMap( subsetMap + 64 );
   }
 
   // match using binary search:
@@ -172,7 +172,7 @@ void SubsetSuffixArray::countMatches( std::vector<unsigned long long>& counts,
     if( subset == CyclicSubsetSeed::DELIMITER ) return;
     equalRange( beg, end, text+depth, subsetMap, subset );
     ++depth;
-    subsetMap = seed.nextMap( subsetMap );
+    subsetMap = seed.nextMap( subsetMap + 64 );
   }
 }
 
@@ -258,7 +258,7 @@ void SubsetSuffixArray::makeBuckets( const uchar* text, indexT bucketDepth ){
       ++depth;
       indexT step = bucketSteps[depth];
       bucketIndex += subset * step;
-      subsetMap = seed.nextMap( subsetMap );
+      subsetMap = seed.nextMap( subsetMap + 64 );
     }
 
     buckets.v.resize( bucketIndex+1, i );

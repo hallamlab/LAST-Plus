@@ -32,7 +32,7 @@ static void insertionSort( const uchar* text, const CyclicSubsetSeed& seed,
       while( m[ *s ] == m[ *t ] && m[ *s ] < CyclicSubsetSeed::DELIMITER ){
         ++s;
         ++t;
-        m = seed.nextMap(m);
+        m = seed.nextMap(m+64);
       }
 
       if( m[ *s ] <= m[ *t ] ) break;

@@ -90,13 +90,21 @@ public:
   const uchar* firstMap() const{
     return &subsetMaps[0];
   }
-
+/*
   const uchar* nextMap( const uchar* x ) const{
     const uchar* y = x + MAX_LETTERS;
     if( y == &subsetMaps[0] + subsetMaps.size() )
       y = &subsetMaps[0];
     return y;
   }
+ */
+	const uchar* nextMap( const uchar* x ) const{
+		if( x == &subsetMaps[0] + subsetMaps.size() ) {
+			return &subsetMaps[0];
+		} else {
+			return x;
+		}
+	}
 
 private:
   std::vector< std::vector<std::string> > subsetLists;

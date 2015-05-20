@@ -6,7 +6,8 @@
 
 using namespace cbrc;
 
-MultiSequenceUser::indexT MultiSequenceUser::whichSequence( indexT coordinate, MultiSequence &which )
+MultiSequenceUser::indexT MultiSequenceUser::whichSequence( indexT coordinate, const MultiSequence
+&which )
 const{
 
   const indexT* u = std::upper_bound( which.ends.begin(), which.ends.end(), coordinate );
@@ -14,28 +15,28 @@ const{
   return u - which.ends.begin() - 1;
 }
 
-MultiSequenceUser::indexT MultiSequenceUser::seqBeg( indexT seqNum, MultiSequence &which )
+MultiSequenceUser::indexT MultiSequenceUser::seqBeg( indexT seqNum, const MultiSequence &which )
 const{
 	return which.ends[seqNum];
 }
 
-MultiSequenceUser::indexT seqEnd( MultiSequenceUser::indexT seqNum, MultiSequence &which )
+MultiSequenceUser::indexT MultiSequenceUser::seqEnd( MultiSequenceUser::indexT seqNum, const MultiSequence &which )
 const{
 	return which.ends[seqNum+1] - which.padSize;
 }
 
-MultiSequenceUser::indexT seqLen( MultiSequenceUser::indexT seqNum, MultiSequence &which )
+MultiSequenceUser::indexT MultiSequenceUser::seqLen( MultiSequenceUser::indexT seqNum, const MultiSequence &which )
 const{
 	return seqEnd(seqNum, which) - which.ends[seqNum];
 }
 
-std::string MultiSequenceUser::seqName( indexT seqNum, MultiSequence &which )
+std::string MultiSequenceUser::seqName( indexT seqNum, const MultiSequence &which )
 const{
   return std::string( which.names.begin() + which.nameEnds[ seqNum ],
 		      which.names.begin() + which.nameEnds[ seqNum + 1 ] );
 }
 
-const MultiSequenceUser::uchar* MultiSequenceUser::seqReader(MultiSequence &which)
+const MultiSequenceUser::uchar* MultiSequenceUser::seqReader(const MultiSequence &which)
 const{
 	return which.seq.begin();
 }

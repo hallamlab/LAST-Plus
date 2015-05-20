@@ -15,17 +15,17 @@ class MultiSequenceUser{
   typedef unsigned indexT;
   typedef unsigned char uchar;
 
-  indexT whichSequence( indexT coordinate, MultiSequence &which ) const;
+  indexT whichSequence( indexT coordinate, const MultiSequence &which ) const;
 
-  indexT seqBeg( indexT seqNum, MultiSequence &which ) const;
+  indexT seqBeg( indexT seqNum, const MultiSequence &which ) const;
 
-	indexT seqEnd( indexT seqNum, MultiSequence &which ) const;
+	indexT seqEnd( indexT seqNum, const MultiSequence &which ) const;
 
-	indexT seqLen( indexT seqNum, MultiSequence &which ) const;
+	indexT seqLen( indexT seqNum, const MultiSequence &which ) const;
 
-	std::string seqName( indexT seqNum, MultiSequence &which ) const;
+	std::string seqName( indexT seqNum, const MultiSequence &which ) const;
 
-  const uchar* seqReader(MultiSequence &which) const;
+  const uchar* seqReader(const MultiSequence &which) const;
 };
 
 }

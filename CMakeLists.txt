@@ -84,48 +84,37 @@ set(LASTAL_SOURCE_FILES
  AlignmentPot.cc
  AlignmentPot.hh
  Alignment.hh
- ScoreMatrixRow.hh
- SegmentPair.hh
  GeneralizedAffineGapCosts.cc
- GeneralizedAffineGapCosts.hh
  Centroid.cc Centroid.hh GappedXdropAligner.hh
- ScoreMatrixRow.hh GeneralizedAffineGapCosts.hh SegmentPair.hh
- OneQualityScoreMatrix.hh GappedXdropAlignerInl.hh
+ GeneralizedAffineGapCosts.hh SegmentPair.hh
+ GappedXdropAlignerInl.hh
  LambdaCalculator.cc LambdaCalculator.hh
  lambda_calculator.hh lambda_calculator.cc
  TwoQualityScoreMatrix.cc
- TwoQualityScoreMatrix.hh ScoreMatrixRow.hh qualityScoreUtil.hh
+ TwoQualityScoreMatrix.hh
  OneQualityScoreMatrix.cc
- OneQualityScoreMatrix.hh ScoreMatrixRow.hh qualityScoreUtil.hh
+ OneQualityScoreMatrix.hh
  QualityPssmMaker.cc QualityPssmMaker.hh
-  qualityScoreUtil.hh stringify.hh
- GeneticCode.cc GeneticCode.hh Alphabet.hh
- gaplessXdrop.cc gaplessXdrop.hh ScoreMatrixRow.hh
+  qualityScoreUtil.hh
+ GeneticCode.cc
+ gaplessXdrop.cc gaplessXdrop.hh
  io.cc io.hh
  gaplessPssmXdrop.cc gaplessPssmXdrop.hh
  gaplessTwoQualityXdrop.cc
- AlignmentWrite.cc Alignment.hh ScoreMatrixRow.hh
- SegmentPair.hh GeneticCode.hh MultiSequence.hh VectorOrMmap.hh Mmap.hh
+ AlignmentWrite.cc ScoreMatrixRow.hh
+ SegmentPair.hh GeneticCode.hh
  fileMap.hh stringify.hh Alphabet.hh
  MultiSequenceQual.cc MultiSequence.hh
-  VectorOrMmap.hh Mmap.hh fileMap.hh stringify.hh
  GappedXdropAlignerPssm.cc GappedXdropAligner.hh
- GappedXdropAlignerInl.hh
  GappedXdropAligner2qual.cc
-  GappedXdropAlignerInl.hh
- TwoQualityScoreMatrix.hh
  GappedXdropAligner3frame.cc
- GappedXdropAlignerInl.hh
  lastal.cc LastalArguments.hh SequenceFormat.hh
- QualityPssmMaker.hh ScoreMatrixRow.hh OneQualityScoreMatrix.hh
- qualityScoreUtil.hh stringify.hh
- LambdaCalculator.hh GeneticCode.hh SubsetSuffixArray.hh
+ SubsetSuffixArray.hh
  CyclicSubsetSeed.hh VectorOrMmap.hh Mmap.hh fileMap.hh Centroid.hh
- GeneralizedAffineGapCosts.hh SegmentPair.hh
- AlignmentPot.hh Alignment.hh SegmentPairPot.hh ScoreMatrix.hh
- MultiSequence.hh DiagonalTable.hh gaplessXdrop.hh
+ AlignmentPot.hh SegmentPairPot.hh ScoreMatrix.hh
+ MultiSequence.hh DiagonalTable.hh
  gaplessPssmXdrop.hh gaplessTwoQualityXdrop.hh io.hh version.hh
- lambda_calculator.cc nrutil.hh
+ nrutil.hh
  nrutil.cc ludcmp.cc lubksb.cc  lambda_calculator.hh
  LastexArguments.cc
  lastex.cc LastexArguments.hh
@@ -145,7 +134,6 @@ set(LASTAL_SOURCE_FILES
  gumbel_params/corelib/ncbistd.hpp gumbel_params/corelib/ncbidbg.hpp
  gumbel_params/sls_alp_regression.hpp gumbel_params/sls_alp.hpp
  gumbel_params/njn_dynprogprob.cpp
- gumbel_params/ncbi_pch.hpp gumbel_params/corelib/ncbitype.h
  gumbel_params/corelib/ncbi_limits.h gumbel_params/njn_dynprogprob.hpp
  gumbel_params/corelib/ncbidbg.hpp gumbel_params/njn_dynprogprobproto.hpp
  gumbel_params/corelib/ncbistl.hpp gumbel_params/common/ncbi_export.h
@@ -160,7 +148,6 @@ set(LASTAL_SOURCE_FILES
  gumbel_params/njn_dynprogprobproto.cpp
  gumbel_params/ncbi_pch.hpp gumbel_params/njn_dynprogprobproto.hpp
  gumbel_params/corelib/ncbistl.hpp gumbel_params/common/ncbi_export.h
- gumbel_params/corelib/ncbitype.h
  gumbel_params/njn_ioutil.cpp gumbel_params/ncbi_pch.hpp
  gumbel_params/corelib/ncbistre.hpp gumbel_params/njn_ioutil.hpp
  gumbel_params/corelib/ncbistl.hpp gumbel_params/common/ncbi_export.h
@@ -243,7 +230,7 @@ gumbel_params/sls_alp_sim.cpp gumbel_params/ncbi_pch.hpp
  gumbel_params/corelib/ncbidbg.hpp gumbel_params/sls_alp_regression.hpp
 
  utils.hh utils.cc Alphabet.cc Alphabet.hh MultiSequence.hh MultiSequence.cc
-  io.hh io.cc
+ io.hh io.cc
 
   semaphores.hh
   SubsetSuffixArrayUser.cc SubsetSuffixArrayUser.hh

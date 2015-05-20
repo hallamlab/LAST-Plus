@@ -26,6 +26,9 @@ class MultiSequenceUser{
 	std::string seqName( indexT seqNum, const MultiSequence &which ) const;
 
   const uchar* seqReader(const MultiSequence &which) const;
+
+	const uchar* qualityReader(const MultiSequence &which) const;
+
 };
 
 }

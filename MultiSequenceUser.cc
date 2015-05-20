@@ -40,3 +40,8 @@ const MultiSequenceUser::uchar* MultiSequenceUser::seqReader(const MultiSequence
 const{
 	return which.seq.begin();
 }
+
+const MultiSequenceUser::uchar* MultiSequenceUser::qualityReader(const MultiSequence &which)
+const{
+	return which.qualityScores.begin();
+}

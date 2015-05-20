@@ -141,6 +141,7 @@ struct Dispatcher{
   int d;  // the maximum score drop
   int z;
   Alphabet *aa;
+	MultiSequenceUser user;
 
 
   Dispatcher( Phase::Enum e, MultiSequence &text, MultiSequence &query,
@@ -148,9 +149,9 @@ struct Dispatcher{
       TwoQualityScoreMatrix &twoQualityScoreMatrixMasked, 
       sequenceFormat::Enum referenceFormat, Alphabet &alph) :
 
-    a  ( text.seqReader() ),
+    a  ( user.seqReader(text) ),
     b  ( query.seqReader() ),
-    i  ( text.qualityReader() ),
+    i  ( user.qualityReader(text) ),
     j  ( query.qualityReader() ),
     p  ( query.pssmReader() ),
     m  ( (e < args.maskLowercase) ?

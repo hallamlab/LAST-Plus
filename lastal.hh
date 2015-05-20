@@ -124,8 +124,6 @@ struct threadData{
   void readOuterPrj( const std::string& fileName, unsigned& volumes, indexT& minSeedLimit,
       countT& refSequences, countT& refLetters );
   void readInnerPrj( const std::string& fileName, indexT& seqCount, indexT& seqLen );
-  //void initializeEvalueCalulator(const std::string dbPrjFile, std::string dbfilePrj);
-  //void writeHeader( countT refSequences, countT refLetters, std::ostream& out );
 };
 
 struct Dispatcher{
@@ -206,8 +204,8 @@ struct Dispatcher{
 
 void writerFunction( std::ostream& out );
 void readerFunction( std::istream& in );
-void finishAlignment( std::ostream& out );
-void* threadFunction( void *args ); 
+void* threadFunction( void *args );
+void writeHeader( countT refSequences, std::ostream& out );
 void initializeThreads();
 void initializeSemaphores();
 void initializeEvalueCalulator(const std::string dbPrjFile, ScoreMatrix &scoreMatrix, std::string dbfilePrj);

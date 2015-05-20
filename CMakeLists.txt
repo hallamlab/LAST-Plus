@@ -56,31 +56,20 @@ set(LASTAL_SOURCE_FILES
  DiagonalTable.cc
  DiagonalTable.hh
  SegmentPair.cc
- SegmentPair.hh
  Alignment.cc
- Alignment.hh
- SegmentPair.hh
  Alphabet.hh
- Centroid.hh
- GappedXdropAligner.hh
  GeneralizedAffineGapCosts.hh
- OneQualityScoreMatrix.hh
  GeneticCode.hh
- TwoQualityScoreMatrix.hh
  GappedXdropAligner.cc
- GappedXdropAligner.hh
  ScoreMatrixRow.hh
- GappedXdropAlignerInl.hh
  SegmentPairPot.cc
  SegmentPairPot.hh
- SegmentPair.hh
  SubsetSuffixArray.cc
  SubsetSuffixArray.hh
  CyclicSubsetSeed.hh
  VectorOrMmap.hh
  Mmap.hh
  fileMap.hh
- io.hh
  AlignmentPot.cc
  AlignmentPot.hh
  Alignment.hh
@@ -101,21 +90,20 @@ set(LASTAL_SOURCE_FILES
  io.cc io.hh
  gaplessPssmXdrop.cc gaplessPssmXdrop.hh
  gaplessTwoQualityXdrop.cc
- AlignmentWrite.cc ScoreMatrixRow.hh
- SegmentPair.hh GeneticCode.hh
- fileMap.hh stringify.hh Alphabet.hh
+ AlignmentWrite.cc
+ stringify.hh
  MultiSequenceQual.cc MultiSequence.hh
- GappedXdropAlignerPssm.cc GappedXdropAligner.hh
+ GappedXdropAlignerPssm.cc
  GappedXdropAligner2qual.cc
  GappedXdropAligner3frame.cc
  lastal.cc LastalArguments.hh SequenceFormat.hh
  SubsetSuffixArray.hh
- CyclicSubsetSeed.hh VectorOrMmap.hh Mmap.hh fileMap.hh Centroid.hh
+ CyclicSubsetSeed.hh Mmap.hh
  AlignmentPot.hh SegmentPairPot.hh ScoreMatrix.hh
- MultiSequence.hh DiagonalTable.hh
- gaplessPssmXdrop.hh gaplessTwoQualityXdrop.hh io.hh version.hh
+ DiagonalTable.hh
+ gaplessTwoQualityXdrop.hh version.hh
  nrutil.hh
- nrutil.cc ludcmp.cc lubksb.cc  lambda_calculator.hh
+ nrutil.cc ludcmp.cc lubksb.cc
  LastexArguments.cc
  lastex.cc LastexArguments.hh
  gumbel_params/mcf_local_alignment_evaluer.hpp

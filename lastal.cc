@@ -82,7 +82,6 @@ void threadData::prepareThreadData(std::string matrixFile, int identifier ){
   this->identifier = identifier;
 }
 
-
 // Set up a scoring matrix, based on the user options
 void threadData::makeScoreMatrix( const std::string& matrixFile ){
   if( !matrixFile.empty() ){
@@ -276,7 +275,6 @@ void threadData::countMatches( char strand ){
     }
 
     for( unsigned x = 0; x < numOfIndexes; ++x )
-      //suffixArrays[x].countMatches( matchCounts[seqNum], query.seqReader() + i, text.seqReader() );
       subsetUser.countMatches( matchCounts[seqNum], query.seqReader() + i, text.seqReader(), suffixArrays[x] );
   }
 }
@@ -747,7 +745,7 @@ void* threadFunction(void* args){
   data->scanAllVolumes( volumes );
   data->callReinit();
   /*
-  
+
            SEM_WAIT( ioSema );
            for(int j=0; j < data->output->outputVector->size(); j++){
            out << data->output->outputVector->at( j );
@@ -879,11 +877,11 @@ void lastal( int argc, char** argv ){
       SEM_WAIT( workingSema );
 
       if( io1 > 0 && in ){
-        SEM_WAIT( waitingQueueSema );  
+        SEM_WAIT( waitingQueueSema );
         for (int k=0; k<waiting.size(); k++){
           id = waiting.front();
           waiting.pop();
-          SEM_POST( waitingQueueSema );  
+          SEM_POST( waitingQueueSema );
 
           struct threadData *data = threadDatas->at( id );
           SEM_WAIT( ioSema );
@@ -892,7 +890,7 @@ void lastal( int argc, char** argv ){
            if( !data->query.isFinished() ){
              pthread_create(&threads->at( id ), NULL, threadFunction, (void*) data);
              break;
-           } 
+           }
           }
           SEM_POST( ioSema );
           //pthread_create(&threads->at( id ), NULL, threadFunction, (void*) data);
@@ -902,7 +900,7 @@ void lastal( int argc, char** argv ){
       SEM_WAIT( waitingQueueSema );
       io1 = waiting.size();
       SEM_POST( waitingQueueSema );
-      SEM_WAIT( workingQueueSema ); 
+      SEM_WAIT( workingQueueSema );
       io2 = working.size();
       SEM_POST( workingQueueSema);
 
@@ -920,7 +918,7 @@ void lastal( int argc, char** argv ){
 
   }
 
-  if (!flush(out)) { 
+  if (!flush(out)) {
     ERR( "write error" );
   }
 }

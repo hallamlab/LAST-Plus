@@ -14,7 +14,7 @@ void LambdaCalculator::setBad(){
   letterProbs2_.clear();
 }
 
-void LambdaCalculator::calculate( const int matrix[MAT][MAT], int alphSize ){
+void LambdaCalculator::calculate( int matrix[MAT][MAT], int alphSize ){
   assert( alphSize < MAT );
 
   // We need to pass the parameters as 1-based pointers, hence the +1s

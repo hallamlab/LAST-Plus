@@ -46,6 +46,7 @@
 #include "semaphores.hh"
 #include "outputStruct.hh"
 #include "SubsetSuffixArrayUser.hh"
+#include "MultiSequenceUser.hh"
 
 
 #define ERR(x) throw std::runtime_error(x)
@@ -82,12 +83,10 @@ struct threadData{
   Alphabet alph;
   Alphabet queryAlph;  // for translated alignment
   GeneticCode geneticCode;
-  //SubsetSuffixArray suffixArrays[16];
   SubsetSuffixArrayUser subsetUser;
   GappedXdropAligner gappedXdropAligner;
   Centroid *centroid;
   MultiSequence query;  // sequence that hasn't been indexed by lastdb
-  MultiSequence text;  // sequence that has been indexed by lastdb
   std::vector< std::vector<countT> > matchCounts;  // used if outputType == 0
   GeneralizedAffineGapCosts gapCosts;
   ScoreMatrix scoreMatrix;

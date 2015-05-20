@@ -10,7 +10,7 @@ SubsetSuffixArray.o LastdbArguments.o io.o fileMap.o	\
 SubsetSuffixArraySort.o MultiSequenceQual.o lastdb.o
 
 ALOBJ = Alphabet.o MultiSequence.o CyclicSubsetSeed.o			\
-SubsetSuffixArrayUser.o SubsetSuffixArray.o LastalArguments.o io.o fileMap.o ScoreMatrix.o	\
+SubsetSuffixArray.o LastalArguments.o io.o fileMap.o ScoreMatrix.o	\
 DiagonalTable.o SegmentPair.o Alignment.o GappedXdropAligner.o		\
 SegmentPairPot.o AlignmentPot.o GeneralizedAffineGapCosts.o		\
 Centroid.o LambdaCalculator.o TwoQualityScoreMatrix.o			\
@@ -29,7 +29,7 @@ gumbel_params/njn_localmaxstatutil.o gumbel_params/njn_matrix.o		\
 gumbel_params/random_gen.o gumbel_params/sls_alp.o			\
 gumbel_params/sls_alp_data.o gumbel_params/sls_alp_regression.o		\
 gumbel_params/sls_alp_sim.o gumbel_params/sls_pvalues.o\
-utils.o
+utils.o MultiSequenceUser.o SubsetSuffixArrayUser.o
 
 SPOBJ = Alphabet.o MultiSequence.o fileMap.o split/cbrc_linalg.o	\
 split/last-split.o split/cbrc_split_aligner.o split/last-split-main.o	\
@@ -132,6 +132,9 @@ LastexArguments.o: LastexArguments.cc LastexArguments.hh stringify.hh
 MultiSequence.o: MultiSequence.cc MultiSequence.hh ScoreMatrixRow.hh \
  VectorOrMmap.hh Mmap.hh fileMap.hh stringify.hh io.hh
 
+MultiSequenceUser.o: MultiSequenceUser.cc MultiSequenceUser.hh ScoreMatrixRow.hh \
+ VectorOrMmap.hh Mmap.hh fileMap.hh stringify.hh io.hh
+
 MultiSequenceQual.o: MultiSequenceQual.cc MultiSequence.hh \
  ScoreMatrixRow.hh VectorOrMmap.hh Mmap.hh fileMap.hh stringify.hh
 
@@ -150,7 +153,9 @@ SegmentPairPot.o: SegmentPairPot.cc SegmentPairPot.hh SegmentPair.hh
 SubsetSuffixArray.o: SubsetSuffixArray.cc SubsetSuffixArray.hh \
  CyclicSubsetSeed.hh VectorOrMmap.hh Mmap.hh fileMap.hh stringify.hh \
  io.hh
-SubsetSuffixArrayUser.o: SubsetSuffixArrayUser.cc SubsetSuffixArrayUser.hh 
+SubsetSuffixArrayUser.o: SubsetSuffixArrayUser.cc SubsetSuffixArrayUser.hh \
+ CyclicSubsetSeed.hh VectorOrMmap.hh Mmap.hh fileMap.hh stringify.hh \
+ io.hh
 SubsetSuffixArraySort.o: SubsetSuffixArraySort.cc SubsetSuffixArray.hh \
  CyclicSubsetSeed.hh VectorOrMmap.hh Mmap.hh fileMap.hh stringify.hh
 TwoQualityScoreMatrix.o: TwoQualityScoreMatrix.cc \

@@ -15,8 +15,6 @@
 #include "fileMap.hh"
 #include "stringify.hh"
 
-#include "semaphores.hh"
-
 namespace cbrc{
 
 template<typename T>

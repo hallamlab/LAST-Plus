@@ -232,4 +232,4 @@ gumbel_params/sls_alp_sim.cpp gumbel_params/ncbi_pch.hpp
 #MBOBJ = last-merge-batches.o
 
 add_executable(lastdb ${LASTDB_SOURCE_FILES})
-add_executable(lastal ${LASTAL_SOURCE_FILES} inputOutput.h inputOutput.cpp)
+add_executable(lastal ${LASTAL_SOURCE_FILES})

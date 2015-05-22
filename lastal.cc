@@ -5,14 +5,17 @@
 
 std::vector<threadData *> *threadDatas;
 std::vector<pthread_t> *threads;
+std::queue<int> inputQueue;
+std::queue<int> outputQueue;
+pthread_t writerThread;
 
-std::queue<int> waiting;
-std::set<int> working;
+bool finishedReadingFlag;
 
+SEM_T readerSema;
+SEM_T writerSema;
 SEM_T ioSema;
-SEM_T workingSema;
-SEM_T waitingQueueSema;
-SEM_T workingQueueSema;
+SEM_T terminationSema;
+SEM_T inputOutputQueueSema;
 
 unsigned volumes = unsigned(-1);
 
@@ -80,9 +83,23 @@ void threadData::prepareThreadData(std::string matrixFile, int identifier) {
 
 	centroid = new Centroid(gappedXdropAligner);
 	this->identifier = identifier;
+
+#ifdef __APPLE__
+    char name[40];
+
+    sprintf(name, "/readSema%d", identifier);
+    sem_unlink(name);
+    readSema = sem_open(name, O_CREAT, 0644, 0)
+
+    sprintf(name, "/writeSema%d", identifier);
+    sem_unlink(name);
+    writeSema = sem_open(name, O_CREAT, 0644, 2)
+#elif __linux
+	sem_init(&readSema, 0, 0);
+	sem_init(&writeSema, 0, 2);
+#endif
 }
 
-// Set up a scoring matrix, based on the user options
 void threadData::makeScoreMatrix(const std::string &matrixFile) {
 	if (!matrixFile.empty()) {
 		scoreMatrix.fromString(matrixFile);
@@ -156,8 +173,6 @@ void threadData::makeQualityScorers() {
 	}
 }
 
-// Calculate statistical parameters for the alignment scoring scheme
-// Meaningless for PSSMs, unless they have the same scale as the score matrix
 void threadData::calculateScoreStatistics() {
 	LOG("calculating matrix probabilities...");
 	// the case-sensitivity of the matrix makes no difference here
@@ -172,7 +187,6 @@ void threadData::calculateScoreStatistics() {
 	}
 }
 
-// Read the .prj file for the whole database
 void threadData::readOuterPrj(const std::string &fileName, unsigned &volumes, indexT &minSeedLimit,
                               countT &refSequences, countT &refLetters) {
 
@@ -206,9 +220,9 @@ void threadData::readOuterPrj(const std::string &fileName, unsigned &volumes, in
 		ERR("the lastdb files are old: please re-run lastdb");
 }
 
-// Read a per-volume .prj file, with info about a database volume
-void threadData::readInnerPrj(const std::string &fileName,
+void readInnerPrj(const std::string &fileName,
                               indexT &seqCount, indexT &seqLen) {
+
 	std::ifstream f(fileName.c_str());
 	if (!f) ERR("can't open file: " + fileName);
 
@@ -228,12 +242,10 @@ void threadData::readInnerPrj(const std::string &fileName,
 	if (!f) ERR("can't read file: " + fileName);
 }
 
-// Write match counts for each query sequence
-void threadData::writeCounts() {
+void threadData::writeCounts(std::ostream &out) {
 
 	LOG("writing...");
 	std::stringstream outstream;
-	std::string output;
 
 	for (indexT i = 0; i < matchCounts.size(); ++i) {
 		outstream << query.seqName(i) << "\n";
@@ -242,12 +254,11 @@ void threadData::writeCounts() {
 			outstream << j << "\t" << matchCounts[i][j] << "\n";
 		}
 
-		outstream << "\n";  // blank line afterwards
-		output = outstream.str();
+		outstream << "\n";
+		out << outstream.str();
 	}
 }
 
-// Count all matches, of all sizes, of a query batch against a suffix array
 void threadData::countMatches(char strand) {
 	LOG("counting...");
 	indexT seqNum = strand == '+' ? 0 : query.finishedSequences() - 1;
@@ -279,7 +290,6 @@ void threadData::countMatches(char strand) {
 	}
 }
 
-// Find query matches to the suffix array, and do gapless extensions
 void threadData::alignGapless(SegmentPairPot &gaplessAlns, char strand) {
 
 	Dispatcher dis(Phase::gapless, text, query, scoreMatrix, twoQualityScoreMatrix,
@@ -354,16 +364,6 @@ void threadData::alignGapless(SegmentPairPot &gaplessAlns, char strand) {
 	LOG("gapless alignments=" << gaplessAlignmentCount);
 }
 
-// Shrink the SegmentPair to its longest run of identical matches.
-// This trims off possibly unreliable parts of the gapless alignment.
-// It may not be the best strategy for protein alignment with subset
-// seeds: there could be few or no identical matches...
-void Dispatcher::shrinkToLongestIdenticalRun(SegmentPair &sp) {
-	sp.maxIdenticalRun(a, b, aa->canonical);
-	sp.score = gaplessScore(sp.beg1(), sp.end1(), sp.beg2());
-}
-
-// Do gapped extensions of the gapless alignments
 void threadData::alignGapped(AlignmentPot &gappedAlns, SegmentPairPot &gaplessAlns, Phase::Enum phase) {
 
 	//Dispatcher dis(phase);
@@ -439,8 +439,6 @@ void threadData::alignGapped(AlignmentPot &gappedAlns, SegmentPairPot &gaplessAl
 	LOG("gapped alignments=" << gappedAlignmentCount);
 }
 
-// Print the gapped alignments, after optionally calculating match
-// probabilities and re-aligning using the gamma-centroid algorithm
 void threadData::alignFinish(const AlignmentPot &gappedAlns, char strand) {
 
 	Dispatcher dis(Phase::final, text, query, scoreMatrix, twoQualityScoreMatrix,
@@ -504,7 +502,6 @@ void threadData::makeQualityPssm(bool isApplyMasking) {
 	}
 }
 
-// Scan one batch of query sequences against one database volume
 void threadData::scan(char strand) {
 
 	if (args.outputType == 0) {  // we just want match counts
@@ -543,8 +540,6 @@ void threadData::scan(char strand) {
 	alignFinish(gappedAlns, strand);
 }
 
-// Scan one batch of query sequences against one database volume,
-// after optionally translating the query
 void threadData::translateAndScan(char strand) {
 
 	if (args.isTranslated()) {
@@ -561,23 +556,22 @@ void threadData::translateAndScan(char strand) {
 	else scan(strand);
 }
 
-void threadData::readIndex(const std::string &baseName, indexT seqCount) {
+void readIndex(const std::string &baseName, indexT seqCount) {
 
 	SEM_WAIT(ioSema);
 	LOG("reading " << baseName << "...");
-	text.fromFiles(baseName, seqCount, isFastq(referenceFormat));
+	text.fromFiles(baseName, seqCount, isFastq(threadDatas->at(0)->referenceFormat));
 	for (unsigned x = 0; x < numOfIndexes; ++x) {
 		if (numOfIndexes > 1) {
-			suffixArrays[x].fromFiles(baseName + char('a' + x), isCaseSensitiveSeeds, alph.encode);
+			suffixArrays[x].fromFiles(baseName + char('a' + x), isCaseSensitiveSeeds, threadDatas->at(0)->alph.encode);
 		} else {
-			suffixArrays[x].fromFiles(baseName, isCaseSensitiveSeeds, alph.encode);
+			suffixArrays[x].fromFiles(baseName, isCaseSensitiveSeeds, threadDatas->at(0)->alph.encode);
 		}
 	}
 	SEM_POST(ioSema);
 }
 
-// Read one database volume
-void threadData::readVolume(unsigned volumeNumber) {
+void readVolume(unsigned volumeNumber) {
 
 	std::string baseName = args.lastdbName + stringify(volumeNumber);
 	indexT seqCount = indexT(-1);
@@ -613,10 +607,9 @@ void threadData::reverseComplementQuery() {
 	}
 }
 
-// Scan one batch of query sequences against all database volumes
 void threadData::scanAllVolumes(unsigned volumes) {
-// Extract this section into the reader function. The threads should just do work as "while buffer non
-// empty"
+
+	/*
 	if (args.outputType == 0) {
 		matchCounts.clear();
 		matchCounts.resize(query.finishedSequences());
@@ -625,19 +618,29 @@ void threadData::scanAllVolumes(unsigned volumes) {
 	if (volumes + 1 == 0) volumes = 1;
 
 	for (unsigned i = 0; i < volumes; ++i) {
-		if (text.unfinishedSize() == 0 || volumes > 1) readVolume(i);
-//
-		if (args.strand == 2 && i > 0) reverseComplementQuery();
+		//if (text.unfinishedSize() == 0 || volumes > 1) readVolume(i);
+	 */
 
-		if (args.strand != 0) translateAndScan('+');
-
-		if (args.strand == 2 || (args.strand == 0 && i == 0))
+	/*
+		if (args.strand == 2 && i > 0){
 			reverseComplementQuery();
+		}
 
-		if (args.strand != 1) translateAndScan('-');
-	}
+		if (args.strand != 0){
+			translateAndScan('+');
+		}
 
-	//if( args.outputType == 0 ) writeCounts( out );
+		if (args.strand == 2 || (args.strand == 0 && i == 0)){
+			reverseComplementQuery();
+		}
+
+		if (args.strand != 1){
+		  translateAndScan('-');
+		}
+*/
+	//}
+
+	//if (args.outputType == 0) writeCounts(out);
 
 	LOG("query batch done!");
 }
@@ -645,6 +648,7 @@ void threadData::scanAllVolumes(unsigned volumes) {
 void writeHeader(countT refSequences, std::ostream &out) {
 
 	out << "# LAST version " <<
+
 	#include "version.hh"
 	<< "\n" << "#\n";
 	args.writeCommented(out);
@@ -675,7 +679,6 @@ void writeHeader(countT refSequences, std::ostream &out) {
 	out << "#\n";
 }
 
-// Read the next sequence, adding it to the MultiSequence
 std::istream &threadData::appendFromFasta(std::istream &in) {
 
 	indexT maxSeqLen = args.batchSize;
@@ -722,112 +725,175 @@ void initializeEvalueCalulator(const std::string dbPrjFile, ScoreMatrix &scoreMa
 	makeEvaluer();
 }
 
-void threadData::callReinit() {
-
-	query.reinitForAppending();
-}
-
-void *threadFunction(void *args) {
-
-	struct threadData *data = (struct threadData *) args;
-	SEM_WAIT(workingSema);
-
-	SEM_WAIT(workingQueueSema);
-	working.insert(data->identifier);
-	SEM_POST(workingQueueSema);
-
-	data->scanAllVolumes(volumes);
-	data->callReinit();
-	/*
-
-					 SEM_WAIT( ioSema );
-					 for(int j=0; j < data->output->outputVector->size(); j++){
-					 out << data->output->outputVector->at( j );
-					 }
-					 SEM_POST( ioSema );
-				data->output->outputVector->clear();
-				*/
-	SEM_WAIT(workingQueueSema);
-	working.erase(data->identifier);
-	SEM_POST(workingQueueSema);
-
-	SEM_WAIT(waitingQueueSema);
-	waiting.push(data->identifier);
-	SEM_POST(waitingQueueSema);
-
-	SEM_POST(workingSema);
-}
-
-void *threadFunctionFinish(void *args) {
-
-	struct threadData *data = (struct threadData *) args;
-	SEM_WAIT(workingSema);
-
-	SEM_WAIT(workingQueueSema);
-	working.insert(data->identifier);
-	SEM_POST(workingQueueSema);
-
-	data->scanAllVolumes(volumes);
-
-	SEM_WAIT(workingQueueSema);
-	working.erase(data->identifier);
-	SEM_POST(workingQueueSema);
-
-	SEM_WAIT(waitingQueueSema);
-	waiting.push(data->identifier);
-	SEM_POST(waitingQueueSema);
-
-	SEM_POST(workingSema);
-}
-
 void initializeThreads() {
 
 	threadDatas = new std::vector<threadData *>();
 	threadDatas->reserve(args.threadNum);
 
 	for (int i = 0; i < args.threadNum; i++) {
-		threadData *thread_ptr = new threadData();
-		threadDatas->push_back(thread_ptr);
+		threadData *data = new threadData();
+		threadDatas->push_back(data);
 	}
-
 	pthread_t thread;
 	threads = new std::vector<pthread_t>(args.threadNum, thread);
 }
 
 void initializeSemaphores() {
 
-	//!! Initialize the semaphores
 #ifdef __APPLE__
-  sem_unlink("/ioSema");
-  if ( ( ioSema = sem_open("/ioSema", O_CREAT, 0644, 1)) == SEM_FAILED ) {
-    perror("sem_open");
-    exit(EXIT_FAILURE);
-  }
-  sem_unlink("/workingSema");
-  if ( ( workingSema = sem_open("/workingSema", O_CREAT, 0644, 1)) == SEM_FAILED ) {
-    perror("sem_open");
-    exit(EXIT_FAILURE);
-  }
-  sem_unlink("/waitingQueueSema");
-  if ( ( waitingQueueSema = sem_open("/waitingQueueSema", O_CREAT, 0644, 1)) == SEM_FAILED ) {
-    perror("sem_open");
-    exit(EXIT_FAILURE);
-  }
-  sem_unlink("/workingQueueSema");
-  if ( ( workingQueueSema = sem_open("/workingQueueSema", O_CREAT, 0644, 1)) == SEM_FAILED ) {
-    perror("sem_open");
-    exit(EXIT_FAILURE);
-  }
+    sem_unlink("/inputOutputQueueSema");
+    if (( inputOutputQueueSema = sem_open("/inputOutputQueueSema", O_CREAT, 0644, 1))== SEM_FAILED ) {
+        perror("sem_open");
+        exit(EXIT_FAILURE);
+    }
+    sem_unlink("/ioSema");
+    if (( ioSema = sem_open("/ioSema", O_CREAT, 0644, 1)) == SEM_FAILED ) {
+        perror("sem_open");
+        exit(EXIT_FAILURE);
+    }
+    sem_unlink("/readerSema");
+    if (( readerSema = sem_open("/readerSema", O_CREAT, 0644, 0)) == SEM_FAILED ) {
+        perror("sem_open");
+        exit(EXIT_FAILURE);
+    }
+    sem_unlink("/writerSema");
+    if (( writerSema = sem_open("/writerSema", O_CREAT, 0644, 0)) == SEM_FAILED ) {
+        perror("sem_open");
+        exit(EXIT_FAILURE);
+    }
+    sem_unlink("/terminationSema");
+    if (( terminationSema = sem_open("/terminationSema", O_CREAT, 0644, 0)) == SEM_FAILED ) {
+        perror("sem_open");
+        exit(EXIT_FAILURE);
+    }
 #elif __linux
+	sem_init(&readerSema, 0, 1);
+	sem_init(&writerSema, 0, 1);
 	sem_init(&ioSema, 0, 1);
-	sem_init(&workingSema, 0, args.threadNum);;
-	sem_init(&waitingQueueSema, 0, 1);
-	sem_init(&workingQueueSema, 0, 1);
+	sem_init(&terminationSema, 0, 1);
+	sem_init(&inputOutputQueueSema, 0, 1);
 #endif
 }
 
-void lastal(int argc, char **argv) {
+void *writerFunction(void *arguments) {
 
+	std::queue<int> currentOutputQueue;
+	int id;
+	int readerCounter;
+	int writerCounter;
+	std::ofstream outFileStream;
+	std::ostream &out = openOut(args.outFile, outFileStream);
+	out.precision(3);
+
+	while (1) {
+		SEM_WAIT(writerSema);
+
+		SEM_WAIT(inputOutputQueueSema);
+		for (int j = 0; j < outputQueue.size(); j++) {
+			currentOutputQueue.push(outputQueue.front());
+			outputQueue.pop();
+		}
+		SEM_POST(inputOutputQueueSema);
+
+		while (currentOutputQueue.size() != 0) {
+			SEM_WAIT(ioSema);
+
+			id = currentOutputQueue.front();
+			currentOutputQueue.pop();
+			threadData *data = threadDatas->at(id);
+			for (int j = 0; j < data->outputVector->size(); j++) {
+				out << data->outputVector->at(j);
+			}
+
+			SEM_POST(ioSema);
+			SEM_POST(data->writeSema);
+		}
+
+		SEM_WAIT(inputOutputQueueSema);
+		readerCounter = inputQueue.size();
+		writerCounter = outputQueue.size();
+		SEM_POST(inputOutputQueueSema);
+
+		if (finishedReadingFlag == 1 && writerCounter == 0 && readerCounter == 0) {
+			SEM_POST(terminationSema);
+			break;
+		}
+	}
+}
+
+void readerFunction( std::istream& in ){
+
+	std::queue<int> currentInputQueue;
+	int id;
+	int count;
+
+		if (volumes + 1 == 0) volumes = 1;
+		for (unsigned i = 0; i < volumes; ++i) {
+			if (text.unfinishedSize() == 0 || volumes > 1){
+				readVolume(i);
+			}
+
+			while (in) {
+				SEM_WAIT(readerSema);
+
+				SEM_WAIT(inputOutputQueueSema);
+				for (int j = 0; j < inputQueue.size(); j++) {
+					currentInputQueue.push(inputQueue.front());
+					inputQueue.pop();
+				}
+				SEM_POST(inputOutputQueueSema);
+
+				while (currentInputQueue.size() != 0) {
+					SEM_WAIT(ioSema);
+
+					count = 0;
+					id = currentInputQueue.front();
+					currentInputQueue.pop();
+					threadData *data = threadDatas->at(id);
+					// read in the data
+					while (in || count > 10000) {
+						data->appendFromFasta(in);
+					}
+					SEM_POST(ioSema);
+
+					SEM_POST(data->readSema);
+				}
+			}
+			in.clear();
+			in.seekg(0);
+		}
+		finishedReadingFlag = 1;
+		SEM_WAIT(terminationSema);
+}
+
+void *threadFunction(void *__threadData) {
+
+	struct threadData *data = (struct threadData *) __threadData;
+
+	if (args.outputType == 0) {
+		data->matchCounts.clear();
+		data->matchCounts.resize(data->query.finishedSequences());
+	}
+
+	while (1) {
+		SEM_WAIT(data->readSema);
+		SEM_WAIT(data->writeSema);
+
+		data->scanAllVolumes(volumes);
+		data->query.reinitForAppending();
+
+		SEM_WAIT(inputOutputQueueSema);
+		inputQueue.push(data->identifier);
+		outputQueue.push(data->identifier);
+		SEM_POST(inputOutputQueueSema);
+
+		SEM_POST(readerSema);
+		SEM_POST(writerSema);
+	}
+	return (void *) 0;
+}
+
+void lastal(int argc, char **argv) {
 	args.fromArgs(argc, argv);
 	std::string matrixFile;
 
@@ -840,81 +906,39 @@ void lastal(int argc, char **argv) {
 	initializeThreads();
 	initializeSemaphores();
 
-	std::ofstream outFileStream;
-	std::ostream &out = openOut(args.outFile, outFileStream);
-	out.precision(3);  // print non-integers more compactly
-	countT queryBatchCount = 0;
+	for (int i=0; i<args.threadNum; i++) {
+		threadDatas->at(i)->prepareThreadData(matrixFile, i);
+	}
 
 	char defaultInputName[] = "-";
 	char *defaultInput[] = {defaultInputName, 0};
 	char **inputBegin = argv + args.inputStart;
 
-	for (int i = 0; i < args.threadNum; i++) {
-		threadDatas->at(i)->prepareThreadData(matrixFile, i);
-	}
+	initializeEvalueCalulator( args.lastdbName + ".prj",
+	                           threadDatas->at(0)->scoreMatrix, *inputBegin );
 
 	for (char **i = *inputBegin ? inputBegin : defaultInput; *i; ++i) {
-		//writeHeader(refSequences, out);
 		std::ifstream inFileStream;
 		std::istream &in = openIn(*i, inFileStream);
-		initializeEvalueCalulator(args.lastdbName + ".prj", threadDatas->at(0)->scoreMatrix, *inputBegin);
 
+		pthread_create(&writerThread, 0, writerFunction, 0);
 		for (int j = 0; j < args.threadNum; j++) {
-			waiting.push(j);
+			pthread_create(&threads->at(j), 0, threadFunction, (void *) threadDatas->at(j));
 		}
 
-		int io1 = waiting.size();
-		int io2 = working.size();
-		int id;
-
-		do {
-			SEM_WAIT(workingSema);
-
-			if (io1 > 0 && in) {
-				SEM_WAIT(waitingQueueSema);
-				for (int k = 0; k < waiting.size(); k++) {
-					id = waiting.front();
-					waiting.pop();
-					SEM_POST(waitingQueueSema);
-
-					struct threadData *data = threadDatas->at(id);
-					SEM_WAIT(ioSema);
-					//data->appendFromFasta( in );
-					while (data->appendFromFasta(in)) {
-						if (!data->query.isFinished()) {
-							pthread_create(&threads->at(id), NULL, threadFunction, (void *) data);
-							break;
-						}
-					}
-					SEM_POST(ioSema);
-					//pthread_create(&threads->at( id ), NULL, threadFunction, (void*) data);
-				}
+		for (int j = 0; j < args.threadNum; j++) {
+			// double buffer condition, reapply later.
+			//for(int k=0; k<2; k++) {
+			SEM_WAIT(ioSema);
+			if (in) {
+				SEM_POST(threadDatas->at(j)->readSema);
 			}
-
-			SEM_WAIT(waitingQueueSema);
-			io1 = waiting.size();
-			SEM_POST(waitingQueueSema);
-			SEM_WAIT(workingQueueSema);
-			io2 = working.size();
-			SEM_POST(workingQueueSema);
-
-			SEM_POST(workingSema);
-
-			//} while( ( io1 > 0 || io2 > 0 ) && in );
-		} while (in);
-
-		for (int j = 0; j < args.threadNum; j++) {
-			pthread_join(threads->at(j), NULL);
-			struct threadData *data = threadDatas->at(j);
-			pthread_create(&threads->at(id), NULL, threadFunctionFinish, (void *) data);
-			pthread_join(threads->at(j), NULL);
+			SEM_POST(ioSema);
+			//}
 		}
-
+		readerFunction(in);
 	}
 
-	if (!flush(out)) {
-		ERR("write error");
-	}
 }
 
 int main(int argc, char **argv) {

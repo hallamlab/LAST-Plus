@@ -9,8 +9,8 @@
 #ifndef THREADEDLAST_INPUTOUTPUT_H
 #define THREADEDLAST_INPUTOUTPUT_H
 
-void* writer_func(void* args);
-void conductWork();
-void* thread_func(void *_thread_datas);
+void* writerFunction(void* args);
+void  readerFunction(char** argv);
+void* threadFunction(void *_thread_datas);
 
 #endif //THREADEDLAST_INPUTOUTPUT_H

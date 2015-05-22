@@ -3,145 +3,130 @@
 //
 
 #include "inputOutput.h"
+#include "lastal.hh"
 
-std::queue<std::string> output;
+std::queue<int> inputQueue;
+std::queue<int> outputQueue;
+bool finishedReadingFlag;
 
-void* writer_func(void* args) {
-/*
+void* writerFunction(void* arguments) {
+
+	std::queue<int> currentOutputQueue;
+	int id;
+	int readerCounter;
+	int writerCounter;
+	std::ofstream outFileStream;
+	std::ostream &out = openOut(args.outFile, outFileStream);
+	out.precision(3);
+
 	while(1) {
-		sem_wait(sema_w);
+		SEM_WAIT(writerSema);
 
-		QUEUE* temp;
+		SEM_WAIT(inputOutputQueueSema);
+		for (int j=0; j<outputQueue.size(); j++) {
+			currentOutputQueue.push(outputQueue.front());
+			outputQueue.pop();
+		}
+		SEM_POST(inputOutputQueueSema);
 
-		sem_wait(sema_Q);
-		cutnpaste_q(&temp, DONE_Q);
-		sem_post(sema_Q);
+		while( currentOutputQueue.size() != 0 ) {
+			SEM_WAIT(ioSema);
 
-		while(temp) {
-			sem_wait(sema_R);
-
-			thread_data* td = temp->td;
-			unsigned int buffer = temp->buffer;
-			num_writes++;
-
-			for(j = 0; j < td->output_num_sequences[buffer]; j++) {
-				writer_counter++;
-				char *ptrc;
-
-				if(td->aa_buffer[buffer][j][0]!=0) {
-					ptrc=td->aa_buffer[buffer][j];
-
-					while(*ptrc!='\0'){
-						if(*ptrc=='\t') *ptrc='>';
-						ptrc++;
-					}
-					fprintf(aa_outfile_fp, ">%s", td->aa_buffer[buffer][j]);
-				}
-				memset(td->aa_buffer[buffer][j], 0, STRINGLEN);
+			id = currentOutputQueue.front();
+			currentOutputQueue.pop();
+			threadData *data = threadDatas->at(id);
+			for (int j=0; j<data->outputVector->size(); j++){
+				out << data->outputVector->at(j);
 			}
 
-			if (verbose) printf("INFO: Wrote results for thread %d, buffer %d.\n", td->id, buffer );
-
-			if (output_meta) fclose(outfile_fp);
-			if (output_dna) fclose(dna_outfile_fp);
-
-			sem_post(sema_R);
-			sem_post(td->sema_w);
-
-			temp = temp->next;
+			SEM_POST(ioSema);
+			SEM_POST(data->writeSema);
 		}
 
-		if(num_reads_flag == 1 && writer_counter ==  read_counter)   {
-			sem_post(stop_sema);
+		SEM_WAIT(inputOutputQueueSema);
+		readerCounter = inputQueue.size();
+		writerCounter = outputQueue.size();
+		SEM_POST(inputOutputQueueSema);
+
+		if(finishedReadingFlag == 1 && writerCounter == 0 && readerCounter == 0)   {
+			SEM_POST(terminationSema);
 			break;
 		}
 	}
-	fclose(aa_outfile_fp);
- */
 }
 
-void conductWork(){
-/*
-	while (stopped_at_fpos!=0) {
-		sem_wait(sema_r);
+void readerFunction(char** argv){
 
-		sem_wait(sema_Q);
-		QUEUE* temp;
-		cutnpaste_q(&temp, EMPTY_Q);
-		sem_post(sema_Q);
+	std::queue<int> currentInputQueue;
+	int id;
+	int count;
+	char defaultInputName[] = "-";
+	char *defaultInput[] = {defaultInputName, 0};
+	char **inputBegin = argv + args.inputStart;
 
-		while(temp) {
-			sem_wait(sema_R);
+	for (char **i = *inputBegin ? inputBegin : defaultInput; *i; ++i) {
+		std::ifstream inFileStream;
+		std::istream &in = openIn(*i, inFileStream);
 
-			stopped_at_fpos = read_seq_into_buffer(fp,  temp->td, temp->buffer);
-
-			sem_post(sema_R);
-
-			sem_post(temp->td->sema_r);
-			temp = temp->next;
+		if (args.outputType == 0) {
+			matchCounts.clear();
+			matchCounts.resize(query.finishedSequences());
 		}
+		if (volumes + 1 == 0) volumes = 1;
+		for (unsigned i = 0; i < volumes; ++i) {
+			if (text.unfinishedSize() == 0 || volumes > 1) readVolume(i);
+
+			while (in) {
+				SEM_WAIT(readerSema);
+
+				SEM_WAIT(inputOutputQueueSema);
+				for (int j = 0; j < inputQueue.size(); j++) {
+					currentInputQueue.push(inputQueue.front());
+					inputQueue.pop();
+				}
+				SEM_POST(inputOutputQueueSema);
+
+				while (currentInputQueue.size() != 0) {
+					SEM_WAIT(ioSema);
+
+					count = 0;
+					id = currentInputQueue.front();
+					currentInputQueue.pop();
+					threadData *data = threadDatas->at(id);
+					// read in the data
+					while (in || count > 10000) {
+						data->appendFromFasta(in);
+					}
+					SEM_POST(ioSema);
+
+					SEM_POST(data->readSema);
+				}
+			}
+		}
+		finishedReadingFlag = 1;
+		SEM_WAIT(terminationSema);
 	}
-	CloseFASTA(fp);
-
-	if (verbose) printf("INFO : Finished handing out all the work...\n");
-	num_reads_flag =1;
-
-	sem_wait(stop_sema);
- */
 }
 
 
-void* thread_func(void *_thread_datas) {
-/*
-	thread_data *td = (thread_data*)_thread_datas;
-	unsigned int b = 0;
-	unsigned int i;
+void* threadFunction(void *args) {
+
+	struct threadData *data = (struct threadData*)args;
 
 	while(1) {
-		sem_wait(td->sema_r);
-		sem_wait(td->sema_w);
+		SEM_WAIT(data->readSema);
+		SEM_WAIT(data->writeSema);
 
-		sem_wait(counter_sema);
-		viterbi_counter +=  td->input_num_sequences[b];
-		sem_post(counter_sema);
+		data->scanAllVolumes(volumes);
+		data->query.reinitForAppending();
 
-		for (i=0; i < td->input_num_sequences[b]; i++) {
-			unsigned int stringlength = strlen(td->input_buffer[b][i]);
-			get_prob_from_cg(td->hmm, &train, td->input_buffer[b][i], stringlength);
+		SEM_WAIT(inputOutputQueueSema);
+		inputQueue.push( data->identifier );
+		outputQueue.push( data->identifier );
+		SEM_POST(inputOutputQueueSema);
 
-			if(td->input_buffer[b][i] == 0 || td->input_head_buffer[b][i] == 0 ) {
-				printf("%s\n",td->input_buffer[b][i]);
-				printf("%s\n",td->input_head_buffer[b][i]);
-			}
-
-			if (td->input_buffer[b][i] != 0 && td->input_head_buffer[b][i] != 0 ) {
-				memset(td->aa_buffer[b][i], 0, STRINGLEN );
-
-				viterbi(td->hmm, td->input_buffer[b][i], td->output_buffer[b][i], td->aa_buffer[b][i], td->dna_buffer[b][i],
-				        td->input_head_buffer[b][i], td->wholegenome, td->format, stringlength,
-				        td->dna, td->dna1, td->dna_f, td->dna_f1, td->protein,
-				        td->insert, td->c_delete, td->temp_str);
-
-				td->acceptable_buffer[b][i] = 1;
-
-				sem_wait(work_sema);
-				work_counter++;
-				sem_post(work_sema);
-			}
-		}
-		td->output_num_sequences[b] = td->input_num_sequences[b];
-
-		if (verbose) printf("INFO: Thread %d buffer %d done work on %d sequences!\n", td->id, b, td->input_num_sequences[b]);
-		sem_wait(sema_Q);
-		enqueue(td, b, EMPTY_Q);
-		enqueue(td, b, DONE_Q);
-
-		sem_post(sema_Q);
-		sem_post(sema_r);
-		sem_post(sema_w);
-
-		b = (b + 1) % 2;
+		SEM_POST(readerSema);
+		SEM_POST(writerSema);
 	}
 	return (void*) 0;
- */
 }

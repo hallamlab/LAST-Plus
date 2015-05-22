@@ -28,7 +28,6 @@
 #include "lastex.hh"
 #include "LastexArguments.hh"
 
-
 #include <iostream>
 #include <fstream>
 #include <stdexcept>
@@ -38,9 +37,9 @@
 #include <vector>
 
 #include <queue>
-#include <set>
 
 #include <cstdlib>
+#include <cstdio>
 #include <pthread.h>
 #include "semaphores.hh"
 #include "SubsetSuffixArrayUser.hh"
@@ -95,29 +94,41 @@ struct threadData{
   TwoQualityScoreMatrix twoQualityScoreMatrixMasked;
   int identifier;
 
+	SEM_T readSema;
+	SEM_T writeSema;
+
+// Find query matches to the suffix array, and do gapless extensions
   void alignGapless( SegmentPairPot& gaplessAlns, char strand );
+// Do gapped extensions of the gapless alignments
   void alignGapped( AlignmentPot& gappedAlns, SegmentPairPot& gaplessAlns, Phase::Enum phase );
+// Print the gapped alignments, after optionally calculating match
+// probabilities and re-aligning using the gamma-centroid algorithm
   void alignFinish( const AlignmentPot& gappedAlns, char strand );
   void makeQualityPssm( bool isApplyMasking );
+// Scan one batch of query sequences against one database volume
   void scan( char strand );
+// Scan one batch of query sequences against one database volume,
+// after optionally translating the query
   void translateAndScan( char strand );
   void reverseComplementPssm();
   void reverseComplementQuery();
-  void scanAllVolumes( unsigned volumes );
+// Scan one batch of query sequences against all database volumes
+  void scanAllVolumes( unsigned volumes);
   void prepareThreadData(std::string matrixFile, int identifier );
-  void readIndex( const std::string& baseName, indexT seqCount );
-  void readVolume( unsigned volumeNumber );
   void countMatches( char strand );
-  void writeCounts();
+// Write match counts for each query sequence
+  void writeCounts(std::ostream& out);
+// Read the next sequence, adding it to the MultiSequence
   std::istream& appendFromFasta( std::istream& in );
-  void callReinit();
-
+// Set up a scoring matrix, based on the user options
   void makeScoreMatrix( const std::string& matrixFile) ;
   void makeQualityScorers();
+// Calculate statistical parameters for the alignment scoring scheme
+// Meaningless for PSSMs, unless they have the same scale as the score matrix
   void calculateScoreStatistics();
+// Read the .prj file for the whole database
   void readOuterPrj( const std::string& fileName, unsigned& volumes, indexT& minSeedLimit,
       countT& refSequences, countT& refLetters );
-  void readInnerPrj( const std::string& fileName, indexT& seqCount, indexT& seqLen );
 };
 
 struct Dispatcher{
@@ -155,7 +166,14 @@ struct Dispatcher{
         (referenceFormat  == sequenceFormat::fasta) ? 1 : 2 ),
     aa ( aa = &alph ){}
 
-  void shrinkToLongestIdenticalRun( SegmentPair& sp);
+// Shrink the SegmentPair to its longest run of identical matches.
+// This trims off possibly unreliable parts of the gapless alignment.
+// It may not be the best strategy for protein alignment with subset
+// seeds: there could be few or no identical matches...
+	void shrinkToLongestIdenticalRun(SegmentPair &sp) {
+		sp.maxIdenticalRun(a, b, aa->canonical);
+		sp.score = gaplessScore(sp.beg1(), sp.end1(), sp.beg2());
+	}
 
   int forwardGaplessScore( indexT x, indexT y ) const{
     if( z==0 ) return forwardGaplessXdropScore( a+x, b+y, m, d );
@@ -194,13 +212,20 @@ struct Dispatcher{
   }
 };
 
-void writerFunction( std::ostream& out );
+// Read a per-volume .prj file, with info about a database volume
+void readInnerPrj( const std::string& fileName, indexT& seqCount, indexT& seqLen );
+// Read one database volume
+void readVolume( unsigned volumeNumber );
+void readIndex( const std::string& baseName, indexT seqCount );
+
+void *writerFunction(void *arguments);
 void readerFunction( std::istream& in );
-void* threadFunction( void *args );
+void *threadFunction(void *__threadData);
 void writeHeader( countT refSequences, std::ostream& out );
 void initializeThreads();
 void initializeSemaphores();
-void initializeEvalueCalulator(const std::string dbPrjFile, ScoreMatrix &scoreMatrix, std::string dbfilePrj);
+void initializeEvalueCalulator(const std::string dbPrjFile, ScoreMatrix &scoreMatrix,
+                               std::string dbfilePrj);
 void lastal( int argc, char** argv );
 
 #endif

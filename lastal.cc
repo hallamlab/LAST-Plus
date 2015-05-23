@@ -18,8 +18,8 @@ SEM_T terminationSema;
 SEM_T inputOutputQueueSema;
 
 unsigned volumes = unsigned(-1);
-unsigned totalLength = 0;
 unsigned workDone = 0;
+unsigned readCharacters = 0;
 
 countT refSequences = -1;
 countT refLetters = -1;
@@ -208,7 +208,6 @@ void threadData::readOuterPrj(const std::string &fileName, unsigned &volumes, in
     if (word == "sequenceformat") iss >> referenceFormat;
     if (word == "volumes") iss >> volumes;
     if (word == "numofindexes") iss >> numOfIndexes;
-    if (word == "totallength") iss >> totalLength;
   }
 
   if (f.eof() && !f.bad()) f.clear();
@@ -795,10 +794,13 @@ void *writerFunction(void *arguments){
     }
 
     SEM_WAIT(inputOutputQueueSema);
-    if (finishedReadingFlag == 1 && outputQueue.size() == 0 && workDone == totalLength) {
-      SEM_POST(terminationSema);
-      SEM_POST(inputOutputQueueSema);
-      break;
+
+    if (finishedReadingFlag == 1 ){
+      if (outputQueue.size() == 0 && workDone == readCharacters){
+        SEM_POST(terminationSema);
+        SEM_POST(inputOutputQueueSema);
+        break;
+      }
     }
     SEM_POST(inputOutputQueueSema);
   }
@@ -845,6 +847,7 @@ void readerFunction( std::istream& in ){
             break;
           }
         }
+        readCharacters += data->query.unfinishedSize();
         SEM_POST(ioSema);
 
         SEM_POST(data->readSema);
@@ -873,10 +876,10 @@ void *threadFunction(void *__threadData) {
     inputQueue.push(data->identifier);
     outputQueue.push(data->identifier);
 
-    if(data->query.finishedSize() == 1){
-      workDone += data->query.finishedSize() - 1;
+    if(data->query.unfinishedSize() == 1){
+      workDone += data->query.unfinishedSize() - 1;
     }else{
-      workDone += data->query.finishedSize();
+      workDone += data->query.unfinishedSize();
     }
     data->query.reinitForAppending();
     SEM_POST(inputOutputQueueSema);

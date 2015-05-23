@@ -11,3 +11,4 @@ core
 TestData/*
 CMakeFiles*
 CMakeCache*
+cmake_install*

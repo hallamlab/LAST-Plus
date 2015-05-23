@@ -9,3 +9,5 @@ a
 *.swp
 core
 TestData/*
+CMakeFiles*
+CMakeCache*

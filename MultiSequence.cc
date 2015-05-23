@@ -91,7 +91,9 @@ std::istream& MultiSequence::appendFromFasta( std::istream& stream, indexT maxSe
   std::istreambuf_iterator<char> endpos;
   while( inpos != endpos ){
     uchar c = *inpos;
-    if( c == '>' ) break;  // we have hit the next FASTA sequence
+    if( c == '>' ){
+      break;  // we have hit the next FASTA sequence
+    }
     if( !std::isspace(c) ){
       //if( seq.v.size() >= maxSeqLen ) break;
       seq.v.push_back(c);

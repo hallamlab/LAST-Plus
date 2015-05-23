@@ -92,7 +92,9 @@ struct threadData{
   QualityPssmMaker qualityPssmMaker;
   TwoQualityScoreMatrix twoQualityScoreMatrix;
   TwoQualityScoreMatrix twoQualityScoreMatrixMasked;
+
   int identifier;
+	int round;
 
 	SEM_T readSema;
 	SEM_T writeSema;

@@ -93,10 +93,11 @@ void threadData::prepareThreadData(std::string matrixFile, int identifier) {
 
     sprintf(name, "/writeSema%d", identifier);
     sem_unlink(name);
-    writeSema = sem_open(name, O_CREAT, 0644, 2)
+    writeSema = sem_open(name, O_CREAT, 0644, 1)
 #elif __linux
 	sem_init(&readSema, 0, 0);
-	sem_init(&writeSema, 0, 2);
+	//!! double buffers, initialize them to 2
+	sem_init(&writeSema, 0, 1);
 #endif
 }
 
@@ -558,7 +559,6 @@ void threadData::translateAndScan(char strand) {
 
 void readIndex(const std::string &baseName, indexT seqCount) {
 
-	SEM_WAIT(ioSema);
 	LOG("reading " << baseName << "...");
 	text.fromFiles(baseName, seqCount, isFastq(threadDatas->at(0)->referenceFormat));
 	for (unsigned x = 0; x < numOfIndexes; ++x) {
@@ -568,7 +568,6 @@ void readIndex(const std::string &baseName, indexT seqCount) {
 			suffixArrays[x].fromFiles(baseName, isCaseSensitiveSeeds, threadDatas->at(0)->alph.encode);
 		}
 	}
-	SEM_POST(ioSema);
 }
 
 void readVolume(unsigned volumeNumber) {
@@ -609,38 +608,25 @@ void threadData::reverseComplementQuery() {
 
 void threadData::scanAllVolumes(unsigned volumes) {
 
-	/*
-	if (args.outputType == 0) {
-		matchCounts.clear();
-		matchCounts.resize(query.finishedSequences());
+	if (args.strand == 2 && round > 0) {
+		reverseComplementQuery();
 	}
 
-	if (volumes + 1 == 0) volumes = 1;
+	if (args.strand != 0) {
+		translateAndScan('+');
+	}
 
-	for (unsigned i = 0; i < volumes; ++i) {
-		//if (text.unfinishedSize() == 0 || volumes > 1) readVolume(i);
-	 */
+	if (args.strand == 2 || (args.strand == 0 && round == 0)) {
+		reverseComplementQuery();
+	}
 
-	/*
-		if (args.strand == 2 && i > 0){
-			reverseComplementQuery();
-		}
+	if (args.strand != 1) {
+		translateAndScan('-');
+	}
 
-		if (args.strand != 0){
-			translateAndScan('+');
-		}
-
-		if (args.strand == 2 || (args.strand == 0 && i == 0)){
-			reverseComplementQuery();
-		}
-
-		if (args.strand != 1){
-		  translateAndScan('-');
-		}
-*/
+	//if (args.outputType == 0){
+	// writeCounts(out);
 	//}
-
-	//if (args.outputType == 0) writeCounts(out);
 
 	LOG("query batch done!");
 }
@@ -767,15 +753,15 @@ void initializeSemaphores() {
         exit(EXIT_FAILURE);
     }
 #elif __linux
-	sem_init(&readerSema, 0, 1);
-	sem_init(&writerSema, 0, 1);
+	sem_init(&readerSema, 0, 0);
+	sem_init(&writerSema, 0, 0);
 	sem_init(&ioSema, 0, 1);
-	sem_init(&terminationSema, 0, 1);
+	sem_init(&terminationSema, 0, 0);
 	sem_init(&inputOutputQueueSema, 0, 1);
 #endif
 }
 
-void *writerFunction(void *arguments) {
+void *writerFunction(void *arguments){
 
 	std::queue<int> currentOutputQueue;
 	int id;
@@ -814,7 +800,7 @@ void *writerFunction(void *arguments) {
 		writerCounter = outputQueue.size();
 		SEM_POST(inputOutputQueueSema);
 
-		if (finishedReadingFlag == 1 && writerCounter == 0 && readerCounter == 0) {
+		if (finishedReadingFlag == 1 && writerCounter == 0) {
 			SEM_POST(terminationSema);
 			break;
 		}
@@ -827,10 +813,14 @@ void readerFunction( std::istream& in ){
 	int id;
 	int count;
 
+	SEM_POST(inputOutputQueueSema);
+
 		if (volumes + 1 == 0) volumes = 1;
 		for (unsigned i = 0; i < volumes; ++i) {
 			if (text.unfinishedSize() == 0 || volumes > 1){
+				SEM_WAIT(ioSema);
 				readVolume(i);
+				SEM_POST(ioSema);
 			}
 
 			while (in) {
@@ -843,25 +833,32 @@ void readerFunction( std::istream& in ){
 				}
 				SEM_POST(inputOutputQueueSema);
 
-				while (currentInputQueue.size() != 0) {
+				while (currentInputQueue.size() != 0 && in) {
 					SEM_WAIT(ioSema);
-
 					count = 0;
 					id = currentInputQueue.front();
 					currentInputQueue.pop();
 					threadData *data = threadDatas->at(id);
+					data->round = i;
 					// read in the data
-					while (in || count > 10000) {
-						data->appendFromFasta(in);
+					while (count < 10000){
+						if(in) {
+							data->appendFromFasta(in);
+							count++;
+						} else {
+							break;
+						}
 					}
 					SEM_POST(ioSema);
 
 					SEM_POST(data->readSema);
 				}
+				std::cout << "Outside the loop" << std::endl;
 			}
 			in.clear();
 			in.seekg(0);
 		}
+		std::cout << "we are done" << std::endl;
 		finishedReadingFlag = 1;
 		SEM_WAIT(terminationSema);
 }
@@ -869,7 +866,6 @@ void readerFunction( std::istream& in ){
 void *threadFunction(void *__threadData) {
 
 	struct threadData *data = (struct threadData *) __threadData;
-
 	if (args.outputType == 0) {
 		data->matchCounts.clear();
 		data->matchCounts.resize(data->query.finishedSequences());

@@ -46,7 +46,7 @@ lastdb: $(DBOBJ)
 	$(CXX) $(CXXFLAGS) $(LDFLAGS) -o $@ $(DBOBJ)
 
 lastal: $(ALOBJ)
-	$(CXX) $(CXXFLAGS) $(LDFLAGS) -lpthread -o $@ $(ALOBJ)
+	$(CXX) $(CXXFLAGS) $(LDFLAGS) -pthread -o $@ $(ALOBJ)
 
 last-split: $(SPOBJ)
 	$(CXX) $(CXXFLAGS) $(LDFLAGS) -o $@ $(SPOBJ)

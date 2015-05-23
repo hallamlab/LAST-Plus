@@ -1,5 +1,5 @@
 *.o
-TestDB/*
+TestData/*
 last-merge-batches
 lastex
 lastal
@@ -8,7 +8,6 @@ last-split
 a
 *.swp
 core
-TestData/*
 CMakeFiles*
 CMakeCache*
 cmake_install*

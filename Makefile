@@ -1,14 +1,9 @@
 CXX = g++
 CC  = gcc
 
-#CXXFLAGS = -O3 -Wall -Wextra -Wcast-qual -Wswitch-enum -Wundef	\
-#-Wcast-align -Wno-long-long -ansi -pedantic -m64 #-g
+CXXFLAGS = -O3 -w -m64
 
-CXXFLAGS = -O3 -w -m64 -lpthread
-
-#CFLAGS = -Wall -O3  -m64  # -g
-
-iCFLAGS = -w -O3 -m64  # -g
+CFLAGS = -w -O3 -m64
 
 DBOBJ = Alphabet.o MultiSequence.o CyclicSubsetSeed.o	\
 SubsetSuffixArray.o LastdbArguments.o io.o fileMap.o	\
@@ -51,7 +46,7 @@ lastdb: $(DBOBJ)
 	$(CXX) $(CXXFLAGS) $(LDFLAGS) -o $@ $(DBOBJ)
 
 lastal: $(ALOBJ)
-	$(CXX) $(CXXFLAGS) $(LDFLAGS) -o $@ $(ALOBJ)
+	$(CXX) $(CXXFLAGS) $(LDFLAGS) -lpthread -o $@ $(ALOBJ)
 
 last-split: $(SPOBJ)
 	$(CXX) $(CXXFLAGS) $(LDFLAGS) -o $@ $(SPOBJ)

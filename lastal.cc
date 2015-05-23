@@ -96,7 +96,7 @@ void threadData::prepareThreadData(std::string matrixFile, int identifier) {
     writeSema = sem_open(name, O_CREAT, 0644, 1);
 #elif __linux
 	sem_init(&readSema, 0, 0);
-	//!! double buffers, initialize them to 2
+	//!! double buffers, initialize the writeSema to 2
 	sem_init(&writeSema, 0, 1);
 #endif
 }
@@ -765,7 +765,6 @@ void *writerFunction(void *arguments){
 
 	std::queue<int> currentOutputQueue;
 	int id;
-	int readerCounter;
 	int writerCounter;
 	std::ofstream outFileStream;
 	std::ostream &out = openOut(args.outFile, outFileStream);
@@ -796,7 +795,6 @@ void *writerFunction(void *arguments){
 		}
 
 		SEM_WAIT(inputOutputQueueSema);
-		readerCounter = inputQueue.size();
 		writerCounter = outputQueue.size();
 		SEM_POST(inputOutputQueueSema);
 
@@ -816,16 +814,22 @@ void readerFunction( std::istream& in ){
 	SEM_POST(inputOutputQueueSema);
 
 		if (volumes + 1 == 0) volumes = 1;
+		//std::cout << "volumes : " << volumes << std::endl;
 		for (unsigned i = 0; i < volumes; ++i) {
+			//std::cout << "current volume : " << i << std::endl;
 			if (text.unfinishedSize() == 0 || volumes > 1){
 				SEM_WAIT(ioSema);
+				//std::cout << "reading in volume " << i << std::endl;
 				readVolume(i);
+				//std::cout << "done reading in volume " << i << std::endl;
 				SEM_POST(ioSema);
 			}
 
 			while (in) {
+				//std::cout << "waiting for the readerSema" << std::endl;
 				SEM_WAIT(readerSema);
 
+				//std::cout << "waiting for the ioQueueSema" << std::endl;
 				SEM_WAIT(inputOutputQueueSema);
 				for (int j = 0; j < inputQueue.size(); j++) {
 					currentInputQueue.push(inputQueue.front());
@@ -834,6 +838,7 @@ void readerFunction( std::istream& in ){
 				SEM_POST(inputOutputQueueSema);
 
 				while(currentInputQueue.size() > 0 && in){
+					//std::cout << "waiting for the ioSema" << std::endl;
 					SEM_WAIT(ioSema);
 					count = 0;
 					id = currentInputQueue.front();
@@ -842,6 +847,7 @@ void readerFunction( std::istream& in ){
 					data->round = i;
 					// read in the data
 					while(count < 10000){
+						//std::cout << "reading in data" << std::endl;
 						if(in){
 							data->appendFromFasta(in);
 							count++;
@@ -868,19 +874,24 @@ void *threadFunction(void *__threadData) {
 		data->matchCounts.clear();
 		data->matchCounts.resize(data->query.finishedSequences());
 	}
-
+	//std::cout << "Created the thread function : " << data->identifier << std::endl;
 	while (1) {
+		//std::cout << "Waiting for the thread read sema : " << data->identifier << std::endl;
 		SEM_WAIT(data->readSema);
+		//std::cout << "Waiting for the thread write sema : " << data->identifier << std::endl;
 		SEM_WAIT(data->writeSema);
 
+		//std::cout << "going into scanAllVolumes : " << data->identifier << std::endl;
 		data->scanAllVolumes(volumes);
+		//std::cout << "coming out of scanAllVolumes : " << data->identifier << std::endl;
 		data->query.reinitForAppending();
-
+		//std::cout << "Waiting for the queue : " << data->identifier << std::endl;
 		SEM_WAIT(inputOutputQueueSema);
 		inputQueue.push(data->identifier);
 		outputQueue.push(data->identifier);
 		SEM_POST(inputOutputQueueSema);
 
+		//std::cout << "posting readerSema and writerSema" << std::endl;
 		SEM_POST(readerSema);
 		SEM_POST(writerSema);
 	}
@@ -921,7 +932,7 @@ void lastal(int argc, char **argv) {
 		}
 
 		for (int j = 0; j < args.threadNum; j++) {
-			// double buffer condition, reapply later.
+			//!! double buffer condition, reapply later.
 			//for(int k=0; k<2; k++) {
 			SEM_WAIT(ioSema);
 			if (in) {

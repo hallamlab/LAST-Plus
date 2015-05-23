@@ -89,11 +89,11 @@ void threadData::prepareThreadData(std::string matrixFile, int identifier) {
 
     sprintf(name, "/readSema%d", identifier);
     sem_unlink(name);
-    readSema = sem_open(name, O_CREAT, 0644, 0)
+    readSema = sem_open(name, O_CREAT, 0644, 0);
 
     sprintf(name, "/writeSema%d", identifier);
     sem_unlink(name);
-    writeSema = sem_open(name, O_CREAT, 0644, 1)
+    writeSema = sem_open(name, O_CREAT, 0644, 1);
 #elif __linux
 	sem_init(&readSema, 0, 0);
 	//!! double buffers, initialize them to 2
@@ -833,7 +833,7 @@ void readerFunction( std::istream& in ){
 				}
 				SEM_POST(inputOutputQueueSema);
 
-				while (currentInputQueue.size() != 0 && in) {
+				while(currentInputQueue.size() > 0 && in){
 					SEM_WAIT(ioSema);
 					count = 0;
 					id = currentInputQueue.front();
@@ -841,11 +841,11 @@ void readerFunction( std::istream& in ){
 					threadData *data = threadDatas->at(id);
 					data->round = i;
 					// read in the data
-					while (count < 10000){
-						if(in) {
+					while(count < 10000){
+						if(in){
 							data->appendFromFasta(in);
 							count++;
-						} else {
+						}else{
 							break;
 						}
 					}
@@ -853,12 +853,10 @@ void readerFunction( std::istream& in ){
 
 					SEM_POST(data->readSema);
 				}
-				std::cout << "Outside the loop" << std::endl;
 			}
 			in.clear();
 			in.seekg(0);
 		}
-		std::cout << "we are done" << std::endl;
 		finishedReadingFlag = 1;
 		SEM_WAIT(terminationSema);
 }
@@ -934,6 +932,12 @@ void lastal(int argc, char **argv) {
 		}
 		readerFunction(in);
 	}
+
+	/*
+	for (int j=0; j<args.threadNum; j++){
+		pthread_cancel(threads->at(j));
+	}
+	*/
 
 }
 

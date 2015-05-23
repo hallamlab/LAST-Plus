@@ -6,7 +6,7 @@ gumbel_params/corelib)
 
 include_directories(${DIRECTORIES})
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O0 -g -w -m64 -pthread")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -g -w -m64 -pthread")
 
 set(LASTDB_SOURCE_FILES
     Alphabet.cc

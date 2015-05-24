@@ -16,10 +16,11 @@ SEM_T writerSema;
 SEM_T ioSema;
 SEM_T terminationSema;
 SEM_T inputOutputQueueSema;
+SEM_T dataCounterSema;
 
 unsigned volumes = unsigned(-1);
-unsigned workDone = 0;
-unsigned readCharacters = 0;
+unsigned readSequences = 0;
+unsigned doneSequences = 0;
 
 countT refSequences = -1;
 countT refLetters = -1;
@@ -753,12 +754,18 @@ void initializeSemaphores() {
     perror("sem_open");
     exit(EXIT_FAILURE);
   }
+  sem_unlink("/dataCounterSema");
+  if (( dataCounterSema = sem_open("/dataCounterSema", O_CREAT, 0644, 1)) == SEM_FAILED ) {
+    perror("sem_open");
+    exit(EXIT_FAILURE);
+  }
 #elif __linux
   sem_init(&readerSema, 0, 0);
   sem_init(&writerSema, 0, 0);
   sem_init(&ioSema, 0, 1);
   sem_init(&terminationSema, 0, 0);
   sem_init(&inputOutputQueueSema, 0, 1);
+  sem_init(&dataCounterSema, 0, 1);
 #endif
 }
 
@@ -799,7 +806,11 @@ void *writerFunction(void *arguments){
     SEM_WAIT(inputOutputQueueSema);
 
     if (finishedReadingFlag == 1 ){
-      if (outputQueue.size() == 0 && workDone == readCharacters){
+
+      std::cout << "readSequences : " << readSequences << std::endl;
+      std::cout << "doneSequences : " << doneSequences << std::endl;
+
+      if (outputQueue.size() == 0 && readSequences == doneSequences){
         SEM_POST(terminationSema);
         SEM_POST(inputOutputQueueSema);
         break;
@@ -850,7 +861,7 @@ void readerFunction( std::istream& in ){
             break;
           }
         }
-        readCharacters += data->query.unfinishedSize();
+        readSequences += data->query.finishedSequences();
         SEM_POST(ioSema);
 
         SEM_POST(data->readSema);
@@ -875,23 +886,16 @@ void *threadFunction(void *__threadData) {
     SEM_WAIT(data->writeSema);
 
     data->scanAllVolumes(volumes);
+    
+    SEM_WAIT(dataCounterSema);
+    doneSequences += data->query.finishedSequences();
+    SEM_POST(dataCounterSema);
+    
+    data->query.reinitForAppending();
+
     SEM_WAIT(inputOutputQueueSema);
     inputQueue.push(data->identifier);
     outputQueue.push(data->identifier);
-
-    /*
-    if(data->query.unfinishedSize() != 1){
-      workDone += data->query.unfinishedSize();
-    }
-    */
-
-    if(data->query.unfinishedSize() == 1){
-      workDone += data->query.unfinishedSize() - 1;
-    }else{
-      workDone += data->query.unfinishedSize();
-    }
-
-    data->query.reinitForAppending();
     SEM_POST(inputOutputQueueSema);
 
     SEM_POST(readerSema);

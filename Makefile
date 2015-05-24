@@ -1,9 +1,8 @@
 CXX = g++
 CC  = gcc
 
-CXXFLAGS = -O3 -w -m64
-
-CFLAGS = -w -O3 -m64
+CXXFLAGS = -O3 -w -m64 -g
+CFLAGS =   -O3 -w -m64 -g
 
 DBOBJ = Alphabet.o MultiSequence.o CyclicSubsetSeed.o	\
 SubsetSuffixArray.o LastdbArguments.o io.o fileMap.o	\

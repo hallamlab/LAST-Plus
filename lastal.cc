@@ -195,6 +195,8 @@ void threadData::readOuterPrj(const std::string &fileName, unsigned &volumes, in
   if (!f) ERR("can't open file: " + fileName);
   unsigned version = 0;
 
+  referenceFormat = sequenceFormat::fasta;
+
   std::string line, word;
   while (getline(f, line)) {
     std::istringstream iss(line);
@@ -788,6 +790,7 @@ void *writerFunction(void *arguments){
       for (int j = 0; j < data->outputVector->size(); j++) {
         out << data->outputVector->at(j);
       }
+      data->outputVector->clear();
 
       SEM_POST(ioSema);
       SEM_POST(data->writeSema);
@@ -876,11 +879,18 @@ void *threadFunction(void *__threadData) {
     inputQueue.push(data->identifier);
     outputQueue.push(data->identifier);
 
+    /*
+    if(data->query.unfinishedSize() != 1){
+      workDone += data->query.unfinishedSize();
+    }
+    */
+
     if(data->query.unfinishedSize() == 1){
       workDone += data->query.unfinishedSize() - 1;
     }else{
       workDone += data->query.unfinishedSize();
     }
+
     data->query.reinitForAppending();
     SEM_POST(inputOutputQueueSema);
 

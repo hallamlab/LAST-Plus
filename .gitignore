@@ -11,3 +11,7 @@ core
 CMakeFiles*
 CMakeCache*
 cmake_install*
+cachegrind*
+callgrind*
+massif*
+lastal.d*

@@ -806,10 +806,6 @@ void *writerFunction(void *arguments){
     SEM_WAIT(inputOutputQueueSema);
 
     if (finishedReadingFlag == 1 ){
-
-      std::cout << "readSequences : " << readSequences << std::endl;
-      std::cout << "doneSequences : " << doneSequences << std::endl;
-
       if (outputQueue.size() == 0 && readSequences == doneSequences){
         SEM_POST(terminationSema);
         SEM_POST(inputOutputQueueSema);

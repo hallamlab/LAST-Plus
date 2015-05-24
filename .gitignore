@@ -15,3 +15,4 @@ cachegrind*
 callgrind*
 massif*
 lastal.d*
+out*

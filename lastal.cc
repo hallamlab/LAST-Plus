@@ -776,7 +776,7 @@ void *writerFunction(void *arguments){
   int writerCounter;
   std::ofstream outFileStream;
   std::ostream &out = openOut(args.outFile, outFileStream);
-  out.precision(3);
+  //out.precision(3);
 
   while (1) {
     SEM_WAIT(writerSema);

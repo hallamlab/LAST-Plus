@@ -92,6 +92,7 @@ void Alignment::writeBlastOutput( const MultiSequence& seq1, const MultiSequence
 			                            LastalArguments &args) const{
 
   std::stringstream outputStream;
+  outputStream.precision(3);
 
   double fullScore = extras.fullScore;
 
@@ -189,7 +190,6 @@ void Alignment::writeBlastOutput( const MultiSequence& seq1, const MultiSequence
        outputStream << "\n";
 
        outputVector->push_back( outputStream.str() );
-       //std::cout << outputStream.str();
   }
 }
 

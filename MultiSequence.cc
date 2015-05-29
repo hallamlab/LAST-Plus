@@ -95,13 +95,12 @@ std::istream& MultiSequence::appendFromFasta( std::istream& stream, indexT maxSe
       break;  // we have hit the next FASTA sequence
     }
     if( !std::isspace(c) ){
-      //if( seq.v.size() >= maxSeqLen ) break;
       seq.v.push_back(c);
     }
     ++inpos;
   }
 
-  if( isFinishable(maxSeqLen) ) finish();
+  finish();
   return stream;
 }
 

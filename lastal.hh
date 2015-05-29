@@ -48,6 +48,10 @@
 #define ERR(x) throw std::runtime_error(x)
 #define LOG(x) if( args.verbosity > 0 ) std::cerr << "lastal: " << x << '\n'
 
+#define OUTPUT_SIZE 1000
+#define INPUT_SIZE 10000
+#define RESERVE 1000
+
 using namespace cbrc;
 
 typedef MultiSequence::indexT indexT;
@@ -80,9 +84,19 @@ struct threadData{
   SubsetSuffixArrayUser subsetUser;
   GappedXdropAligner gappedXdropAligner;
   Centroid *centroid;
-  MultiSequence query;  // sequence that hasn't been indexed by lastdb
+
+  bool whichQuery;
+  MultiSequence *queryPointer;
+  MultiSequence query0;  // sequence that hasn't been indexed by lastdb
+  MultiSequence query1;  // sequence that hasn't been indexed by lastdb
+  
+  std::vector<std::string> *outputVectorPointer;
+  std::vector<std::string> *outputVector0;
+  std::vector<std::string> *outputVector1;
+
+
   std::vector< std::vector<countT> > matchCounts;  // used if outputType == 0
-	std::vector<std::string> *outputVector;
+
   GeneralizedAffineGapCosts gapCosts;
   ScoreMatrix scoreMatrix;
   sequenceFormat::Enum referenceFormat;  // defaults to 0
@@ -95,9 +109,11 @@ struct threadData{
 
   int identifier;
 	int round;
+  int counter;
 
 	SEM_T readSema;
 	SEM_T writeSema;
+  SEM_T counterSema;
 
 // Find query matches to the suffix array, and do gapless extensions
   void alignGapless( SegmentPairPot& gaplessAlns, char strand );
@@ -117,6 +133,9 @@ struct threadData{
 // Scan one batch of query sequences against all database volumes
   void scanAllVolumes( unsigned volumes);
   void prepareThreadData(std::string matrixFile, int identifier );
+  /* helper function to reserve space in all of the query multisequence structures to hopefully prevent
+   * costly resize operations */
+  void prepareQuery(int init, MultiSequence &query);
   void countMatches( char strand );
 // Write match counts for each query sequence
   void writeCounts(std::ostream& out);
@@ -131,6 +150,7 @@ struct threadData{
 // Read the .prj file for the whole database
   void readOuterPrj( const std::string& fileName, unsigned& volumes, indexT& minSeedLimit,
       countT& refSequences, countT& refLetters );
+  void switchBuffers();
 };
 
 struct Dispatcher{
@@ -172,42 +192,42 @@ struct Dispatcher{
 // This trims off possibly unreliable parts of the gapless alignment.
 // It may not be the best strategy for protein alignment with subset
 // seeds: there could be few or no identical matches...
-	void shrinkToLongestIdenticalRun(SegmentPair &sp) {
+	inline void shrinkToLongestIdenticalRun(SegmentPair &sp) {
 		sp.maxIdenticalRun(a, b, aa->canonical);
 		sp.score = gaplessScore(sp.beg1(), sp.end1(), sp.beg2());
 	}
 
-  int forwardGaplessScore( indexT x, indexT y ) const{
+  inline int forwardGaplessScore( indexT x, indexT y ) const{
     if( z==0 ) return forwardGaplessXdropScore( a+x, b+y, m, d );
     if( z==1 ) return forwardGaplessPssmXdropScore( a+x, p+y, d );
     return forwardGaplessTwoQualityXdropScore( a+x, i+x, b+y, j+y, t, d );
   }
 
-  int reverseGaplessScore( indexT x, indexT y ) const{
+  inline int reverseGaplessScore( indexT x, indexT y ) const{
     if( z==0 ) return reverseGaplessXdropScore( a+x, b+y, m, d );
     if( z==1 ) return reverseGaplessPssmXdropScore( a+x, p+y, d );
     return reverseGaplessTwoQualityXdropScore( a+x, i+x, b+y, j+y, t, d );
   }
 
-  indexT forwardGaplessEnd( indexT x, indexT y, int s ) const{
+  inline indexT forwardGaplessEnd( indexT x, indexT y, int s ) const{
     if( z==0 ) return forwardGaplessXdropEnd( a+x, b+y, m, s ) - a;
     if( z==1 ) return forwardGaplessPssmXdropEnd( a+x, p+y, s ) - a;
     return forwardGaplessTwoQualityXdropEnd( a+x, i+x, b+y, j+y, t, s ) - a;
   }
 
-  indexT reverseGaplessEnd( indexT x, indexT y, int s ) const{
+  inline indexT reverseGaplessEnd( indexT x, indexT y, int s ) const{
     if( z==0 ) return reverseGaplessXdropEnd( a+x, b+y, m, s ) - a;
     if( z==1 ) return reverseGaplessPssmXdropEnd( a+x, p+y, s ) - a;
     return reverseGaplessTwoQualityXdropEnd( a+x, i+x, b+y, j+y, t, s ) - a;
   }
 
-  bool isOptimalGapless( indexT x, indexT e, indexT y ) const{
+  inline bool isOptimalGapless( indexT x, indexT e, indexT y ) const{
     if( z==0 ) return isOptimalGaplessXdrop( a+x, a+e, b+y, m, d );
     if( z==1 ) return isOptimalGaplessPssmXdrop( a+x, a+e, p+y, d );
     return isOptimalGaplessTwoQualityXdrop( a+x, a+e, i+x, b+y, j+y, t, d );
   }
 
-  int gaplessScore( indexT x, indexT e, indexT y ) const{
+  inline int gaplessScore( indexT x, indexT e, indexT y ) const{
     if( z==0 ) return gaplessAlignmentScore( a+x, a+e, b+y, m );
     if( z==1 ) return gaplessPssmAlignmentScore( a+x, a+e, p+y );
     return gaplessTwoQualityAlignmentScore( a+x, a+e, i+x, b+y, j+y, t );
@@ -219,6 +239,8 @@ void readInnerPrj( const std::string& fileName, indexT& seqCount, indexT& seqLen
 // Read one database volume
 void readVolume( unsigned volumeNumber );
 void readIndex( const std::string& baseName, indexT seqCount );
+
+void prepareText();
 
 void *writerFunction(void *arguments);
 void readerFunction( std::istream& in );

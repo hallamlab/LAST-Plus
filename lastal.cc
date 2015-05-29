@@ -716,11 +716,11 @@ void writeHeader(countT refSequences, std::ostream &out) {
 void threadData::switchBuffers(){
 
   if(whichQuery){
-    //queryPointer = &query1;
+    queryPointer = &query0;
     outputVectorPointer = outputVector0;
     whichQuery = !whichQuery;
   }else{
-    //queryPointer = &query0;
+    queryPointer = &query1;
     outputVectorPointer = outputVector1;
     whichQuery = !whichQuery;
   }

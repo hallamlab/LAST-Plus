@@ -26,7 +26,6 @@ countT refLetters = -1;
 
 void threadData::prepareThreadData(std::string matrixFile, int identifier) {
 
-
   outputVector0 = new std::vector<std::string>();
   outputVector1 = new std::vector<std::string>();
   outputVector0->reserve(OUTPUT_SIZE);
@@ -83,6 +82,10 @@ void threadData::prepareThreadData(std::string matrixFile, int identifier) {
     prepareQuery(1, query0);
     prepareQuery(1, query1);
   }
+  whichVolume = 0;
+  textPointer = &text0;
+  suffixArraysPointer = &suffixArrays0[16];
+
   whichQuery = 0;
   queryPointer = &query0;
   queryAlph.tr(query0.seqWriter(), query0.seqWriter() + query0.unfinishedSize());
@@ -135,17 +138,6 @@ void threadData::prepareQuery(int init, MultiSequence &query){
   query.pssm.reserve(INPUT_SIZE);
   query.pssmColumnLetters.reserve(INPUT_SIZE);  
   */
-}
-
-void prepareText(){
-
-  text.seq.v.reserve(RESERVE); 
-  text.ends.v.reserve(RESERVE);
-  text.names.v.reserve(RESERVE);  
-  text.nameEnds.v.reserve(RESERVE);
-
-  text.pssm.reserve(RESERVE);
-  text.pssmColumnLetters.reserve(RESERVE);  
 }
 
 void threadData::makeScoreMatrix(const std::string &matrixFile) {
@@ -335,14 +327,14 @@ void threadData::countMatches(char strand) {
     }
 
     for (unsigned x = 0; x < numOfIndexes; ++x)
-      subsetUser.countMatches(matchCounts[seqNum], queryPointer->seqReader() + i, text.seqReader(),
-          suffixArrays[x]);
+      subsetUser.countMatches(matchCounts[seqNum], queryPointer->seqReader() + i, textPointer->seqReader(),
+          suffixArraysPointer[x]);
   }
 }
 
 void threadData::alignGapless(SegmentPairPot &gaplessAlns, char strand) {
 
-  Dispatcher dis(Phase::gapless, text, *queryPointer, scoreMatrix, twoQualityScoreMatrix,
+  Dispatcher dis(Phase::gapless, *textPointer, *queryPointer, scoreMatrix, twoQualityScoreMatrix,
       twoQualityScoreMatrixMasked,
       referenceFormat, alph);
   DiagonalTable dt;  // record already-covered positions on each diagonal
@@ -355,12 +347,8 @@ void threadData::alignGapless(SegmentPairPot &gaplessAlns, char strand) {
       const indexT *beg;
       const indexT *end;
 
-      /*
-         suffixArrays[x].match( beg, end, dis.b + i, dis.a, args.oneHitMultiplicity, args.minHitDepth );
-         matchCount += end - beg;
-         */
       subsetUser.match(beg, end, dis.b + i, dis.a, args.oneHitMultiplicity, args.minHitDepth,
-          suffixArrays[x]);
+          suffixArraysPointer[x]);
       matchCount += end - beg;
 
       // Tried: if we hit a delimiter when using contiguous seeds, then
@@ -396,7 +384,7 @@ void threadData::alignGapless(SegmentPairPot &gaplessAlns, char strand) {
         if (args.outputType == 1) {  // we just want gapless alignments
           Alignment aln(identifier);
           aln.fromSegmentPair(sp);
-          aln.write(text, *queryPointer, strand, args.isTranslated(), alph, args.outputFormat, args,
+          aln.write(*textPointer, *queryPointer, strand, args.isTranslated(), alph, args.outputFormat, args,
               outputVectorPointer);
         }
         else {
@@ -417,7 +405,7 @@ void threadData::alignGapless(SegmentPairPot &gaplessAlns, char strand) {
 void threadData::alignGapped(AlignmentPot &gappedAlns, SegmentPairPot &gaplessAlns, Phase::Enum phase) {
 
   //Dispatcher dis(phase);
-  Dispatcher dis(phase, text, *queryPointer, scoreMatrix, twoQualityScoreMatrix, twoQualityScoreMatrixMasked,
+  Dispatcher dis(phase, *textPointer, *queryPointer, scoreMatrix, twoQualityScoreMatrix, twoQualityScoreMatrixMasked,
       referenceFormat, alph);
   indexT frameSize = args.isTranslated() ? (queryPointer->finishedSize() / 3) : 0;
   countT gappedExtensionCount = 0, gappedAlignmentCount = 0;
@@ -491,7 +479,7 @@ void threadData::alignGapped(AlignmentPot &gappedAlns, SegmentPairPot &gaplessAl
 
 void threadData::alignFinish(const AlignmentPot &gappedAlns, char strand) {
 
-  Dispatcher dis(Phase::final, text, *queryPointer, scoreMatrix, twoQualityScoreMatrix,
+  Dispatcher dis(Phase::final, *textPointer, *queryPointer, scoreMatrix, twoQualityScoreMatrix,
       twoQualityScoreMatrixMasked,
       referenceFormat, alph);
   indexT frameSize = args.isTranslated() ? (queryPointer->finishedSize() / 3) : 0;
@@ -513,7 +501,7 @@ void threadData::alignFinish(const AlignmentPot &gappedAlns, char strand) {
   for (size_t i = 0; i < gappedAlns.size(); ++i) {
     const Alignment &aln = gappedAlns.items[i];
     if (args.outputType < 4) {
-      aln.write(text, *queryPointer, strand, args.isTranslated(), alph, args.outputFormat, args, outputVectorPointer);
+      aln.write(*textPointer, *queryPointer, strand, args.isTranslated(), alph, args.outputFormat, args, outputVectorPointer);
     }
     else {  // calculate match probabilities:
       Alignment probAln(identifier);
@@ -525,7 +513,7 @@ void threadData::alignFinish(const AlignmentPot &gappedAlns, char strand) {
           args.frameshiftCost, frameSize, dis.p, dis.t,
           dis.i, dis.j, alph, extras,
           args.gamma, args.outputType);
-      probAln.write(text, *queryPointer, strand, args.isTranslated(),
+      probAln.write(*textPointer, *queryPointer, strand, args.isTranslated(),
           alph, args.outputFormat, args, outputVectorPointer, extras);
     }
   }
@@ -608,12 +596,12 @@ void threadData::translateAndScan(char strand) {
 void readIndex(const std::string &baseName, indexT seqCount) {
 
   LOG("reading " << baseName << "...");
-  text.fromFiles(baseName, seqCount, isFastq(threadDatas->at(0)->referenceFormat));
+  textPointer->fromFiles(baseName, seqCount, isFastq(threadDatas->at(0)->referenceFormat));
   for (unsigned x = 0; x < numOfIndexes; ++x) {
     if (numOfIndexes > 1) {
-      suffixArrays[x].fromFiles(baseName + char('a' + x), isCaseSensitiveSeeds, threadDatas->at(0)->alph.encode);
+      suffixArraysPointer[x].fromFiles(baseName + char('a' + x), isCaseSensitiveSeeds, threadDatas->at(0)->alph.encode);
     } else {
-      suffixArrays[x].fromFiles(baseName, isCaseSensitiveSeeds, threadDatas->at(0)->alph.encode);
+      suffixArraysPointer[x].fromFiles(baseName, isCaseSensitiveSeeds, threadDatas->at(0)->alph.encode);
     }
   }
 }
@@ -887,7 +875,7 @@ void readerFunction( std::istream& in ){
 
   if (volumes + 1 == 0) volumes = 1;
   for (unsigned i = 0; i < volumes; ++i) {
-    if (text.unfinishedSize() == 0 || volumes > 1){
+    if (textPointer->unfinishedSize() == 0 || volumes > 1){
       SEM_WAIT(ioSema);
       readVolume(i);
       SEM_POST(ioSema);
@@ -980,8 +968,6 @@ void lastal(int argc, char **argv) {
   for (int i=0; i<args.threadNum; i++) {
     threadDatas->at(i)->prepareThreadData(matrixFile, i);
   }
-
-  //prepareText();
 
   char defaultInputName[] = "-";
   char *defaultInput[] = {defaultInputName, 0};

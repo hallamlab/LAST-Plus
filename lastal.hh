@@ -66,8 +66,14 @@ namespace {
   int isCaseSensitiveSeeds = -1;  // initialize it to an "error" value
   unsigned numOfIndexes = 1;  // assume this value, if unspecified
 
-  SubsetSuffixArray suffixArrays[16];
-  MultiSequence text;
+  bool whichVolume;
+  SubsetSuffixArray suffixArrays0[16];
+  SubsetSuffixArray suffixArrays1[16];
+  SubsetSuffixArray *suffixArraysPointer;
+
+  MultiSequence text0;
+  MultiSequence text1;
+  MultiSequence *textPointer;
 
 }
 
@@ -89,11 +95,9 @@ struct threadData{
   MultiSequence *queryPointer;
   MultiSequence query0;  // sequence that hasn't been indexed by lastdb
   MultiSequence query1;  // sequence that hasn't been indexed by lastdb
-  
   std::vector<std::string> *outputVectorPointer;
   std::vector<std::string> *outputVector0;
   std::vector<std::string> *outputVector1;
-
 
   std::vector< std::vector<countT> > matchCounts;  // used if outputType == 0
 

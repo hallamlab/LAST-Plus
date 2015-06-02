@@ -84,7 +84,10 @@ struct threadData{
   Centroid *centroid;
   MultiSequence query;  // sequence that hasn't been indexed by lastdb
   std::vector< std::vector<countT> > matchCounts;  // used if outputType == 0
+
 	std::vector<std::string> *outputVector;
+  std::queue< std::vector<std::string>* > *outputVectorQueue;
+
   GeneralizedAffineGapCosts gapCosts;
   ScoreMatrix scoreMatrix;
   sequenceFormat::Enum referenceFormat;  // defaults to 0

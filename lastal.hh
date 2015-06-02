@@ -82,7 +82,8 @@ struct threadData{
   SubsetSuffixArrayUser subsetUser;
   GappedXdropAligner gappedXdropAligner;
   Centroid *centroid;
-  MultiSequence query;  // sequence that hasn't been indexed by lastdb
+  MultiSequence *query;  
+  std::queue<MultiSequence*> *queryQueue; 
   std::vector< std::vector<countT> > matchCounts;  // used if outputType == 0
 
 	std::vector<std::string> *outputVector;
@@ -125,8 +126,6 @@ struct threadData{
   void countMatches( char strand );
 // Write match counts for each query sequence
   void writeCounts(std::ostream& out);
-// Read the next sequence, adding it to the MultiSequence
-  std::istream& appendFromFasta( std::istream& in );
 // Set up a scoring matrix, based on the user options
   void makeScoreMatrix( const std::string& matrixFile) ;
   void makeQualityScorers();
@@ -224,6 +223,7 @@ void readInnerPrj( const std::string& fileName, indexT& seqCount, indexT& seqLen
 // Read one database volume
 void readVolume( unsigned volumeNumber );
 void readIndex( const std::string& baseName, indexT seqCount );
+std::istream& appendFromFasta( std::istream& in, threadData *data, MultiSequence *query );
 
 void *writerFunction(void *arguments);
 void readerFunction( std::istream& in );

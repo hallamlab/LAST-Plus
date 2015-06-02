@@ -5,10 +5,13 @@
 
 std::vector<threadData *> *threadDatas;
 std::vector<pthread_t> *threads;
-std::queue<int> inputQueue;
-//std::queue<int> outputQueue;
+
+std::queue<int> idInputQueue;
+std::queue<MultiSequence*> inputQueue;
+
 std::queue<int> idOutputQueue;
 std::queue< std::vector< std::string >* > outputQueue;
+
 pthread_t writerThread;
 
 bool finishedReadingFlag;
@@ -27,13 +30,16 @@ unsigned doneSequences = 0;
 countT refSequences = -1;
 countT refLetters = -1;
 
-void threadData::prepareThreadData(std::string matrixFile, int identifier) {
+void threadData::prepareThreadData(std::string matrixFile, int identifier){
 
   outputVectorQueue = new std::queue< std::vector<std::string>*>();
-
   for (int j=0; j<2; j++){
     outputVectorQueue->push(new std::vector<std::string>() );
   }
+
+  queryQueue = new std::queue<MultiSequence*>();
+  MultiSequence *query1 = new MultiSequence();
+  MultiSequence *query2 = new MultiSequence();
 
   indexT minSeedLimit = 0;
 
@@ -78,12 +84,24 @@ void threadData::prepareThreadData(std::string matrixFile, int identifier) {
       geneticCode.fromFile(args.geneticCodeFile);
     }
     geneticCode.codeTableSet(alph, queryAlph);
-    query.initForAppending(3);
+    query1->initForAppending(3);
+    query2->initForAppending(3);
   } else {
     queryAlph = alph;
-    query.initForAppending(1);
+    query1->initForAppending(1);
+    query2->initForAppending(1);
   }
-  queryAlph.tr(query.seqWriter(), query.seqWriter() + query.unfinishedSize());
+  queryAlph.tr(query1->seqWriter(), query1->seqWriter() + query1->unfinishedSize());
+  queryAlph.tr(query2->seqWriter(), query2->seqWriter() + query2->unfinishedSize());
+
+  /*
+  inputQueue.push(query1);
+  inputQueue.push(query2);
+  */
+  queryQueue->push(query1);
+  queryQueue->push(query2);
+
+  idInputQueue.push(identifier);
 
   if (volumes + 1 == 0) {
     readIndex(args.lastdbName, refSequences);
@@ -258,7 +276,7 @@ void threadData::writeCounts(std::ostream &out) {
   std::stringstream outstream;
 
   for (indexT i = 0; i < matchCounts.size(); ++i) {
-    outstream << query.seqName(i) << "\n";
+    outstream << query->seqName(i) << "\n";
 
     for (indexT j = args.minHitDepth; j < matchCounts[i].size(); ++j) {
       outstream << j << "\t" << matchCounts[i][j] << "\n";
@@ -271,44 +289,44 @@ void threadData::writeCounts(std::ostream &out) {
 
 void threadData::countMatches(char strand) {
   LOG("counting...");
-  indexT seqNum = strand == '+' ? 0 : query.finishedSequences() - 1;
+  indexT seqNum = strand == '+' ? 0 : query->finishedSequences() - 1;
 
-  for (indexT i = 0; i < query.finishedSize(); i += args.queryStep) {
+  for (indexT i = 0; i < query->finishedSize(); i += args.queryStep) {
     if (strand == '+') {
       for (; ;) {
-        if (seqNum == query.finishedSequences()) return;
-        if (query.seqEnd(seqNum) > i) break;
+        if (seqNum == query->finishedSequences()) return;
+        if (query->seqEnd(seqNum) > i) break;
         ++seqNum;
       }
       // speed-up:
-      if (args.minHitDepth > query.seqEnd(seqNum) - i) continue;
+      if (args.minHitDepth > query->seqEnd(seqNum) - i) continue;
     }
     else {
-      indexT j = query.finishedSize() - i;
+      indexT j = query->finishedSize() - i;
       for (; ;) {
         if (seqNum + 1 == 0) return;
-        if (query.seqBeg(seqNum) < j) break;
+        if (query->seqBeg(seqNum) < j) break;
         --seqNum;
       }
       // speed-up:
-      if (args.minHitDepth > j - query.seqBeg(seqNum)) continue;
+      if (args.minHitDepth > j - query->seqBeg(seqNum)) continue;
     }
 
     for (unsigned x = 0; x < numOfIndexes; ++x)
-      subsetUser.countMatches(matchCounts[seqNum], query.seqReader() + i, text.seqReader(),
+      subsetUser.countMatches(matchCounts[seqNum], query->seqReader() + i, text.seqReader(),
           suffixArrays[x]);
   }
 }
 
 void threadData::alignGapless(SegmentPairPot &gaplessAlns, char strand) {
 
-  Dispatcher dis(Phase::gapless, text, query, scoreMatrix, twoQualityScoreMatrix,
+  Dispatcher dis(Phase::gapless, text, *query, scoreMatrix, twoQualityScoreMatrix,
       twoQualityScoreMatrixMasked,
       referenceFormat, alph);
   DiagonalTable dt;  // record already-covered positions on each diagonal
   countT matchCount = 0, gaplessExtensionCount = 0, gaplessAlignmentCount = 0;
 
-  for (indexT i = 0; i < query.finishedSize(); i += args.queryStep) {
+  for (indexT i = 0; i < query->finishedSize(); i += args.queryStep) {
 
     for (unsigned x = 0; x < numOfIndexes; ++x) {
 
@@ -356,7 +374,7 @@ void threadData::alignGapless(SegmentPairPot &gaplessAlns, char strand) {
         if (args.outputType == 1) {  // we just want gapless alignments
           Alignment aln(identifier);
           aln.fromSegmentPair(sp);
-          aln.write(text, query, strand, args.isTranslated(), alph, args.outputFormat, args,
+          aln.write(text, *query, strand, args.isTranslated(), alph, args.outputFormat, args,
               outputVector);
         }
         else {
@@ -377,9 +395,9 @@ void threadData::alignGapless(SegmentPairPot &gaplessAlns, char strand) {
 void threadData::alignGapped(AlignmentPot &gappedAlns, SegmentPairPot &gaplessAlns, Phase::Enum phase) {
 
   //Dispatcher dis(phase);
-  Dispatcher dis(phase, text, query, scoreMatrix, twoQualityScoreMatrix, twoQualityScoreMatrixMasked,
+  Dispatcher dis(phase, text, *query, scoreMatrix, twoQualityScoreMatrix, twoQualityScoreMatrixMasked,
       referenceFormat, alph);
-  indexT frameSize = args.isTranslated() ? (query.finishedSize() / 3) : 0;
+  indexT frameSize = args.isTranslated() ? (query->finishedSize() / 3) : 0;
   countT gappedExtensionCount = 0, gappedAlignmentCount = 0;
 
   // Redo the gapless extensions, using gapped score parameters.
@@ -451,15 +469,15 @@ void threadData::alignGapped(AlignmentPot &gappedAlns, SegmentPairPot &gaplessAl
 
 void threadData::alignFinish(const AlignmentPot &gappedAlns, char strand) {
 
-  Dispatcher dis(Phase::final, text, query, scoreMatrix, twoQualityScoreMatrix,
+  Dispatcher dis(Phase::final, text, *query, scoreMatrix, twoQualityScoreMatrix,
       twoQualityScoreMatrixMasked,
       referenceFormat, alph);
-  indexT frameSize = args.isTranslated() ? (query.finishedSize() / 3) : 0;
+  indexT frameSize = args.isTranslated() ? (query->finishedSize() / 3) : 0;
 
   if (args.outputType > 3) {
     if (dis.p) {
       LOG("exponentiating PSSM...");
-      centroid->setPssm(dis.p, query.finishedSize(), args.temperature,
+      centroid->setPssm(dis.p, query->finishedSize(), args.temperature,
           oneQualityExpMatrix, dis.b, dis.j);
     }
     else {
@@ -473,7 +491,7 @@ void threadData::alignFinish(const AlignmentPot &gappedAlns, char strand) {
   for (size_t i = 0; i < gappedAlns.size(); ++i) {
     const Alignment &aln = gappedAlns.items[i];
     if (args.outputType < 4) {
-      aln.write(text, query, strand, args.isTranslated(), alph, args.outputFormat, args, outputVector);
+      aln.write(text, *query, strand, args.isTranslated(), alph, args.outputFormat, args, outputVector);
     }
     else {  // calculate match probabilities:
       Alignment probAln(identifier);
@@ -485,7 +503,7 @@ void threadData::alignFinish(const AlignmentPot &gappedAlns, char strand) {
           args.frameshiftCost, frameSize, dis.p, dis.t,
           dis.i, dis.j, alph, extras,
           args.gamma, args.outputType);
-      probAln.write(text, query, strand, args.isTranslated(),
+      probAln.write(text, *query, strand, args.isTranslated(),
           alph, args.outputFormat, args, outputVector, extras);
     }
   }
@@ -495,12 +513,12 @@ void threadData::makeQualityPssm(bool isApplyMasking) {
   if (!isQuality(args.inputFormat) || isQuality(referenceFormat)) return;
 
   LOG("making PSSM...");
-  query.resizePssm();
+  query->resizePssm();
 
-  const uchar *seqBeg = query.seqReader();
-  const uchar *seqEnd = seqBeg + query.finishedSize();
-  const uchar *q = query.qualityReader();
-  int *pssm = *query.pssmWriter();
+  const uchar *seqBeg = query->seqReader();
+  const uchar *seqEnd = seqBeg + query->finishedSize();
+  const uchar *q = query->qualityReader();
+  int *pssm = *query->pssmWriter();
 
   if (args.inputFormat == sequenceFormat::prb) {
     qualityPssmMaker.make(seqBeg, seqEnd, q, pssm, isApplyMasking);
@@ -553,14 +571,14 @@ void threadData::translateAndScan(char strand) {
 
   if (args.isTranslated()) {
     LOG("translating...");
-    std::vector<uchar> translation(query.finishedSize());
-    geneticCode.translate(query.seqReader(),
-        query.seqReader() + query.finishedSize(), &translation[0]);
+    std::vector<uchar> translation(query->finishedSize());
+    geneticCode.translate(query->seqReader(),
+        query->seqReader() + query->finishedSize(), &translation[0]);
 
-    query.swapSeq(translation);
+    query->swapSeq(translation);
 
     scan(strand);
-    query.swapSeq(translation);
+    query->swapSeq(translation);
   }
   else scan(strand);
 }
@@ -590,8 +608,8 @@ void readVolume(unsigned volumeNumber) {
 
 void threadData::reverseComplementPssm() {
 
-  ScoreMatrixRow *beg = query.pssmWriter();
-  ScoreMatrixRow *end = beg + query.finishedSize();
+  ScoreMatrixRow *beg = query->pssmWriter();
+  ScoreMatrixRow *end = beg + query->finishedSize();
 
   while (beg < end) {
     --end;
@@ -605,10 +623,10 @@ void threadData::reverseComplementPssm() {
 
 void threadData::reverseComplementQuery() {
   LOG("reverse complementing...");
-  queryAlph.rc(query.seqWriter(), query.seqWriter() + query.finishedSize());
+  queryAlph.rc(query->seqWriter(), query->seqWriter() + query->finishedSize());
   if (isQuality(args.inputFormat)) {
-    std::reverse(query.qualityWriter(),
-        query.qualityWriter() + query.finishedSize() * query.qualsPerLetter());
+    std::reverse(query->qualityWriter(),
+        query->qualityWriter() + query->finishedSize() * query->qualsPerLetter());
   } else if (args.inputFormat == sequenceFormat::pssm) {
     reverseComplementPssm();
   }
@@ -673,34 +691,34 @@ void writeHeader(countT refSequences, std::ostream &out) {
   out << "#\n";
 }
 
-std::istream &threadData::appendFromFasta(std::istream &in) {
+std::istream& appendFromFasta(std::istream &in, threadData *data, MultiSequence *query) {
 
   indexT maxSeqLen = args.batchSize;
   if (maxSeqLen < args.batchSize) maxSeqLen = indexT(-1);
-  if (query.finishedSequences() == 0) maxSeqLen = indexT(-1);
+  if (query->finishedSequences() == 0) maxSeqLen = indexT(-1);
 
-  size_t oldUnfinishedSize = query.unfinishedSize();
+  size_t oldUnfinishedSize = query->unfinishedSize();
 
   /**/ if (args.inputFormat == sequenceFormat::fasta) {
-    query.appendFromFasta(in, maxSeqLen);
+    query->appendFromFasta(in, maxSeqLen);
   } else if (args.inputFormat == sequenceFormat::prb) {
-    query.appendFromPrb(in, maxSeqLen, queryAlph.size, queryAlph.decode);
+    query->appendFromPrb(in, maxSeqLen, data->queryAlph.size, data->queryAlph.decode);
   } else if (args.inputFormat == sequenceFormat::pssm) {
-    query.appendFromPssm(in, maxSeqLen, queryAlph.encode,
+    query->appendFromPssm(in, maxSeqLen, data->queryAlph.encode,
         args.maskLowercase > 1);
   } else {
-    query.appendFromFastq(in, maxSeqLen);
+    query->appendFromFastq(in, maxSeqLen);
   }
-  if (!query.isFinished() && query.finishedSequences() == 0) {
+  if (!query->isFinished() && query->finishedSequences() == 0) {
     ERR("encountered a sequence that's too long");
   }
   // encode the newly-read sequence
-  queryAlph.tr(query.seqWriter() + oldUnfinishedSize,
-      query.seqWriter() + query.unfinishedSize());
+  data->queryAlph.tr(query->seqWriter() + oldUnfinishedSize,
+      query->seqWriter() + query->unfinishedSize());
 
   if (isPhred(args.inputFormat))  // assumes one quality code per letter:
-    checkQualityCodes(query.qualityReader() + oldUnfinishedSize,
-        query.qualityReader() + query.unfinishedSize(),
+    checkQualityCodes(query->qualityReader() + oldUnfinishedSize,
+        query->qualityReader() + query->unfinishedSize(),
         qualityOffset(args.inputFormat));
 
   return in;
@@ -820,6 +838,7 @@ void readerFunction( std::istream& in ){
 
   int id;
   int count;
+  MultiSequence *current;
 
   if (volumes + 1 == 0) volumes = 1;
 
@@ -834,22 +853,25 @@ void readerFunction( std::istream& in ){
       SEM_WAIT(readerSema);
       SEM_WAIT(inputOutputQueueSema);
       for (int j = 0; j < inputQueue.size(); j++) {
-        id = inputQueue.front();
-        inputQueue.pop();
-
-        SEM_WAIT(ioSema);
+        id = idInputQueue.front();
+        idInputQueue.pop();
         count = 0;
         threadData *data = threadDatas->at(id);
+        current = inputQueue.front();
+        inputQueue.pop();
+
         data->round = i;
+        SEM_WAIT(ioSema);
         while(count < INPUT_SIZE){
           if(in){
-            data->appendFromFasta(in);
+            appendFromFasta(in, data, current);
             count++;
           }else{
             break;
           }
         }
-        readSequences += data->query.finishedSequences();
+        readSequences += current->finishedSequences();
+        data->queryQueue->push(current);
         SEM_POST(ioSema);
         SEM_POST(data->readSema);
       }
@@ -868,7 +890,7 @@ void *threadFunction(void *__threadData){
   
   if (args.outputType == 0) {
     data->matchCounts.clear();
-    data->matchCounts.resize(data->query.finishedSequences());
+    data->matchCounts.resize(data->query->finishedSequences());
   }
 
   while (1) {
@@ -878,19 +900,23 @@ void *threadFunction(void *__threadData){
     SEM_WAIT(inputOutputQueueSema);
     data->outputVector = data->outputVectorQueue->front();
     data->outputVectorQueue->pop();
+
+    data->query = data->queryQueue->front();
+    data->queryQueue->pop();
     SEM_POST(inputOutputQueueSema);
 
     data->scanAllVolumes(volumes);
 
     SEM_WAIT(dataCounterSema);
-    doneSequences += data->query.finishedSequences();
+    doneSequences += data->query->finishedSequences();
     SEM_POST(dataCounterSema);
 
-    data->query.reinitForAppending();
+    data->query->reinitForAppending();
 
     SEM_WAIT(inputOutputQueueSema);
-    inputQueue.push(data->identifier);
-    //outputQueue.push(data->identifier);
+    idInputQueue.push(data->identifier);
+    inputQueue.push(data->query);
+
     idOutputQueue.push(data->identifier);
     outputQueue.push(data->outputVector);
     SEM_POST(inputOutputQueueSema);
@@ -935,14 +961,17 @@ void lastal(int argc, char **argv) {
     }
 
     for (int j = 0; j < args.threadNum; j++) {
-      //!! double buffer condition, reapply later.
-      //for(int k=0; k<2; k++) {
+      for(int k=0; k<2; k++) {
+      /*
       SEM_WAIT(ioSema);
       if (in) {
         SEM_POST(threadDatas->at(j)->readSema);
       }
       SEM_POST(ioSema);
-      //}
+      }
+      */
+        SEM_POST(threadDatas->at(j)->readSema);
+      }
     }
     readerFunction(in);
   }

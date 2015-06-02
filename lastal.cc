@@ -7,6 +7,7 @@ std::vector<threadData *> *threadDatas;
 std::vector<pthread_t> *threads;
 std::queue<int> inputQueue;
 std::queue<int> outputQueue;
+//std::queue< std::vector< std::string >* > outputQueue;
 pthread_t writerThread;
 
 bool finishedReadingFlag;
@@ -771,28 +772,20 @@ void initializeSemaphores() {
 
 void *writerFunction(void *arguments){
 
-  std::queue<int> currentOutputQueue;
   int id;
   int writerCounter;
   std::ofstream outFileStream;
   std::ostream &out = openOut(args.outFile, outFileStream);
-  //out.precision(3);
 
   while (1) {
     SEM_WAIT(writerSema);
-
     SEM_WAIT(inputOutputQueueSema);
     for (int j = 0; j < outputQueue.size(); j++) {
-      currentOutputQueue.push(outputQueue.front());
+      id = outputQueue.front();
       outputQueue.pop();
-    }
-    SEM_POST(inputOutputQueueSema);
 
-    while (currentOutputQueue.size() != 0) {
       SEM_WAIT(ioSema);
 
-      id = currentOutputQueue.front();
-      currentOutputQueue.pop();
       threadData *data = threadDatas->at(id);
       for (int j = 0; j < data->outputVector->size(); j++) {
         out << data->outputVector->at(j);
@@ -803,28 +796,22 @@ void *writerFunction(void *arguments){
       SEM_POST(data->writeSema);
     }
 
-    SEM_WAIT(inputOutputQueueSema);
-
-    if (finishedReadingFlag == 1 ){
-      if (outputQueue.size() == 0 && readSequences == doneSequences){
+      if (finishedReadingFlag == 1 && outputQueue.size() == 0 && readSequences == doneSequences){
         SEM_POST(terminationSema);
         SEM_POST(inputOutputQueueSema);
         break;
       }
-    }
     SEM_POST(inputOutputQueueSema);
   }
 }
 
 void readerFunction( std::istream& in ){
 
-  std::queue<int> currentInputQueue;
   int id;
   int count;
 
-  SEM_POST(inputOutputQueueSema);
-
   if (volumes + 1 == 0) volumes = 1;
+
   for (unsigned i = 0; i < volumes; ++i) {
     if (text.unfinishedSize() == 0 || volumes > 1){
       SEM_WAIT(ioSema);
@@ -834,34 +821,28 @@ void readerFunction( std::istream& in ){
 
     while (in) {
       SEM_WAIT(readerSema);
-
       SEM_WAIT(inputOutputQueueSema);
       for (int j = 0; j < inputQueue.size(); j++) {
-        currentInputQueue.push(inputQueue.front());
+        id = inputQueue.front();
         inputQueue.pop();
+
+          SEM_WAIT(ioSema);
+          count = 0;
+          threadData *data = threadDatas->at(id);
+          data->round = i;
+          while(count < INPUT_SIZE){
+            if(in){
+              data->appendFromFasta(in);
+              count++;
+            }else{
+              break;
+            }
+          }
+          readSequences += data->query.finishedSequences();
+          SEM_POST(ioSema);
+          SEM_POST(data->readSema);
       }
       SEM_POST(inputOutputQueueSema);
-
-      while(currentInputQueue.size() > 0 && in){
-        SEM_WAIT(ioSema);
-        count = 0;
-        id = currentInputQueue.front();
-        currentInputQueue.pop();
-        threadData *data = threadDatas->at(id);
-        data->round = i;
-        while(count < 10000){
-          if(in){
-            data->appendFromFasta(in);
-            count++;
-          }else{
-            break;
-          }
-        }
-        readSequences += data->query.finishedSequences();
-        SEM_POST(ioSema);
-
-        SEM_POST(data->readSema);
-      }
     }
     in.clear();
     in.seekg(0);
@@ -882,11 +863,11 @@ void *threadFunction(void *__threadData) {
     SEM_WAIT(data->writeSema);
 
     data->scanAllVolumes(volumes);
-    
+
     SEM_WAIT(dataCounterSema);
     doneSequences += data->query.finishedSequences();
     SEM_POST(dataCounterSema);
-    
+
     data->query.reinitForAppending();
 
     SEM_WAIT(inputOutputQueueSema);
@@ -913,9 +894,20 @@ void lastal(int argc, char **argv) {
   initializeThreads();
   initializeSemaphores();
 
-  for (int i=0; i<args.threadNum; i++) {
+  for (int i=0; i<args.threadNum; i++){
     threadDatas->at(i)->prepareThreadData(matrixFile, i);
   }
+
+  /*
+     for (int i=0; i<(args.threadNum)*2; i++){
+     std::vector< std::string > *output = new std::vector< std::string >();
+     outputQueue.push(output);
+
+     MultiSequence *input = new MultiSequence();
+     inputQueue.push(input);
+
+     }
+     */
 
   char defaultInputName[] = "-";
   char *defaultInput[] = {defaultInputName, 0};

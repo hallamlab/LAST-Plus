@@ -94,10 +94,6 @@ void threadData::prepareThreadData(std::string matrixFile, int identifier){
   queryAlph.tr(query1->seqWriter(), query1->seqWriter() + query1->unfinishedSize());
   queryAlph.tr(query2->seqWriter(), query2->seqWriter() + query2->unfinishedSize());
 
-  /*
-  inputQueue.push(query1);
-  inputQueue.push(query2);
-  */
   queryQueue->push(query1);
   queryQueue->push(query2);
 
@@ -697,29 +693,36 @@ std::istream& appendFromFasta(std::istream &in, threadData *data, MultiSequence 
   if (maxSeqLen < args.batchSize) maxSeqLen = indexT(-1);
   if (query->finishedSequences() == 0) maxSeqLen = indexT(-1);
 
-  size_t oldUnfinishedSize = query->unfinishedSize();
+  int count = 0;
 
-  /**/ if (args.inputFormat == sequenceFormat::fasta) {
-    query->appendFromFasta(in, maxSeqLen);
-  } else if (args.inputFormat == sequenceFormat::prb) {
-    query->appendFromPrb(in, maxSeqLen, data->queryAlph.size, data->queryAlph.decode);
-  } else if (args.inputFormat == sequenceFormat::pssm) {
-    query->appendFromPssm(in, maxSeqLen, data->queryAlph.encode,
-        args.maskLowercase > 1);
-  } else {
-    query->appendFromFastq(in, maxSeqLen);
-  }
-  if (!query->isFinished() && query->finishedSequences() == 0) {
-    ERR("encountered a sequence that's too long");
-  }
-  // encode the newly-read sequence
-  data->queryAlph.tr(query->seqWriter() + oldUnfinishedSize,
-      query->seqWriter() + query->unfinishedSize());
+  while(count < INPUT_SIZE && in){
 
-  if (isPhred(args.inputFormat))  // assumes one quality code per letter:
-    checkQualityCodes(query->qualityReader() + oldUnfinishedSize,
-        query->qualityReader() + query->unfinishedSize(),
-        qualityOffset(args.inputFormat));
+    size_t oldUnfinishedSize = query->unfinishedSize();
+
+    if (args.inputFormat == sequenceFormat::fasta) {
+      query->appendFromFasta(in, maxSeqLen);
+    } else if (args.inputFormat == sequenceFormat::prb) {
+      query->appendFromPrb(in, maxSeqLen, data->queryAlph.size, data->queryAlph.decode);
+    } else if (args.inputFormat == sequenceFormat::pssm) {
+      query->appendFromPssm(in, maxSeqLen, data->queryAlph.encode,
+          args.maskLowercase > 1);
+    } else {
+      query->appendFromFastq(in, maxSeqLen);
+    }
+    if (!query->isFinished() && query->finishedSequences() == 0) {
+      ERR("encountered a sequence that's too long");
+    }
+    // encode the newly-read sequence
+    data->queryAlph.tr(query->seqWriter() + oldUnfinishedSize,
+        query->seqWriter() + query->unfinishedSize());
+
+    if (isPhred(args.inputFormat))  // assumes one quality code per letter:
+      checkQualityCodes(query->qualityReader() + oldUnfinishedSize,
+          query->qualityReader() + query->unfinishedSize(),
+          qualityOffset(args.inputFormat));
+
+    count++;
+  }
 
   return in;
 }
@@ -796,16 +799,54 @@ void initializeSemaphores() {
 void *writerFunction(void *arguments){
 
   int id;
+  int counter;
   std::vector< std::string >* current;
-  int writerCounter;
   std::ofstream outFileStream;
   std::ostream &out = openOut(args.outFile, outFileStream);
 
   while (1) {
     SEM_WAIT(writerSema);
     SEM_WAIT(inputOutputQueueSema);
+
+    /*
+       do{
+       SEM_WAIT(inputOutputQueueSema);
+       current = outputQueue.front();
+       outputQueue.pop();
+       counter = outputQueue.size();
+       id = idOutputQueue.front();
+       idOutputQueue.pop();
+       SEM_POST(inputOutputQueueSema);
+
+       threadData *data = threadDatas->at(id);
+
+       std::cout << "counter : " << counter << std::endl;
+       std::cout << "identifier : " << data->identifier << std::endl;
+
+       SEM_WAIT(ioSema);
+       for(int j=0; j<current->size(); j++) {
+       out << current->at(j);
+       }
+       current->clear();
+       SEM_POST(ioSema);
+
+       SEM_WAIT(inputOutputQueueSema);
+       data->outputVectorQueue->push(current);
+       SEM_POST(inputOutputQueueSema);
+
+       SEM_POST(data->writeSema);
+       }
+       while(counter > 0);
+
+       std::cout << "outside the loop once " << std::endl;
+
+       if (finishedReadingFlag == 1 && readSequences == doneSequences){
+       SEM_POST(terminationSema);
+       break;
+       }
+       */
+
     for (int j = 0; j < outputQueue.size(); j++) {
-      //id = outputQueue.front();
       current = outputQueue.front();
       outputQueue.pop();
       id = idOutputQueue.front();
@@ -819,25 +860,24 @@ void *writerFunction(void *arguments){
         out << current->at(j);
       }
       current->clear();
-
       data->outputVectorQueue->push(current);
 
       SEM_POST(ioSema);
       SEM_POST(data->writeSema);
     }
-
     if (finishedReadingFlag == 1 && outputQueue.size() == 0 && readSequences == doneSequences){
       SEM_POST(terminationSema);
       break;
     }
     SEM_POST(inputOutputQueueSema);
+
   }
 }
 
 void readerFunction( std::istream& in ){
 
   int id;
-  int count;
+  //int count;
   MultiSequence *current;
 
   if (volumes + 1 == 0) volumes = 1;
@@ -855,21 +895,21 @@ void readerFunction( std::istream& in ){
       for (int j = 0; j < inputQueue.size(); j++) {
         id = idInputQueue.front();
         idInputQueue.pop();
-        count = 0;
+        //count = 0;
         threadData *data = threadDatas->at(id);
         current = inputQueue.front();
         inputQueue.pop();
 
         data->round = i;
         SEM_WAIT(ioSema);
-        while(count < INPUT_SIZE){
-          if(in){
-            appendFromFasta(in, data, current);
-            count++;
-          }else{
-            break;
-          }
-        }
+        //while(count < INPUT_SIZE){
+        //if(in){
+        appendFromFasta(in, data, current);
+        //count++;
+        //}else{
+        // break;
+        //}
+        //}
         readSequences += current->finishedSequences();
         data->queryQueue->push(current);
         SEM_POST(ioSema);
@@ -887,7 +927,7 @@ void readerFunction( std::istream& in ){
 void *threadFunction(void *__threadData){
 
   struct threadData *data = (struct threadData *) __threadData;
-  
+
   if (args.outputType == 0) {
     data->matchCounts.clear();
     data->matchCounts.resize(data->query->finishedSequences());
@@ -928,6 +968,7 @@ void *threadFunction(void *__threadData){
 }
 
 void lastal(int argc, char **argv) {
+
   args.fromArgs(argc, argv);
   std::string matrixFile;
 
@@ -962,14 +1003,6 @@ void lastal(int argc, char **argv) {
 
     for (int j = 0; j < args.threadNum; j++) {
       for(int k=0; k<2; k++) {
-      /*
-      SEM_WAIT(ioSema);
-      if (in) {
-        SEM_POST(threadDatas->at(j)->readSema);
-      }
-      SEM_POST(ioSema);
-      }
-      */
         SEM_POST(threadDatas->at(j)->readSema);
       }
     }

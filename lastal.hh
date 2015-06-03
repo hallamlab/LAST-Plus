@@ -175,42 +175,42 @@ struct Dispatcher{
 // This trims off possibly unreliable parts of the gapless alignment.
 // It may not be the best strategy for protein alignment with subset
 // seeds: there could be few or no identical matches...
-	inline void shrinkToLongestIdenticalRun(SegmentPair &sp) {
+	void shrinkToLongestIdenticalRun(SegmentPair &sp) {
 		sp.maxIdenticalRun(a, b, aa->canonical);
 		sp.score = gaplessScore(sp.beg1(), sp.end1(), sp.beg2());
 	}
 
-  inline int forwardGaplessScore( indexT x, indexT y ) const{
+  int forwardGaplessScore( indexT x, indexT y ) const{
     if( z==0 ) return forwardGaplessXdropScore( a+x, b+y, m, d );
     if( z==1 ) return forwardGaplessPssmXdropScore( a+x, p+y, d );
     return forwardGaplessTwoQualityXdropScore( a+x, i+x, b+y, j+y, t, d );
   }
 
-  inline int reverseGaplessScore( indexT x, indexT y ) const{
+   int reverseGaplessScore( indexT x, indexT y ) const{
     if( z==0 ) return reverseGaplessXdropScore( a+x, b+y, m, d );
     if( z==1 ) return reverseGaplessPssmXdropScore( a+x, p+y, d );
     return reverseGaplessTwoQualityXdropScore( a+x, i+x, b+y, j+y, t, d );
   }
 
-  inline indexT forwardGaplessEnd( indexT x, indexT y, int s ) const{
+   indexT forwardGaplessEnd( indexT x, indexT y, int s ) const{
     if( z==0 ) return forwardGaplessXdropEnd( a+x, b+y, m, s ) - a;
     if( z==1 ) return forwardGaplessPssmXdropEnd( a+x, p+y, s ) - a;
     return forwardGaplessTwoQualityXdropEnd( a+x, i+x, b+y, j+y, t, s ) - a;
   }
 
-  inline indexT reverseGaplessEnd( indexT x, indexT y, int s ) const{
+   indexT reverseGaplessEnd( indexT x, indexT y, int s ) const{
     if( z==0 ) return reverseGaplessXdropEnd( a+x, b+y, m, s ) - a;
     if( z==1 ) return reverseGaplessPssmXdropEnd( a+x, p+y, s ) - a;
     return reverseGaplessTwoQualityXdropEnd( a+x, i+x, b+y, j+y, t, s ) - a;
   }
 
-  inline bool isOptimalGapless( indexT x, indexT e, indexT y ) const{
+   bool isOptimalGapless( indexT x, indexT e, indexT y ) const{
     if( z==0 ) return isOptimalGaplessXdrop( a+x, a+e, b+y, m, d );
     if( z==1 ) return isOptimalGaplessPssmXdrop( a+x, a+e, p+y, d );
     return isOptimalGaplessTwoQualityXdrop( a+x, a+e, i+x, b+y, j+y, t, d );
   }
 
-  inline int gaplessScore( indexT x, indexT e, indexT y ) const{
+   int gaplessScore( indexT x, indexT e, indexT y ) const{
     if( z==0 ) return gaplessAlignmentScore( a+x, a+e, b+y, m );
     if( z==1 ) return gaplessPssmAlignmentScore( a+x, a+e, p+y );
     return gaplessTwoQualityAlignmentScore( a+x, a+e, i+x, b+y, j+y, t );

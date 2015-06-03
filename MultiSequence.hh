@@ -38,7 +38,7 @@ class MultiSequence{
   // Append a sequence with delimiters.  Don't let the total size of
   // the concatenated sequences plus pads exceed maxSeqLen: thus it
   // may not finish reading the sequence.
-  std::istream& appendFromFasta( std::istream& stream, indexT maxSeqLen );
+  std::istream& appendFromFasta( std::istream& stream, indexT maxSeqLen);
 
   // As above, but read quality scores too.
   std::istream& appendFromFastq( std::istream& stream, indexT maxSeqLen );

@@ -95,6 +95,10 @@ void threadData::prepareThreadData(std::string matrixFile, int identifier){
   centroid = new Centroid(gappedXdropAligner);
   this->identifier = identifier;
 
+  counter = 0;
+  round = 0;
+
+
 #ifdef __APPLE__
   char name[40];
 

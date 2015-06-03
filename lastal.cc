@@ -1,6 +1,5 @@
 // Copyright 2008, 2009, 2010, 2011, 2012, 2013, 2014 Martin C. Frith
 // BLAST-like pair-wise sequence alignment, using suffix arrays.
-
 #include "lastal.hh"
 
 std::vector<threadData *> *threadDatas;
@@ -21,7 +20,6 @@ SEM_T writerSema;
 SEM_T ioSema;
 SEM_T terminationSema;
 SEM_T inputOutputQueueSema;
-SEM_T dataCounterSema;
 
 unsigned volumes = unsigned(-1);
 unsigned readSequences = 0;
@@ -781,24 +779,19 @@ void initializeSemaphores() {
     perror("sem_open");
     exit(EXIT_FAILURE);
   }
-  sem_unlink("/dataCounterSema");
-  if (( dataCounterSema = sem_open("/dataCounterSema", O_CREAT, 0644, 1)) == SEM_FAILED ) {
-    perror("sem_open");
-    exit(EXIT_FAILURE);
-  }
 #elif __linux
   sem_init(&readerSema, 0, 0);
   sem_init(&writerSema, 0, 0);
   sem_init(&ioSema, 0, 1);
   sem_init(&terminationSema, 0, 0);
   sem_init(&inputOutputQueueSema, 0, 1);
-  sem_init(&dataCounterSema, 0, 1);
 #endif
 }
 
 void *writerFunction(void *arguments){
 
   int id;
+  bool state;
   int counter;
   std::vector< std::string >* current;
   std::ofstream outFileStream;
@@ -806,78 +799,49 @@ void *writerFunction(void *arguments){
 
   while (1) {
     SEM_WAIT(writerSema);
+
     SEM_WAIT(inputOutputQueueSema);
+    state = outputQueue.empty();
+    SEM_POST(inputOutputQueueSema);
 
-    /*
-       do{
-       SEM_WAIT(inputOutputQueueSema);
-       current = outputQueue.front();
-       outputQueue.pop();
-       counter = outputQueue.size();
-       id = idOutputQueue.front();
-       idOutputQueue.pop();
-       SEM_POST(inputOutputQueueSema);
+    while(!state){
 
-       threadData *data = threadDatas->at(id);
-
-       std::cout << "counter : " << counter << std::endl;
-       std::cout << "identifier : " << data->identifier << std::endl;
-
-       SEM_WAIT(ioSema);
-       for(int j=0; j<current->size(); j++) {
-       out << current->at(j);
-       }
-       current->clear();
-       SEM_POST(ioSema);
-
-       SEM_WAIT(inputOutputQueueSema);
-       data->outputVectorQueue->push(current);
-       SEM_POST(inputOutputQueueSema);
-
-       SEM_POST(data->writeSema);
-       }
-       while(counter > 0);
-
-       std::cout << "outside the loop once " << std::endl;
-
-       if (finishedReadingFlag == 1 && readSequences == doneSequences){
-       SEM_POST(terminationSema);
-       break;
-       }
-       */
-
-    for (int j = 0; j < outputQueue.size(); j++) {
+      SEM_WAIT(inputOutputQueueSema);
       current = outputQueue.front();
       outputQueue.pop();
       id = idOutputQueue.front();
       idOutputQueue.pop();
-
-      SEM_WAIT(ioSema);
+      state = outputQueue.empty();
+      SEM_POST(inputOutputQueueSema);
 
       threadData *data = threadDatas->at(id);
 
-      for (int j = 0; j < current->size(); j++) {
+      SEM_WAIT(ioSema);
+      for (int j=0; j < current->size(); j++) {
         out << current->at(j);
       }
-      current->clear();
-      data->outputVectorQueue->push(current);
-
       SEM_POST(ioSema);
+
+      doneSequences += data->counter;
+      data->counter = 0;
+      current->clear();
+
+      SEM_WAIT(inputOutputQueueSema);
+      data->outputVectorQueue->push(current);
+      SEM_POST(inputOutputQueueSema);
       SEM_POST(data->writeSema);
     }
-    if (finishedReadingFlag == 1 && outputQueue.size() == 0 && readSequences == doneSequences){
+
+    if (finishedReadingFlag == 1 && readSequences == doneSequences){
       SEM_POST(terminationSema);
       break;
     }
-    SEM_POST(inputOutputQueueSema);
-
   }
 }
 
 void readerFunction( std::istream& in ){
 
   int id;
-  //int count;
   MultiSequence *current;
 
   if (volumes + 1 == 0) volumes = 1;
@@ -892,24 +856,17 @@ void readerFunction( std::istream& in ){
     while (in) {
       SEM_WAIT(readerSema);
       SEM_WAIT(inputOutputQueueSema);
+
       for (int j = 0; j < inputQueue.size(); j++) {
         id = idInputQueue.front();
         idInputQueue.pop();
-        //count = 0;
         threadData *data = threadDatas->at(id);
         current = inputQueue.front();
         inputQueue.pop();
 
         data->round = i;
         SEM_WAIT(ioSema);
-        //while(count < INPUT_SIZE){
-        //if(in){
         appendFromFasta(in, data, current);
-        //count++;
-        //}else{
-        // break;
-        //}
-        //}
         readSequences += current->finishedSequences();
         data->queryQueue->push(current);
         SEM_POST(ioSema);
@@ -947,9 +904,7 @@ void *threadFunction(void *__threadData){
 
     data->scanAllVolumes(volumes);
 
-    SEM_WAIT(dataCounterSema);
-    doneSequences += data->query->finishedSequences();
-    SEM_POST(dataCounterSema);
+    data->counter += data->query->finishedSequences();
 
     data->query->reinitForAppending();
 

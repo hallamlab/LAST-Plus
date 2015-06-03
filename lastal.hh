@@ -101,6 +101,7 @@ struct threadData{
 
   int identifier;
 	int round;
+  int counter;
 
 	SEM_T readSema;
 	SEM_T writeSema;

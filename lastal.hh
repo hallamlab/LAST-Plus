@@ -63,10 +63,11 @@ namespace {
   int minScoreGapless;
   int isCaseSensitiveSeeds = -1;  // initialize it to an "error" value
   unsigned numOfIndexes = 1;  // assume this value, if unspecified
+  sequenceFormat::Enum referenceFormat = sequenceFormat::fasta;
 
   SubsetSuffixArray suffixArrays[16];
   MultiSequence text;
-
+  indexT minSeedLimit;
 }
 
 namespace Phase{ 
@@ -91,7 +92,6 @@ struct threadData{
 
   GeneralizedAffineGapCosts gapCosts;
   ScoreMatrix scoreMatrix;
-  sequenceFormat::Enum referenceFormat;  // defaults to 0
   OneQualityScoreMatrix oneQualityScoreMatrix;
   OneQualityScoreMatrix oneQualityScoreMatrixMasked;
   OneQualityExpMatrix oneQualityExpMatrix;
@@ -134,8 +134,8 @@ struct threadData{
 // Meaningless for PSSMs, unless they have the same scale as the score matrix
   void calculateScoreStatistics();
 // Read the .prj file for the whole database
-  void readOuterPrj( const std::string& fileName, unsigned& volumes, indexT& minSeedLimit,
-      countT& refSequences, countT& refLetters );
+//  void readOuterPrj( const std::string& fileName, unsigned& volumes, indexT& minSeedLimit,
+//      countT& refSequences, countT& refLetters );
 };
 
 struct Dispatcher{
@@ -219,6 +219,8 @@ struct Dispatcher{
   }
 };
 
+void readOuterPrj( const std::string& fileName, unsigned& volumes,
+     countT& refSequences, countT& refLetters );
 // Read a per-volume .prj file, with info about a database volume
 void readInnerPrj( const std::string& fileName, indexT& seqCount, indexT& seqLen );
 // Read one database volume

@@ -39,10 +39,6 @@ void threadData::prepareThreadData(std::string matrixFile, int identifier){
   MultiSequence *query1 = new MultiSequence();
   MultiSequence *query2 = new MultiSequence();
 
-  indexT minSeedLimit = 0;
-
-  readOuterPrj(args.lastdbName + ".prj", volumes, minSeedLimit, refSequences, refLetters);
-
   if (minSeedLimit > 1) {
     if (args.outputType == 0)
       ERR("can't use option -j 0: need to re-run lastdb with i <= 1");
@@ -207,21 +203,24 @@ void threadData::calculateScoreStatistics() {
   }
 }
 
-void threadData::readOuterPrj(const std::string &fileName, unsigned &volumes, indexT &minSeedLimit,
+void readOuterPrj(const std::string &fileName, unsigned &volumes,
     countT &refSequences, countT &refLetters) {
 
   std::ifstream f(fileName.c_str());
   if (!f) ERR("can't open file: " + fileName);
   unsigned version = 0;
 
-  referenceFormat = sequenceFormat::fasta;
-
   std::string line, word;
   while (getline(f, line)) {
     std::istringstream iss(line);
     getline(iss, word, '=');
     if (word == "version") iss >> version;
-    if (word == "alphabet") iss >> alph;
+    if (word == "alphabet"){ 
+        iss >> threadDatas->at(0)->alph;
+      for(int i=1; i<args.threadNum; i++){
+        threadDatas->at(i)->alph = threadDatas->at(0)->alph;
+      }
+    }
     if (word == "numofsequences") iss >> refSequences;
     if (word == "numofletters") iss >> refLetters;
     if (word == "maxunsortedinterval") iss >> minSeedLimit;
@@ -232,7 +231,7 @@ void threadData::readOuterPrj(const std::string &fileName, unsigned &volumes, in
   }
 
   if (f.eof() && !f.bad()) f.clear();
-  if (alph.letters.empty() || refSequences + 1 == 0 || refLetters + 1 == 0 ||
+  if (threadDatas->at(0)->alph.letters.empty() || refSequences + 1 == 0 || refLetters + 1 == 0 ||
       isCaseSensitiveSeeds < 0 || referenceFormat >= sequenceFormat::prb ||
       numOfIndexes > maxNumOfIndexes) {
     f.setstate(std::ios::failbit);
@@ -580,7 +579,7 @@ void threadData::translateAndScan(char strand) {
 void readIndex(const std::string &baseName, indexT seqCount) {
 
   LOG("reading " << baseName << "...");
-  text.fromFiles(baseName, seqCount, isFastq(threadDatas->at(0)->referenceFormat));
+  text.fromFiles(baseName, seqCount, isFastq(referenceFormat));
   for (unsigned x = 0; x < numOfIndexes; ++x) {
     if (numOfIndexes > 1) {
       suffixArrays[x].fromFiles(baseName + char('a' + x), isCaseSensitiveSeeds, threadDatas->at(0)->alph.encode);
@@ -945,7 +944,8 @@ void lastal(int argc, char **argv) {
 
   initializeThreads();
   initializeSemaphores();
-
+ 
+  readOuterPrj(args.lastdbName + ".prj", volumes, refSequences, refLetters);
   for (int i=0; i<args.threadNum; i++){
     threadDatas->at(i)->prepareThreadData(matrixFile, i);
   }

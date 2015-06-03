@@ -59,13 +59,11 @@ namespace {
 
   LastalArguments args;
   LambdaCalculator lambdaCalculator;
-  const unsigned maxNumOfIndexes = 16;
   int minScoreGapless;
   int isCaseSensitiveSeeds = -1;  // initialize it to an "error" value
   unsigned numOfIndexes = 1;  // assume this value, if unspecified
   sequenceFormat::Enum referenceFormat = sequenceFormat::fasta;
-
-  SubsetSuffixArray suffixArrays[16];
+  SubsetSuffixArray *suffixArrays;
   MultiSequence text;
   indexT minSeedLimit;
 }

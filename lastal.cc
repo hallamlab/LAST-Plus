@@ -93,10 +93,6 @@ void threadData::prepareThreadData(std::string matrixFile, int identifier){
 
   idInputQueue.push(identifier);
 
-  if (volumes + 1 == 0) {
-    readIndex(args.lastdbName, refSequences);
-  }
-
   centroid = new Centroid(gappedXdropAligner);
   this->identifier = identifier;
 
@@ -232,11 +228,10 @@ void readOuterPrj(const std::string &fileName, unsigned &volumes,
 
   if (f.eof() && !f.bad()) f.clear();
   if (threadDatas->at(0)->alph.letters.empty() || refSequences + 1 == 0 || refLetters + 1 == 0 ||
-      isCaseSensitiveSeeds < 0 || referenceFormat >= sequenceFormat::prb ||
-      numOfIndexes > maxNumOfIndexes) {
+      isCaseSensitiveSeeds < 0 || referenceFormat >= sequenceFormat::prb){
     f.setstate(std::ios::failbit);
   }
-  if (!f) ERR("can't read file: " + fileName);
+  if (!f) ERR("can't read database prj file: " + fileName);
   if (version < 294 && version > 0)
     ERR("the lastdb files are old: please re-run lastdb");
 }
@@ -257,10 +252,10 @@ void readInnerPrj(const std::string &fileName,
   }
 
   if (f.eof() && !f.bad()) f.clear();
-  if (seqCount + 1 == 0 || seqLen + 1 == 0 || numOfIndexes > maxNumOfIndexes) {
+  if (seqCount + 1 == 0 || seqLen + 1 == 0 ){
     f.setstate(std::ios::failbit);
   }
-  if (!f) ERR("can't read file: " + fileName);
+  if (!f) ERR("can't read volume prj file: " + fileName);
 }
 
 void threadData::writeCounts(std::ostream &out) {
@@ -326,10 +321,6 @@ void threadData::alignGapless(SegmentPairPot &gaplessAlns, char strand) {
       const indexT *beg;
       const indexT *end;
 
-      /*
-         suffixArrays[x].match( beg, end, dis.b + i, dis.a, args.oneHitMultiplicity, args.minHitDepth );
-         matchCount += end - beg;
-         */
       subsetUser.match(beg, end, dis.b + i, dis.a, args.oneHitMultiplicity, args.minHitDepth,
           suffixArrays[x]);
       matchCount += end - beg;
@@ -946,6 +937,12 @@ void lastal(int argc, char **argv) {
   initializeSemaphores();
  
   readOuterPrj(args.lastdbName + ".prj", volumes, refSequences, refLetters);
+  
+  suffixArrays = new SubsetSuffixArray[numOfIndexes];
+
+  if (volumes + 1 == 0) {
+    readIndex(args.lastdbName, refSequences);
+  }
   for (int i=0; i<args.threadNum; i++){
     threadDatas->at(i)->prepareThreadData(matrixFile, i);
   }
@@ -981,12 +978,11 @@ int main(int argc, char **argv) {
     lastal(argc, argv);
     return EXIT_SUCCESS;
   } catch (const std::bad_alloc &e) { 
-    std::cerr << "lastal: out of memory\n";
+    std::cerr << "lastal: memory exception\n";
     std::cout << e.what() << std::endl;
     return EXIT_FAILURE;
   } catch (const std::exception &e) {
     std::cerr << "lastal: " << e.what() << '\n';
-    std::cout << e.what() << std::endl;
     return EXIT_FAILURE;
   } catch (int i) {
     return i;

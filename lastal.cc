@@ -842,6 +842,7 @@ void *writerFunction(void *arguments){
 void readerFunction( std::istream& in ){
 
   int id;
+  bool state;
   MultiSequence *current;
 
   if (volumes + 1 == 0) volumes = 1;
@@ -855,24 +856,33 @@ void readerFunction( std::istream& in ){
 
     while (in) {
       SEM_WAIT(readerSema);
-      SEM_WAIT(inputOutputQueueSema);
 
-      for (int j = 0; j < inputQueue.size(); j++) {
+      SEM_WAIT(inputOutputQueueSema);
+      state = inputQueue.empty();
+      SEM_POST(inputOutputQueueSema);
+
+      while(!state){
+
+        SEM_WAIT(inputOutputQueueSema);
         id = idInputQueue.front();
         idInputQueue.pop();
         threadData *data = threadDatas->at(id);
         current = inputQueue.front();
         inputQueue.pop();
+        state = inputQueue.empty();
+        SEM_POST(inputOutputQueueSema);
 
         data->round = i;
+
         SEM_WAIT(ioSema);
+        SEM_WAIT(inputOutputQueueSema);
         appendFromFasta(in, data, current);
         readSequences += current->finishedSequences();
         data->queryQueue->push(current);
         SEM_POST(ioSema);
         SEM_POST(data->readSema);
+        SEM_POST(inputOutputQueueSema);
       }
-      SEM_POST(inputOutputQueueSema);
     }
     in.clear();
     in.seekg(0);

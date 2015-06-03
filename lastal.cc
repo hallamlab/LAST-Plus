@@ -4,6 +4,7 @@
 
 threadData **threadDatas;
 pthread_t *threads;
+pthread_t writerThread;
 
 std::queue<int> idInputQueue;
 std::queue<MultiSequence*> inputQueue;
@@ -11,15 +12,13 @@ std::queue<MultiSequence*> inputQueue;
 std::queue<int> idOutputQueue;
 std::queue< std::vector< std::string >* > outputQueue;
 
-pthread_t writerThread;
-
-bool finishedReadingFlag;
-
 SEM_T readerSema;
 SEM_T writerSema;
 SEM_T ioSema;
 SEM_T terminationSema;
 SEM_T inputOutputQueueSema;
+
+bool finishedReadingFlag;
 
 unsigned volumes = unsigned(-1);
 unsigned readSequences = 0;

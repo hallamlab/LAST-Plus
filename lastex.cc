@@ -124,6 +124,7 @@ void makeStrandStats(){
 }
 
 void makeEvaluer(){
+
   // we need to pass the score matrix as a pointer-to-pointers:
   std::vector<const int*> matrixPointers;
 

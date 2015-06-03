@@ -711,7 +711,6 @@ std::istream& appendFromFasta(std::istream &in, threadData *data, MultiSequence 
       checkQualityCodes(query->qualityReader() + oldUnfinishedSize,
           query->qualityReader() + query->unfinishedSize(),
           qualityOffset(args.inputFormat));
-
     count++;
   }
 

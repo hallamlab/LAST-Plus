@@ -11,6 +11,8 @@
 
 using namespace cbrc;
 
+std::string line;
+
 void MultiSequence::initForAppending( indexT padSizeIn ){
   padSize = padSizeIn;
   seq.v.assign( padSize, ' ' );
@@ -67,12 +69,10 @@ void MultiSequence::addName( std::string& name ){
 }
 
 std::istream& MultiSequence::readFastaName( std::istream& stream ){
-  std::string line, word;
+  line = "";
   getline( stream, line );
-  std::istringstream iss(line);
-  iss >> word;
   if( !stream ) return stream;
-  addName(word);
+  addName(line);
   return stream;
 }
 

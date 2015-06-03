@@ -48,7 +48,7 @@
 #define ERR(x) throw std::runtime_error(x)
 #define LOG(x) if( args.verbosity > 0 ) std::cerr << "lastal: " << x << '\n'
 
-#define INPUT_SIZE 25000
+#define INPUT_SIZE 50000
 
 using namespace cbrc;
 

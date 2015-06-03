@@ -49,6 +49,7 @@ void SubsetSuffixArray::fromFiles( const std::string& baseName,
     }
   }
 
+  /*
   std::cout << "totallength : " << textLength << std::endl;
   std::cout << "specialcharacters : " << unindexedPositions << std::endl;
   std::cout << "prefixlength : " << bucketDepth << std::endl;
@@ -58,6 +59,7 @@ void SubsetSuffixArray::fromFiles( const std::string& baseName,
      if( bucketDepth+1 == 0 ) std::cout << "bucketDepth" << std::endl;
       if( !seed.span()) std::cout << "seedspan" << std::endl;
        if(!f.eof() ) std::cout << "eof" << std::endl;
+  */
 
   if( textLength == 0 || unindexedPositions == 0 || bucketDepth+1 == 0 ||
       !seed.span() || !f.eof() ){

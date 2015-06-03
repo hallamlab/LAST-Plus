@@ -2,8 +2,8 @@
 // BLAST-like pair-wise sequence alignment, using suffix arrays.
 #include "lastal.hh"
 
-std::vector<threadData *> *threadDatas;
-std::vector<pthread_t> *threads;
+threadData **threadDatas;
+pthread_t *threads;
 
 std::queue<int> idInputQueue;
 std::queue<MultiSequence*> inputQueue;
@@ -212,9 +212,9 @@ void readOuterPrj(const std::string &fileName, unsigned &volumes,
     getline(iss, word, '=');
     if (word == "version") iss >> version;
     if (word == "alphabet"){ 
-        iss >> threadDatas->at(0)->alph;
+        iss >> threadDatas[0]->alph;
       for(int i=1; i<args.threadNum; i++){
-        threadDatas->at(i)->alph = threadDatas->at(0)->alph;
+        threadDatas[i]->alph = threadDatas[0]->alph;
       }
     }
     if (word == "numofsequences") iss >> refSequences;
@@ -227,7 +227,7 @@ void readOuterPrj(const std::string &fileName, unsigned &volumes,
   }
 
   if (f.eof() && !f.bad()) f.clear();
-  if (threadDatas->at(0)->alph.letters.empty() || refSequences + 1 == 0 || refLetters + 1 == 0 ||
+  if (threadDatas[0]->alph.letters.empty() || refSequences + 1 == 0 || refLetters + 1 == 0 ||
       isCaseSensitiveSeeds < 0 || referenceFormat >= sequenceFormat::prb){
     f.setstate(std::ios::failbit);
   }
@@ -573,9 +573,9 @@ void readIndex(const std::string &baseName, indexT seqCount) {
   text.fromFiles(baseName, seqCount, isFastq(referenceFormat));
   for (unsigned x = 0; x < numOfIndexes; ++x) {
     if (numOfIndexes > 1) {
-      suffixArrays[x].fromFiles(baseName + char('a' + x), isCaseSensitiveSeeds, threadDatas->at(0)->alph.encode);
+      suffixArrays[x].fromFiles(baseName + char('a' + x), isCaseSensitiveSeeds, threadDatas[0]->alph.encode);
     } else {
-      suffixArrays[x].fromFiles(baseName, isCaseSensitiveSeeds, threadDatas->at(0)->alph.encode);
+      suffixArrays[x].fromFiles(baseName, isCaseSensitiveSeeds, threadDatas[0]->alph.encode);
     }
   }
 }
@@ -655,7 +655,7 @@ void writeHeader(countT refSequences, std::ostream &out) {
   } else {
     if (args.outputFormat != 2) {
       if (args.inputFormat != sequenceFormat::pssm || !args.matrixFile.empty()) {
-        threadDatas->at(0)->scoreMatrix.writeCommented(out);
+        threadDatas[0]->scoreMatrix.writeCommented(out);
         out << "#\n";
       }
       out << "# Coordinates are 0-based.  For - strand matches, coordinates\n";
@@ -730,15 +730,14 @@ void initializeEvalueCalulator(const std::string dbPrjFile, ScoreMatrix &scoreMa
 
 void initializeThreads() {
 
-  threadDatas = new std::vector<threadData *>();
-  threadDatas->reserve(args.threadNum);
+  threadDatas = new threadData*[args.threadNum];
+  threads = new pthread_t[args.threadNum];
 
   for (int i = 0; i < args.threadNum; i++) {
     threadData *data = new threadData();
-    threadDatas->push_back(data);
+    threadDatas[i] = data;
   }
   pthread_t thread;
-  threads = new std::vector<pthread_t>(args.threadNum, thread);
 }
 
 void initializeSemaphores() {
@@ -804,7 +803,7 @@ void *writerFunction(void *arguments){
       state = outputQueue.empty();
       SEM_POST(inputOutputQueueSema);
 
-      threadData *data = threadDatas->at(id);
+      threadData *data = threadDatas[id];
 
       SEM_WAIT(ioSema);
       for (int j=0; j < current->size(); j++) {
@@ -856,7 +855,7 @@ void readerFunction( std::istream& in ){
         SEM_WAIT(inputOutputQueueSema);
         id = idInputQueue.front();
         idInputQueue.pop();
-        threadData *data = threadDatas->at(id);
+        threadData *data = threadDatas[id];
         current = inputQueue.front();
         inputQueue.pop();
         state = inputQueue.empty();
@@ -944,7 +943,7 @@ void lastal(int argc, char **argv) {
     readIndex(args.lastdbName, refSequences);
   }
   for (int i=0; i<args.threadNum; i++){
-    threadDatas->at(i)->prepareThreadData(matrixFile, i);
+    threadDatas[i]->prepareThreadData(matrixFile, i);
   }
 
   char defaultInputName[] = "-";
@@ -952,7 +951,7 @@ void lastal(int argc, char **argv) {
   char **inputBegin = argv + args.inputStart;
 
   initializeEvalueCalulator( args.lastdbName + ".prj",
-      threadDatas->at(0)->scoreMatrix, *inputBegin );
+      threadDatas[0]->scoreMatrix, *inputBegin );
 
   for (char **i = *inputBegin ? inputBegin : defaultInput; *i; ++i) {
     std::ifstream inFileStream;
@@ -960,12 +959,12 @@ void lastal(int argc, char **argv) {
 
     pthread_create(&writerThread, 0, writerFunction, 0);
     for (int j = 0; j < args.threadNum; j++) {
-      pthread_create(&threads->at(j), 0, threadFunction, (void *) threadDatas->at(j));
+      pthread_create(&(threads[j]), 0, threadFunction, (void *) threadDatas[j]);
     }
 
     for (int j = 0; j < args.threadNum; j++) {
       for(int k=0; k<2; k++) {
-        SEM_POST(threadDatas->at(j)->readSema);
+        SEM_POST(threadDatas[j]->readSema);
       }
     }
     readerFunction(in);

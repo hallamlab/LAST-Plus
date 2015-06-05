@@ -16,13 +16,16 @@ SEM_T readerSema;
 SEM_T writerSema;
 SEM_T ioSema;
 SEM_T terminationSema;
+SEM_T roundSema;
+SEM_T roundCheckSema;
 SEM_T inputOutputQueueSema;
 
-bool finishedReadingFlag;
+bool finishedReadingFlag = 0;
+bool roundDone = 0;
 
 unsigned volumes = unsigned(-1);
-unsigned readSequences = 0;
-unsigned doneSequences = 0;
+int readSequences = 0;
+int doneSequences = 0;
 
 countT refSequences = -1;
 countT refLetters = -1;
@@ -95,7 +98,6 @@ void threadData::prepareThreadData(std::string matrixFile, int identifier){
   centroid = new Centroid(gappedXdropAligner);
   this->identifier = identifier;
 
-  counter = 0;
   round = 0;
 
 
@@ -215,7 +217,7 @@ void readOuterPrj(const std::string &fileName, unsigned &volumes,
     getline(iss, word, '=');
     if (word == "version") iss >> version;
     if (word == "alphabet"){ 
-        iss >> threadDatas[0]->alph;
+      iss >> threadDatas[0]->alph;
       for(int i=1; i<args.threadNum; i++){
         threadDatas[i]->alph = threadDatas[0]->alph;
       }
@@ -304,14 +306,14 @@ void threadData::countMatches(char strand) {
     }
 
     for (unsigned x = 0; x < numOfIndexes; ++x)
-      subsetUser.countMatches(matchCounts[seqNum], query->seqReader() + i, text.seqReader(),
+      subsetUser.countMatches(matchCounts[seqNum], query->seqReader() + i, text->seqReader(),
           suffixArrays[x]);
   }
 }
 
 void threadData::alignGapless(SegmentPairPot &gaplessAlns, char strand) {
 
-  Dispatcher dis(Phase::gapless, text, *query, scoreMatrix, twoQualityScoreMatrix,
+  Dispatcher dis(Phase::gapless, *text, *query, scoreMatrix, twoQualityScoreMatrix,
       twoQualityScoreMatrixMasked,
       referenceFormat, alph);
   DiagonalTable dt;  // record already-covered positions on each diagonal
@@ -361,7 +363,7 @@ void threadData::alignGapless(SegmentPairPot &gaplessAlns, char strand) {
         if (args.outputType == 1) {  // we just want gapless alignments
           Alignment aln(identifier);
           aln.fromSegmentPair(sp);
-          aln.write(text, *query, strand, args.isTranslated(), alph, args.outputFormat, args,
+          aln.write(*text, *query, strand, args.isTranslated(), alph, args.outputFormat, args,
               outputVector);
         }
         else {
@@ -382,7 +384,7 @@ void threadData::alignGapless(SegmentPairPot &gaplessAlns, char strand) {
 void threadData::alignGapped(AlignmentPot &gappedAlns, SegmentPairPot &gaplessAlns, Phase::Enum phase) {
 
   //Dispatcher dis(phase);
-  Dispatcher dis(phase, text, *query, scoreMatrix, twoQualityScoreMatrix, twoQualityScoreMatrixMasked,
+  Dispatcher dis(phase, *text, *query, scoreMatrix, twoQualityScoreMatrix, twoQualityScoreMatrixMasked,
       referenceFormat, alph);
   indexT frameSize = args.isTranslated() ? (query->finishedSize() / 3) : 0;
   countT gappedExtensionCount = 0, gappedAlignmentCount = 0;
@@ -456,7 +458,7 @@ void threadData::alignGapped(AlignmentPot &gappedAlns, SegmentPairPot &gaplessAl
 
 void threadData::alignFinish(const AlignmentPot &gappedAlns, char strand) {
 
-  Dispatcher dis(Phase::final, text, *query, scoreMatrix, twoQualityScoreMatrix,
+  Dispatcher dis(Phase::final, *text, *query, scoreMatrix, twoQualityScoreMatrix,
       twoQualityScoreMatrixMasked,
       referenceFormat, alph);
   indexT frameSize = args.isTranslated() ? (query->finishedSize() / 3) : 0;
@@ -478,7 +480,7 @@ void threadData::alignFinish(const AlignmentPot &gappedAlns, char strand) {
   for (size_t i = 0; i < gappedAlns.size(); ++i) {
     const Alignment &aln = gappedAlns.items[i];
     if (args.outputType < 4) {
-      aln.write(text, *query, strand, args.isTranslated(), alph, args.outputFormat, args, outputVector);
+      aln.write(*text, *query, strand, args.isTranslated(), alph, args.outputFormat, args, outputVector);
     }
     else {  // calculate match probabilities:
       Alignment probAln(identifier);
@@ -490,7 +492,7 @@ void threadData::alignFinish(const AlignmentPot &gappedAlns, char strand) {
           args.frameshiftCost, frameSize, dis.p, dis.t,
           dis.i, dis.j, alph, extras,
           args.gamma, args.outputType);
-      probAln.write(text, *query, strand, args.isTranslated(),
+      probAln.write(*text, *query, strand, args.isTranslated(),
           alph, args.outputFormat, args, outputVector, extras);
     }
   }
@@ -573,7 +575,7 @@ void threadData::translateAndScan(char strand) {
 void readIndex(const std::string &baseName, indexT seqCount) {
 
   LOG("reading " << baseName << "...");
-  text.fromFiles(baseName, seqCount, isFastq(referenceFormat));
+  text->fromFiles(baseName, seqCount, isFastq(referenceFormat));
   for (unsigned x = 0; x < numOfIndexes; ++x) {
     if (numOfIndexes > 1) {
       suffixArrays[x].fromFiles(baseName + char('a' + x), isCaseSensitiveSeeds, threadDatas[0]->alph.encode);
@@ -626,6 +628,7 @@ void threadData::scanAllVolumes(unsigned volumes) {
   }
 
   if (args.strand != 0) {
+    std::stringstream tmp;
     translateAndScan('+');
   }
 
@@ -686,7 +689,7 @@ std::istream& appendFromFasta(std::istream &in, threadData *data, MultiSequence 
 
   int count = 0;
 
-  while(count < INPUT_SIZE && in){
+  while(count < INPUT_SIZE && !in.eof() ){
 
     size_t oldUnfinishedSize = query->unfinishedSize();
 
@@ -770,11 +773,23 @@ void initializeSemaphores() {
     perror("sem_open");
     exit(EXIT_FAILURE);
   }
+  sem_unlink("/roundSema");
+  if (( roundSema = sem_open("/roundSema", O_CREAT, 0644, 0)) == SEM_FAILED ) {
+    perror("sem_open");
+    exit(EXIT_FAILURE);
+  }
+  sem_unlink("/roundCheckSema");
+  if (( roundCheckSema = sem_open("/roundCheckSema", O_CREAT, 0644, 1)) == SEM_FAILED ) {
+    perror("sem_open");
+    exit(EXIT_FAILURE);
+  }
 #elif __linux
   sem_init(&readerSema, 0, 0);
   sem_init(&writerSema, 0, 0);
   sem_init(&ioSema, 0, 1);
   sem_init(&terminationSema, 0, 0);
+  sem_init(&roundSema, 0, 0);
+  sem_init(&roundCheckSema, 0, 1);
   sem_init(&inputOutputQueueSema, 0, 1);
 #endif
 }
@@ -783,7 +798,6 @@ void *writerFunction(void *arguments){
 
   int id;
   bool state;
-  int counter;
   std::vector< std::string >* current;
   std::ofstream outFileStream;
   std::ostream &out = openOut(args.outFile, outFileStream);
@@ -813,17 +827,24 @@ void *writerFunction(void *arguments){
       }
       SEM_POST(ioSema);
 
-      doneSequences += data->counter;
-      data->counter = 0;
       current->clear();
 
       SEM_WAIT(inputOutputQueueSema);
       data->outputVectorQueue->push(current);
+      doneSequences++;
       SEM_POST(inputOutputQueueSema);
       SEM_POST(data->writeSema);
     }
 
+    SEM_WAIT(roundCheckSema);
+    if (roundDone && readSequences == doneSequences){
+      SEM_POST(roundCheckSema);
+      SEM_POST(roundSema);
+    }
+    SEM_POST(roundCheckSema);
+
     if (finishedReadingFlag == 1 && readSequences == doneSequences){
+      SEM_POST(roundSema);
       SEM_POST(terminationSema);
       break;
     }
@@ -836,23 +857,39 @@ void readerFunction( std::istream& in ){
   bool state;
   MultiSequence *current;
 
-  if (volumes + 1 == 0) volumes = 1;
+  if (volumes == -1) {
+    readIndex(args.lastdbName, refSequences);
+    volumes = 1;
+  }
 
-  for (unsigned i = 0; i < volumes; ++i) {
-    if (text.unfinishedSize() == 0 || volumes > 1){
+  for (unsigned i = 0; i < volumes; ++i){
+
+    SEM_WAIT(roundCheckSema);
+    roundDone = 0;
+    SEM_POST(roundCheckSema);
+
+    if (text->unfinishedSize() == 0 || volumes > 1){
+      std::stringstream tmp;
+      tmp << "Volume : " << i+1 << " out of : " << volumes << "\n";
+      std::cout << tmp.str();
+
       SEM_WAIT(ioSema);
       readVolume(i);
       SEM_POST(ioSema);
+
+      for(int j=0; j<args.threadNum; j++){
+        threadDatas[j]->round = i;
+      }
     }
 
-    while (in) {
+    while ( !in.eof() ) {
       SEM_WAIT(readerSema);
 
       SEM_WAIT(inputOutputQueueSema);
       state = inputQueue.empty();
       SEM_POST(inputOutputQueueSema);
 
-      while(!state){
+      while(!state && !in.eof() ){
 
         SEM_WAIT(inputOutputQueueSema);
         id = idInputQueue.front();
@@ -863,13 +900,12 @@ void readerFunction( std::istream& in ){
         state = inputQueue.empty();
         SEM_POST(inputOutputQueueSema);
 
-        data->round = i;
-
         SEM_WAIT(ioSema);
         SEM_WAIT(inputOutputQueueSema);
         appendFromFasta(in, data, current);
-        readSequences += current->finishedSequences();
+
         data->queryQueue->push(current);
+        readSequences++;
         SEM_POST(ioSema);
         SEM_POST(data->readSema);
         SEM_POST(inputOutputQueueSema);
@@ -877,9 +913,18 @@ void readerFunction( std::istream& in ){
     }
     in.clear();
     in.seekg(0);
+
+    SEM_WAIT(roundCheckSema);
+    roundDone = 1;
+    if (i+1 == volumes){
+      finishedReadingFlag = 1;
+      SEM_POST(roundCheckSema);
+      SEM_WAIT(roundSema);
+      SEM_WAIT(terminationSema);
+    }
+    SEM_POST(roundCheckSema);
+    SEM_WAIT(roundSema);
   }
-  finishedReadingFlag = 1;
-  SEM_WAIT(terminationSema);
 }
 
 void *threadFunction(void *__threadData){
@@ -904,8 +949,6 @@ void *threadFunction(void *__threadData){
     SEM_POST(inputOutputQueueSema);
 
     data->scanAllVolumes(volumes);
-
-    data->counter += data->query->finishedSequences();
 
     data->query->reinitForAppending();
 
@@ -936,14 +979,13 @@ void lastal(int argc, char **argv) {
 
   initializeThreads();
   initializeSemaphores();
- 
-  readOuterPrj(args.lastdbName + ".prj", volumes, refSequences, refLetters);
-  
-  suffixArrays = new SubsetSuffixArray[numOfIndexes];
 
-  if (volumes + 1 == 0) {
-    readIndex(args.lastdbName, refSequences);
-  }
+  readOuterPrj(args.lastdbName + ".prj", volumes, refSequences, refLetters);
+
+  suffixArrays = new SubsetSuffixArray[numOfIndexes];
+  text = new MultiSequence();
+  doneSequences -= (args.threadNum)*2;
+
   for (int i=0; i<args.threadNum; i++){
     threadDatas[i]->prepareThreadData(matrixFile, i);
   }

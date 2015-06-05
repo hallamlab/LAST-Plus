@@ -37,6 +37,7 @@ void MultiSequence::fromFiles( const std::string& baseName, indexT seqCount,
   seq.m.open( baseName + ".tis", ends.m.back() );
   nameEnds.m.open( baseName + ".sds", seqCount + 1 );
   names.m.open( baseName + ".des", nameEnds.m.back() );
+
   padSize = ends.m[0];
 
   qualityScores.m.open( baseName + ".qua",
@@ -78,8 +79,8 @@ std::istream& MultiSequence::readFastaName( std::istream& stream ){
 
 std::istream& MultiSequence::appendFromFasta( std::istream& stream, indexT maxSeqLen){
 
+  char c;
   if( isFinished() ){
-    char c = '>';
     stream >> c;
     if( c != '>' )
       throw std::runtime_error("bad FASTA sequence data: missing '>'");
@@ -87,17 +88,15 @@ std::istream& MultiSequence::appendFromFasta( std::istream& stream, indexT maxSe
     if( !stream ) return stream;
   }
 
-  std::istreambuf_iterator<char> inpos(stream);
-  std::istreambuf_iterator<char> endpos;
-  while( inpos != endpos ){
-    uchar c = *inpos;
+  while( !stream.eof() ){
+    stream >> c; 
     if( c == '>' ){
+      stream.unget();
       break;  // we have hit the next FASTA sequence
     }
     if( !std::isspace(c) ){
       seq.v.push_back(c);
     }
-    ++inpos;
   }
 
   finish();

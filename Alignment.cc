@@ -232,10 +232,6 @@ void Alignment::extend( std::vector< SegmentPair >& chunks,
 			double gamma, int outputType ) {
 
 
-//  std::cout << "This is seq 1: " << seq1 << std::endl;
-//  std::cout << "This is seq 2: " << seq2 << std::endl;
-
-
   if( frameSize ) {
     assert( outputType < 4 );
     assert( !globality );

@@ -481,8 +481,7 @@ void threadData::alignFinish(const AlignmentPot &gappedAlns, char strand) {
     const Alignment &aln = gappedAlns.items[i];
     if (args.outputType < 4) {
       aln.write(*text, *query, strand, args.isTranslated(), alph, args.outputFormat, args, outputVector);
-    }
-    else {  // calculate match probabilities:
+    }else{  // calculate match probabilities:
       Alignment probAln(identifier);
       AlignmentExtras extras;
       probAln.seed = aln.seed;
@@ -576,6 +575,7 @@ void readIndex(const std::string &baseName, indexT seqCount) {
 
   LOG("reading " << baseName << "...");
   text->fromFiles(baseName, seqCount, isFastq(referenceFormat));
+  LOG("reading suffix " << baseName << "...");
   for (unsigned x = 0; x < numOfIndexes; ++x) {
     if (numOfIndexes > 1) {
       suffixArrays[x].fromFiles(baseName + char('a' + x), isCaseSensitiveSeeds, threadDatas[0]->alph.encode);
@@ -583,6 +583,7 @@ void readIndex(const std::string &baseName, indexT seqCount) {
       suffixArrays[x].fromFiles(baseName, isCaseSensitiveSeeds, threadDatas[0]->alph.encode);
     }
   }
+  LOG("finished reading " << baseName << "...");
 }
 
 void readVolume(unsigned volumeNumber) {
@@ -621,14 +622,13 @@ void threadData::reverseComplementQuery() {
   }
 }
 
-void threadData::scanAllVolumes(unsigned volumes) {
+void threadData::scanAllVolumes(){
 
   if (args.strand == 2 && round > 0) {
     reverseComplementQuery();
   }
 
   if (args.strand != 0) {
-    std::stringstream tmp;
     translateAndScan('+');
   }
 
@@ -647,7 +647,7 @@ void threadData::scanAllVolumes(unsigned volumes) {
   LOG("query batch done!");
 }
 
-void writeHeader(countT refSequences, std::ostream &out) {
+void writeHeader(std::ostream &out) {
 
   out << "# LAST version " <<
 
@@ -864,14 +864,13 @@ void readerFunction( std::istream& in ){
 
   for (unsigned i = 0; i < volumes; ++i){
 
+    LOG(i+1 << "out of " << volumes);
+
     SEM_WAIT(roundCheckSema);
     roundDone = 0;
     SEM_POST(roundCheckSema);
 
     if (text->unfinishedSize() == 0 || volumes > 1){
-      std::stringstream tmp;
-      tmp << "Volume : " << i+1 << " out of : " << volumes << "\n";
-      std::cout << tmp.str();
 
       SEM_WAIT(ioSema);
       readVolume(i);
@@ -948,7 +947,7 @@ void *threadFunction(void *__threadData){
     data->queryQueue->pop();
     SEM_POST(inputOutputQueueSema);
 
-    data->scanAllVolumes(volumes);
+    data->scanAllVolumes();
 
     data->query->reinitForAppending();
 

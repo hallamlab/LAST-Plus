@@ -48,7 +48,7 @@
 #define ERR(x) throw std::runtime_error(x)
 #define LOG(x) if( args.verbosity > 0 ) std::cerr << "lastal: " << x << '\n'
 
-#define INPUT_SIZE 50000
+#define INPUT_SIZE 10000
 
 using namespace cbrc;
 
@@ -120,7 +120,7 @@ struct threadData{
   void reverseComplementPssm();
   void reverseComplementQuery();
   // Scan one batch of query sequences against all database volumes
-  void scanAllVolumes( unsigned volumes);
+  void scanAllVolumes();
   void prepareThreadData(std::string matrixFile, int identifier );
   void countMatches( char strand );
   // Write match counts for each query sequence
@@ -226,7 +226,7 @@ std::istream& appendFromFasta( std::istream& in, threadData *data, MultiSequence
 void *writerFunction(void *arguments);
 void readerFunction( std::istream& in );
 void *threadFunction(void *__threadData);
-void writeHeader( countT refSequences, std::ostream& out );
+void writeHeader( std::ostream& out );
 void initializeThreads();
 void initializeSemaphores();
 void initializeEvalueCalulator(const std::string dbPrjFile, ScoreMatrix &scoreMatrix,

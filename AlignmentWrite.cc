@@ -257,8 +257,6 @@ void Alignment::writeTab( const MultiSequence& seq1, const MultiSequence& seq2,
      << strand << '\t'
      << seq2.seqLen(w2) << '\t';
 
-  std::cout << (alnBeg1 - seqStart1) << "  " << (alnEnd1 -seqStart1) << " --  " << (alnBeg2 - seqStart2) << "  " << (alnEnd2 -seqStart2) << std::endl;
-
   for( CI(SegmentPair) i = blocks.begin(); i < blocks.end(); ++i ){
     if( i > blocks.begin() ){  // between each pair of aligned blocks:
       CI(SegmentPair) j = i - 1;

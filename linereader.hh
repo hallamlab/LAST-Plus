@@ -3,7 +3,7 @@
 #ifndef INCLUDED_FASTA_Line
 #define INCLUDED_FASTA_Line
 #include <string>
-#include <iterator> 
+#include <iterator>
 
 using namespace std;
 
@@ -18,6 +18,7 @@ class Line {
   public:
     std::string orfid;      // name of the Line
     std::string line;  // sequence of 'A', 'C', 'G', and 'T' characters
+		float evalue;
     // CREATORS
     explicit Line();
         // Create a new 'Line' object having the (default) attribute values:
@@ -50,6 +51,7 @@ class Line {
         // Set the 'sequence' attribute of this object to the specified
         // 'value'.
 
+		void setEvalue(const float& value);
 
     // ACCESSORS
     const std::string& getOrfId() const;
@@ -145,6 +147,11 @@ void Line::setLine(const std::string& value)
     line.assign(value.begin(), value.end());
 }
 
+inline
+void Line::setEvalue(const float& value)
+{
+	evalue = value;
+}
 
 // ACCESSORS
 inline const std::string& Line::getOrfId() const

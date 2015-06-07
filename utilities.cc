@@ -407,7 +407,7 @@ string orf_extractor_from_blast(const string & line){
 
 float evalue_extractor_from_blast(const string &line){
     char buf[10000];
-    string evaluestr  = split_n_pick(line, buf, '\t', 5); 
+    string evaluestr  = split_n_pick(line, buf, '\t', 10);
     float evalue ;
    
     try{

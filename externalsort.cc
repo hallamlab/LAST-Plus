@@ -2,13 +2,15 @@
 #include <algorithm>
 
 #define STR_BUFFER_SIZE 10
-#define PRINT_INTERVAL 100000
 
 typedef Line *LINE;
 
 bool comp_lines(const LINE &lhs, const LINE &rhs) {
-	// //std::cout << lhs->orfid << "  " <<   lhs->line << std::endl;
-	return lhs->orfid < rhs->orfid;
+	if (lhs->orfid < rhs->orfid) return true;
+	if (lhs->orfid == rhs->orfid) {
+		return lhs->evalue < rhs->evalue;
+	}
+	return false;
 }
 
 void free_lines(vector<Line *> &v) {
@@ -20,6 +22,7 @@ void free_lines(vector<Line *> &v) {
 /* Sort the input sequences and divide them into blocks; return the number of blocks created */
 int disk_sort_file(string outputdir, string tobe_sorted_file_name, string sorted_file_name, \
     int chunk_size, string(*key_extractor)(const string &)) {
+
 	string sorted_fname = outputdir + "/sorted.fasta";
 	string sorted_fname_tmp = sorted_fname + ".tmp.";
 
@@ -29,8 +32,6 @@ int disk_sort_file(string outputdir, string tobe_sorted_file_name, string sorted
 
 	int curr_size = 0;
 	int batch = 0;
-	int seq_id = 0;
-	string seqname;
 	char buffer[STR_BUFFER_SIZE];
 
 	vector<string> filenames;
@@ -46,43 +47,27 @@ int disk_sort_file(string outputdir, string tobe_sorted_file_name, string sorted
 	while (std::getline(inputfile, line).good()) {
 
 		string orfid = key_extractor(line);
-		//   //std::cout << "ZZZZ\t" << orfid << "\t" << line <<  std::endl;
-		//string orfid = key_extractor(line) fields, buf,'\t');
-
+		float evalue = evalue_extractor_from_blast(line);
 		lineptr = new Line;
-
-		//     lineptr->orfid = orfid;
-		//	 lineptr->line = line;
-
 		lineptr->setOrfId(orfid);
 		lineptr->setLine(line);
+		lineptr->setEvalue(evalue);
 		lines.push_back(lineptr);
 
 		if (curr_size > chunk_size) {
-			//std::cout << "processing batch " << batch << std::endl;
-
-			// Sort the vector of sequence ids/lengths            
-			//        //std::cout << " done processing batch 0 " << batch << std::endl;
-			//         //std::cout << "going to  sorting now 1 " << lines.size() << "\t" << count << "\t" << curr_size << "\t" << chunk_size << " \n";
-
+			// Sort the vector of sequence ids/lengths
 			sort(lines.begin(), lines.end(), comp_lines);
-			//    sort(lines.begin(), lines.end());
-			//          //std::cout << " done processing batch A " << batch << std::endl;
 			// Write the sequences to a file
 			sprintf(buffer, "%d", batch);
 			string fname = sorted_fname_tmp + string(buffer);
 			filenames.push_back(fname);
 			write_sorted_sequences(lines, fname);
 
-//            //std::cout << " done processing batch a " << batch << std::endl;
 			free_lines(lines);
-
 			batch++;
 			// Clear the variables
 			curr_size = 0;
 			lines.clear();
-			seq_id = 0;
-			//           //std::cout << " done processing batch " << batch << std::endl;
 		}
 		curr_size++;
 		count++;
@@ -91,14 +76,7 @@ int disk_sort_file(string outputdir, string tobe_sorted_file_name, string sorted
 	// Sort remaining sequences and write to last file
 	if (lines.size() > 0) {
 
-		//std::cout << "going to  sorting 1 " << lines.size() << "\t" << count << "\t" << curr_size << "\t" <<
-		//chunk_size << " \n";
-
 		sort(lines.begin(), lines.end(), comp_lines);
-		//sort(lines.begin(), lines.end());
-
-		//std::cout << "going to  sorting 1.1 " << lines.size() << "  \n";
-		//std::cout << "done sorting 2 " << lines.size() << "  \n";
 
 		sprintf(buffer, "%d", batch);
 		string fname = sorted_fname_tmp + string(buffer);
@@ -107,16 +85,11 @@ int disk_sort_file(string outputdir, string tobe_sorted_file_name, string sorted
 		write_sorted_sequences(lines, fname);
 		free_lines(lines);
 		lines.clear();
-
 	}
 	inputfile.close();
 
-	//std::cout << "done sort again ing \n";
-
 	// Merge the sorted files and write into blocks
-	//std::cout << " going to merge \n";
-	int num_blocks = merge_sorted_files_create_blocks(filenames, chunk_size, outputdir,
-	                                                    sorted_file_name);
+	int num_blocks = merge_sorted_files_create_blocks(filenames, chunk_size, outputdir, sorted_file_name);
 	
 	// Remove the individual sorted files
 	unsigned int i;
@@ -211,7 +184,6 @@ int merge_sorted_files_create_blocks(vector<string> &filenames, float block_mb, 
 
 	for (i = 0; i < S; i++) {
 		remove(filenames[i].c_str());
-
 	}
 	return block_num + 1;
 }
@@ -221,11 +193,9 @@ void write_sorted_sequences(vector<Line *> &lines, string filename) {
 	unsigned int i;
 	ofstream output;
 	output.open(filename.c_str(), std::ifstream::out);
-	//std::cout << filename << std::endl;
 
 	for (i = 0; i < lines.size(); i++) { ;
 		output << lines[i]->line << std::endl;
-		//output << lines[i]->line ;
 	}
 	output.close();
 }

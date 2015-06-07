@@ -29,7 +29,6 @@ struct sort_pred {
 	}
 };
 
-
 int disk_sort_file(string outputdir, string tobe_sorted_file_name, string sorted_file_name,\
      int chunk_size, string(*key_extractor)(const string &) ) ;
 

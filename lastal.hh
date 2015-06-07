@@ -44,6 +44,7 @@
 #include "semaphores.hh"
 #include "SubsetSuffixArrayUser.hh"
 #include "MultiSequenceUser.hh"
+#include "externalsort.hh"
 
 #define ERR(x) throw std::runtime_error(x)
 #define LOG(x) if( args.verbosity > 0 ) std::cerr << "lastal: " << x << '\n'

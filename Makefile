@@ -28,8 +28,8 @@ gumbel_params/njn_localmaxstatutil.o gumbel_params/njn_matrix.o		\
 gumbel_params/random_gen.o gumbel_params/sls_alp.o			\
 gumbel_params/sls_alp_data.o gumbel_params/sls_alp_regression.o		\
 gumbel_params/sls_alp_sim.o gumbel_params/sls_pvalues.o\
-utils.o \
-MultiSequenceUser.o SubsetSuffixArrayUser.o \
+utils.o  MultiSequenceUser.o SubsetSuffixArrayUser.o\
+externalsort.o linereader.o utilities.o heapsort.o
 
 SPOBJ = Alphabet.o MultiSequence.o fileMap.o split/cbrc_linalg.o	\
 split/last-split.o split/cbrc_split_aligner.o split/last-split-main.o	\
@@ -173,6 +173,12 @@ gaplessTwoQualityXdrop.o: gaplessTwoQualityXdrop.cc \
  gaplessTwoQualityXdrop.hh TwoQualityScoreMatrix.hh ScoreMatrixRow.hh
 gaplessXdrop.o: gaplessXdrop.cc gaplessXdrop.hh ScoreMatrixRow.hh
 io.o: io.cc io.hh
+
+externalsort.o: externalsort.cc externalsort.hh
+linereader.o: linereader.cc linereader.hh
+heapsort.o: heapsort.cc heapsort.hh
+utilities.o: utilities.cc utilities.hh
+
 lastal.o: lastal.cc LastalArguments.hh SequenceFormat.hh \
  QualityPssmMaker.hh ScoreMatrixRow.hh OneQualityScoreMatrix.hh \
  TwoQualityScoreMatrix.hh qualityScoreUtil.hh stringify.hh \
@@ -182,7 +188,7 @@ lastal.o: lastal.cc LastalArguments.hh SequenceFormat.hh \
  AlignmentPot.hh Alignment.hh SegmentPairPot.hh ScoreMatrix.hh \
  Alphabet.hh MultiSequence.hh DiagonalTable.hh gaplessXdrop.hh \
  gaplessPssmXdrop.hh gaplessTwoQualityXdrop.hh io.hh version.hh \
- lastal.hh 
+ lastal.hh  externalsort.hh linereader.hh
 
 lastdb.o: lastdb.cc LastdbArguments.hh SequenceFormat.hh \
  SubsetSuffixArray.hh CyclicSubsetSeed.hh VectorOrMmap.hh Mmap.hh \

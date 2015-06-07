@@ -849,6 +849,7 @@ void *writerFunction(void *arguments){
       break;
     }
   }
+
 }
 
 void readerFunction( std::istream& in ){
@@ -1012,6 +1013,12 @@ void lastal(int argc, char **argv) {
     }
     readerFunction(in);
   }
+
+  //now sort the LAST output on the disk
+  printf("%s  %s\n", args.outFile.c_str(), (string(args.outFile) + string("sort")).c_str());
+  //sort_parsed_blastouput(string("/tmp/"), args.outFile, std::string(args.outFile) + string("sort"), 1000000);
+  disk_sort_file(string("/tmp"), args.outFile, std::string(args.outFile) + string("sort"), 1000000, orf_extractor_from_blast);
+
 }
 
 int main(int argc, char **argv) {

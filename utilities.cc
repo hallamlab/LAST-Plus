@@ -524,9 +524,8 @@ string to_upper(const string &str) {
 void topHits(std::string filename, int maxHits){
 	int count;
 	int location;
-	std::string tmp = filename+"sort";
-	std::ifstream input(tmp.c_str());
-	tmp = filename + "tmp";
+	std::ifstream input(filename.c_str());
+	std::string tmp = filename + "_tmp";
 	std::string current;
 	std::string previous;
 	std::string temp;

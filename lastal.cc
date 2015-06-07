@@ -29,7 +29,7 @@ int doneSequences = 0;
 
 countT refSequences = -1;
 countT refLetters = -1;
-countT maxRefLetters = -1;
+countT maxRefLetters = 0;
 
 void threadData::prepareThreadData(std::string matrixFile, int identifier){
 
@@ -226,8 +226,9 @@ void readOuterPrj(const std::string &fileName, unsigned &volumes,
     if (word == "numofsequences") iss >> refSequences;
     if (word == "numofletters") {
 	    iss >> refLetters;
-	    if( refLetters > maxRefLetters)
+	    if( refLetters > maxRefLetters) {
 		    maxRefLetters = refLetters;
+	    }
     }
     if (word == "maxunsortedinterval") iss >> minSeedLimit;
     if (word == "masklowercase") iss >> isCaseSensitiveSeeds;
@@ -259,8 +260,9 @@ void readInnerPrj(const std::string &fileName,
     if (word == "numofsequences") iss >> seqCount;
     if (word == "numofletters"){
 	    iss >> seqLen;
-	    if( seqLen > maxRefLetters )
+	    if( seqLen > maxRefLetters ) {
 		    maxRefLetters = seqLen;
+	    }
     }
     if (word == "numofindexes") iss >> numOfIndexes;
   }

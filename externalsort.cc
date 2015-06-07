@@ -33,7 +33,7 @@ int disk_sort_file(string outputdir, string tobe_sorted_file_name, string sorted
 
     int curr_size = 0;
     int batch = 0;
-	int seq_id = 0;    
+   	int seq_id = 0;
     string seqname;
     char buffer[STR_BUFFER_SIZE];
 

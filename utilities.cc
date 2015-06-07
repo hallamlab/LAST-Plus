@@ -521,4 +521,38 @@ string to_upper(const string &str) {
     return string(buf);
 }
 
+void topHits(std::string filename, int maxHits){
+	int count;
+	int location;
+	std::string tmp = filename+"sort";
+	std::ifstream input(tmp.c_str());
+	tmp = filename + "tmp";
+	std::string current;
+	std::string previous;
+	std::string temp;
+	std::ofstream output(tmp.c_str());
 
+	getline(input, previous);
+	location = previous.find_first_of("\t");
+	output << previous << "\n";
+	previous = previous.substr(0,location);
+	count++;
+
+
+	while(getline(input, current)){
+		location = current.find_first_of("\t");
+		temp = current.substr(0,location);
+		if(temp.compare(previous) != 0 ){
+			if (count <= maxHits) {
+				output << current << "\n";
+				count++;
+			}else{
+				count = 0;
+			}
+		}else{
+			count = 0;
+		}
+		previous = temp;
+	}
+	std::rename(tmp.c_str(), filename.c_str());
+}

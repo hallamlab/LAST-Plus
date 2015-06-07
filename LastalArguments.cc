@@ -55,7 +55,8 @@ LastalArguments::LastalArguments() :
   verbosity(0),
   scoreCutoff(20),
   evalueCutoff(1.0e-6),
-  threadNum(1){}
+  threadNum(1),
+	topHits(MAX_HITS){}
 
 
 void LastalArguments::fromArgs( int argc, char** argv, bool optionsOnly ){
@@ -116,6 +117,7 @@ Miscellaneous options (default settings):\n\
 -S: Optional bit-Score cutoff value (" + stringify(scoreCutoff) + ")\n\
 -E: Optional e-value cutoff value (" + stringify(evalueCutoff) + ")\n\
 -P: Optional number of threads (" + stringify(threadNum) + ")\n\
+-K: Optional number of top hits wanted (" + stringify(topHits) + ")\n\
 \n\
 Report bugs to: last-align (ATmark) googlegroups (dot) com\n\
 LAST home page: http://last.cbrc.jp/\n\
@@ -124,7 +126,7 @@ LAST home page: http://last.cbrc.jp/\n\
   optind = 1;  // allows us to scan arguments more than once(???)
   int c;
   const char optionString[] =
-      "ho:u:s:f:r:q:p:a:b:A:B:c:F:x:y:z:d:e:Q:T:m:l:n:C:k:i:w:t:g:G:vj:S:E:P:";
+      "ho:u:s:f:r:q:p:a:b:A:B:c:F:x:y:z:d:e:Q:T:m:l:n:C:k:i:w:t:g:G:vj:S:E:P:K:";
   while( (c = getopt(argc, argv, optionString)) != -1 ){
     switch(c){
     case 'h':
@@ -263,7 +265,9 @@ LAST home page: http://last.cbrc.jp/\n\
     case 'P':
       unstringify(threadNum, optarg);
       break;
-
+	  case 'K': //Top k for parsing the output file
+		  unstringify(topHits, optarg);
+      break;
     case '?':
       ERR( "bad option" );
     }

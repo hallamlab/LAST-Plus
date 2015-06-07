@@ -29,6 +29,7 @@ int doneSequences = 0;
 
 countT refSequences = -1;
 countT refLetters = -1;
+countT maxRefLetters = -1;
 
 void threadData::prepareThreadData(std::string matrixFile, int identifier){
 
@@ -223,7 +224,11 @@ void readOuterPrj(const std::string &fileName, unsigned &volumes,
       }
     }
     if (word == "numofsequences") iss >> refSequences;
-    if (word == "numofletters") iss >> refLetters;
+    if (word == "numofletters") {
+	    iss >> refLetters;
+	    if( refLetters > maxRefLetters)
+		    maxRefLetters = refLetters;
+    }
     if (word == "maxunsortedinterval") iss >> minSeedLimit;
     if (word == "masklowercase") iss >> isCaseSensitiveSeeds;
     if (word == "sequenceformat") iss >> referenceFormat;
@@ -252,7 +257,11 @@ void readInnerPrj(const std::string &fileName,
     std::istringstream iss(line);
     getline(iss, word, '=');
     if (word == "numofsequences") iss >> seqCount;
-    if (word == "numofletters") iss >> seqLen;
+    if (word == "numofletters"){
+	    iss >> seqLen;
+	    if( seqLen > maxRefLetters )
+		    maxRefLetters = seqLen;
+    }
     if (word == "numofindexes") iss >> numOfIndexes;
   }
 
@@ -1014,12 +1023,16 @@ void lastal(int argc, char **argv) {
     readerFunction(in);
   }
 
-  //now sort the LAST output on the disk
-  printf("%s  %s\n", args.outFile.c_str(), (string(args.outFile) + string("sort")).c_str());
-  //sort_parsed_blastouput(string("/tmp/"), args.outFile, std::string(args.outFile) + string("sort"), 1000000);
-  disk_sort_file(string("/tmp"), args.outFile, std::string(args.outFile) + string("sort"), 1000000, orf_extractor_from_blast);
+	//now sort the LAST output on the disk
+	disk_sort_file(string("/tmp"), args.outFile, std::string(args.outFile) + string("sort"),
+			               maxRefLetters, orf_extractor_from_blast);
 
+	// parse the top k hits from the file
+	if (args.topHits < MAX_HITS){
+		topHits(args.outFile, args.topHits);
+	}
 }
+
 
 int main(int argc, char **argv) {
 

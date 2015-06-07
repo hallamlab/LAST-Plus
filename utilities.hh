@@ -43,6 +43,8 @@ string getCOGID(const char *str);
 string getKEGGID(const char *str);
 string getSEEDID(const char *str);
 
+void topHits(std::string filename, int maxHits);
+
 string getTaxonomyFromProduct(const char *str);
 
 string orf_extractor_from_blast(const string &line);

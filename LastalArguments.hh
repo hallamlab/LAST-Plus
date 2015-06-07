@@ -1,5 +1,4 @@
 // Copyright 2008, 2009, 2010, 2011, 2012, 2013, 2014 Martin C. Frith
-
 // This struct holds the command line arguments for lastal.
 
 #ifndef LASTALARGUMENTS_HH
@@ -10,6 +9,8 @@
 #include <string>
 #include <iosfwd>
 #include <stddef.h>  // size_t
+
+#define MAX_HITS 10000
 
 namespace cbrc{
 
@@ -83,6 +84,7 @@ struct LastalArguments{
   double scoreCutoff;
   double evalueCutoff;
   int threadNum;
+	int topHits;
 
   // positional arguments:
   std::string lastdbName;

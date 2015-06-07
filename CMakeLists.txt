@@ -36,6 +36,14 @@ set(LASTDB_SOURCE_FILES
 )
 
 set(LASTAL_SOURCE_FILES
+	externalsort.hh
+	externalsort.cc
+	utilities.hh
+	utilities.cc
+	heapsort.cc
+	heapsort.hh
+	linereader.hh
+	linereader.cc
  Alphabet.cc
  Alphabet.hh
  MultiSequence.cc

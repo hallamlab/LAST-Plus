@@ -521,6 +521,36 @@ string to_upper(const string &str) {
     return string(buf);
 }
 
+
+void topHits(std::string filename, int maxHits){
+	int count=0;
+	int location;
+	std::ifstream input(filename.c_str());
+	std::string tmp = filename + "_tmp";
+	std::string current;
+	std::string prevorfid;
+	std::string currorfid;
+	std::ofstream output(tmp.c_str());
+
+	prevorfid = "";
+
+	while(getline(input, current)){
+		location = current.find_first_of("\t");
+		currorfid = current.substr(0,location);
+
+		if(!(currorfid.compare(prevorfid) == 0 || prevorfid.size()==0 ) )
+                   count=0;
+             
+	         if(count <  maxHits) 
+	            output << current << "\n";
+
+                 count++;
+		prevorfid = currorfid;
+	}
+	std::rename(tmp.c_str(), filename.c_str());
+}
+
+/*
 void topHits(std::string filename, int maxHits){
 	int count;
 	int location;
@@ -541,7 +571,7 @@ void topHits(std::string filename, int maxHits){
 	while(getline(input, current)){
 		location = current.find_first_of("\t");
 		temp = current.substr(0,location);
-		if(temp.compare(previous) != 0 ){
+		if(temp.compare(previous) == 0 ){
 			if (count <= maxHits) {
 				output << current << "\n";
 				count++;
@@ -555,3 +585,4 @@ void topHits(std::string filename, int maxHits){
 	}
 	std::rename(tmp.c_str(), filename.c_str());
 }
+*/

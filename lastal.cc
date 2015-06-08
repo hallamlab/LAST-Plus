@@ -1029,11 +1029,7 @@ void lastal(int argc, char **argv) {
   }
 
 	//now sort the LAST output on the disk
-  char nameBuffer[100];
-  sprintf(nameBuffer, "/tmp/sortedFasta");
-  mkdir(nameBuffer, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
-  
-	disk_sort_file(string(nameBuffer), args.outFile, std::string(args.outFile) + string("sort"),
+	disk_sort_file(string("/tmp"), args.outFile, std::string(args.outFile) + string("sort"),
 			               maxRefLetters, orf_extractor_from_blast);
 
 	// parse the top k hits from the file

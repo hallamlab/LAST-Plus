@@ -20,8 +20,8 @@ void free_lines(vector<Line *> &v) {
 }
 
 /* Sort the input sequences and divide them into blocks; return the number of blocks created */
-int disk_sort_file(string outputdir, string tobe_sorted_file_name, string sorted_file_name, \
-    int chunk_size, string(*key_extractor)(const string &)) {
+int disk_sort_file(string outputdir, string tobe_sorted_file_name, string sorted_file_name, 
+    unsigned chunk_size, string(*key_extractor)(const string &)) {
 
 	string sorted_fname = outputdir + "/sorted.fasta";
 	string sorted_fname_tmp = sorted_fname + ".tmp.";
@@ -112,7 +112,7 @@ int merge_sorted_files_create_blocks(vector<string> &filenames, float block_mb, 
 	// Open an istream_iterator for each fasta file
 	int i;
 	int S = filenames.size();
-	Line *curr_lines = new Line[S];;
+	Line *curr_lines = new Line[S];
 
 	for (i = 0; i < S; i++) {
 		ifstream *f_str = new ifstream(

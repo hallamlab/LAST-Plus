@@ -2,6 +2,9 @@
 // BLAST-like pair-wise sequence alignment, using suffix arrays.
 #include "lastal.hh"
 
+#include <sys/stat.h> // mkdir
+#include <cstdio> // sprintf
+
 threadData **threadDatas;
 pthread_t *threads;
 pthread_t writerThread;
@@ -1026,7 +1029,11 @@ void lastal(int argc, char **argv) {
   }
 
 	//now sort the LAST output on the disk
-	disk_sort_file(string("/tmp"), args.outFile, std::string(args.outFile) + string("sort"),
+  char nameBuffer[100];
+  sprintf(nameBuffer, "/tmp/sortedFasta");
+  mkdir(nameBuffer, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
+  
+	disk_sort_file(string(nameBuffer), args.outFile, std::string(args.outFile) + string("sort"),
 			               maxRefLetters, orf_extractor_from_blast);
 
 	// parse the top k hits from the file

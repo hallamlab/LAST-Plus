@@ -37,20 +37,20 @@ split/cbrc_unsplit_alignment.o
 
 MBOBJ = last-merge-batches.o
 
-ALL = lastdb lastal last-split last-merge-batches
+ALL = lastdb+ lastal+ last-split+ last-merge-batches+
 
 all: $(ALL)
 
-lastal: $(ALOBJ)
+lastal+: $(ALOBJ)
 	$(CXX) $(CXXFLAGS) $(LDFLAGS) -pthread -o $@ $(ALOBJ)
 
-lastdb: $(DBOBJ)
+lastdb+: $(DBOBJ)
 	$(CXX) $(CXXFLAGS) $(LDFLAGS) -o $@ $(DBOBJ)
 
-last-split: $(SPOBJ)
+last-split+: $(SPOBJ)
 	$(CXX) $(CXXFLAGS) $(LDFLAGS) -o $@ $(SPOBJ)
 
-last-merge-batches: $(MBOBJ)
+last-merge-batches+: $(MBOBJ)
 	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $(MBOBJ)
 
 all: $(ALL)

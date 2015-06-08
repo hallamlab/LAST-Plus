@@ -1,10 +1,10 @@
 *.o
 TestData/*
-last-merge-batches
-lastex
-lastal
-lastdb
-last-split
+last-merge-batches+
+lastex+
+lastal+
+lastdb+
+last-split+
 a
 *.swp
 core

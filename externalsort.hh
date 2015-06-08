@@ -30,7 +30,7 @@ struct sort_pred {
 };
 
 int disk_sort_file(string outputdir, string tobe_sorted_file_name, string sorted_file_name,\
-     int chunk_size, string(*key_extractor)(const string &) ) ;
+     unsigned chunk_size, string(*key_extractor)(const string &) ) ;
 
 int sort_and_create_blocks(string outputdir, string faa_file, float block_mb, map<int, int> &block_active_seqs, map<string, int> &seq_lengths); 
 

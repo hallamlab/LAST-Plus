@@ -1,4 +1,5 @@
 #include "utilities.hh"
+#include "lastal.hh"
 
 
 char *split_n_pick(const string  &strn,  char *buf, char d, unsigned int n) {
@@ -405,10 +406,10 @@ string orf_extractor_from_blast(const string & line){
     return orfid;
 }
 
-float evalue_extractor_from_blast(const string &line){
+double evalue_extractor_from_blast(const string &line){
     char buf[10000];
     string evaluestr  = split_n_pick(line, buf, '\t', 10);
-    float evalue ;
+    double evalue ;
    
     try{
          evalue = atof(evaluestr.c_str());
@@ -521,8 +522,10 @@ string to_upper(const string &str) {
     return string(buf);
 }
 
-
 void topHits(std::string filename, int maxHits){
+
+  std::cout << "Parsing the output for only the top k : " << maxHits << std::endl; 
+
 	int count=0;
 	int location;
 	std::ifstream input(filename.c_str());
@@ -539,50 +542,15 @@ void topHits(std::string filename, int maxHits){
 		currorfid = current.substr(0,location);
 
 		if(!(currorfid.compare(prevorfid) == 0 || prevorfid.size()==0 ) )
-                   count=0;
+      count=0;
              
-	         if(count <  maxHits) 
-	            output << current << "\n";
+	  if(count <  maxHits) 
+	    output << current << "\n";
 
-                 count++;
+    count++;
 		prevorfid = currorfid;
 	}
 	std::rename(tmp.c_str(), filename.c_str());
+
+  std::cout << "Finished parsing the output for top hits" << std::endl; 
 }
-
-/*
-void topHits(std::string filename, int maxHits){
-	int count;
-	int location;
-	std::ifstream input(filename.c_str());
-	std::string tmp = filename + "_tmp";
-	std::string current;
-	std::string previous;
-	std::string temp;
-	std::ofstream output(tmp.c_str());
-
-	getline(input, previous);
-	location = previous.find_first_of("\t");
-	output << previous << "\n";
-	previous = previous.substr(0,location);
-	count++;
-
-
-	while(getline(input, current)){
-		location = current.find_first_of("\t");
-		temp = current.substr(0,location);
-		if(temp.compare(previous) == 0 ){
-			if (count <= maxHits) {
-				output << current << "\n";
-				count++;
-			}else{
-				count = 0;
-			}
-		}else{
-			count = 0;
-		}
-		previous = temp;
-	}
-	std::rename(tmp.c_str(), filename.c_str());
-}
-*/

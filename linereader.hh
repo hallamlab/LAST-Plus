@@ -18,7 +18,7 @@ class Line {
   public:
     std::string orfid;      // name of the Line
     std::string line;  // sequence of 'A', 'C', 'G', and 'T' characters
-		float evalue;
+		double evalue;
     // CREATORS
     explicit Line();
         // Create a new 'Line' object having the (default) attribute values:
@@ -51,7 +51,7 @@ class Line {
         // Set the 'sequence' attribute of this object to the specified
         // 'value'.
 
-		void setEvalue(const float& value);
+		void setEvalue(const double& value);
 
     // ACCESSORS
     const std::string& getOrfId() const;
@@ -148,7 +148,7 @@ void Line::setLine(const std::string& value)
 }
 
 inline
-void Line::setEvalue(const float& value)
+void Line::setEvalue(const double& value)
 {
 	evalue = value;
 }

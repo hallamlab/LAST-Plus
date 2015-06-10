@@ -26,12 +26,12 @@ SEM_T inputOutputQueueSema;
 bool finishedReadingFlag = 0;
 bool roundDone = 0;
 
-unsigned volumes = unsigned(-1);
+unsigned volumes = 1;
 int readSequences = 0;
 int doneSequences = 0;
 
-countT refSequences = -1;
-countT refLetters = -1;
+countT refSequences = 0;
+countT refLetters = 0;
 countT maxRefLetters = 0;
 
 void threadData::prepareThreadData(std::string matrixFile, int identifier){
@@ -54,7 +54,7 @@ void threadData::prepareThreadData(std::string matrixFile, int identifier){
           stringify(args.oneHitMultiplicity));
   }
 
-  bool isMultiVolume = (volumes + 1 > 0 && volumes > 1);
+  bool isMultiVolume = volumes > 1;
   args.setDefaultsFromAlphabet(alph.letters == alph.dna, alph.isProtein(),
       isCaseSensitiveSeeds, isMultiVolume);
   makeScoreMatrix(matrixFile);
@@ -241,7 +241,7 @@ void readOuterPrj(const std::string &fileName, unsigned &volumes,
   }
 
   if (f.eof() && !f.bad()) f.clear();
-  if (threadDatas[0]->alph.letters.empty() || refSequences + 1 == 0 || refLetters + 1 == 0 ||
+  if (threadDatas[0]->alph.letters.empty() || refSequences + 1 == 1 || refLetters + 1 == 1 ||
       isCaseSensitiveSeeds < 0 || referenceFormat >= sequenceFormat::prb){
     f.setstate(std::ios::failbit);
   }
@@ -872,14 +872,13 @@ void readerFunction( std::istream& in ){
   bool state;
   MultiSequence *current;
 
-  if (volumes == -1) {
+  if (volumes == 1) {
     readIndex(args.lastdbName, refSequences);
-    volumes = 1;
   }
 
   for (unsigned i = 0; i < volumes; ++i){
 
-    LOG(i+1 << "out of " << volumes);
+    LOG(i+1 << " out of " << volumes);
 
     SEM_WAIT(roundCheckSema);
     roundDone = 0;

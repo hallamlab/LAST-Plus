@@ -1,8 +1,8 @@
 CXX = g++
 CC  = gcc
 
-CXXFLAGS = -O3 -w -m64 
-CFLAGS =   -O3 -w -m64 
+CXXFLAGS = -O3 -w -m64
+CFLAGS =   -O3 -w -m64
 
 DBOBJ = Alphabet.o MultiSequence.o CyclicSubsetSeed.o	\
 SubsetSuffixArray.o LastdbArguments.o io.o fileMap.o	\
@@ -188,7 +188,7 @@ lastal.o: lastal.cc LastalArguments.hh SequenceFormat.hh \
  AlignmentPot.hh Alignment.hh SegmentPairPot.hh ScoreMatrix.hh \
  Alphabet.hh MultiSequence.hh DiagonalTable.hh gaplessXdrop.hh \
  gaplessPssmXdrop.hh gaplessTwoQualityXdrop.hh io.hh version.hh \
- lastal.hh  externalsort.hh linereader.hh
+ lastal.hh externalsort.hh linereader.hh
 
 lastdb.o: lastdb.cc LastdbArguments.hh SequenceFormat.hh \
  SubsetSuffixArray.hh CyclicSubsetSeed.hh VectorOrMmap.hh Mmap.hh \

@@ -16,3 +16,5 @@ callgrind*
 massif*
 lastal.d*
 out*
+nohup*
+*.dSYM*

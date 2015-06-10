@@ -49,7 +49,7 @@ string getTaxonomyFromProduct(const char *str);
 
 string orf_extractor_from_blast(const string &line);
 
-float  evalue_extractor_from_blast(const string &line);
+double evalue_extractor_from_blast(const string &line);
 
 unsigned int hashIntoBucket(const char *str, unsigned int index) ;
 

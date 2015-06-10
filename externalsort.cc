@@ -181,6 +181,14 @@ int merge_sorted_files_create_blocks(vector<string> &filenames, string outputdir
 	for (i = 0; i < S; i++) {
 		remove(filenames[i].c_str());
 	}
+
+	delete[] curr_lines;
+  /*
+  for (vector<istream_iterator<Line> >::iterator begin = f_its.begin(), end = f_its.end(); begin!=end; ++begin){
+    delete *begin;
+  }
+  */
+
 	return 1;
 }
 

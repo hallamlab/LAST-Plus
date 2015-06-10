@@ -524,7 +524,7 @@ string to_upper(const string &str) {
 
 void topHits(std::string filename, int maxHits){
 
-  std::cout << "Parsing the output for only the top k : " << maxHits << std::endl; 
+  //std::cout << "Parsing the output for only the top k : " << maxHits << std::endl; 
 
 	int count=0;
 	int location;
@@ -552,5 +552,5 @@ void topHits(std::string filename, int maxHits){
 	}
 	std::rename(tmp.c_str(), filename.c_str());
 
-  std::cout << "Finished parsing the output for top hits" << std::endl; 
+  //std::cout << "Finished parsing the output for top hits" << std::endl; 
 }

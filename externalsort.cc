@@ -7,7 +7,7 @@
 bool comp_lines(const LINE &lhs, const LINE &rhs) {
 	if (lhs->orfid < rhs->orfid) return true;
 	if (lhs->orfid == rhs->orfid) {
-    std::cout << "sorting by evalue : " <<lhs->evalue << " " << rhs->evalue << std::endl;
+    //std::cout << "sorting by evalue : " <<lhs->evalue << " " << rhs->evalue << std::endl;
 		return lhs->evalue < rhs->evalue;
 	}
 	return false;
@@ -41,7 +41,7 @@ int disk_sort_file(string outputdir, string tobe_sorted_file_name, string sorted
 	string line;
 	Line *lineptr;
 
-  std::cout << "Beginning the sorting of the output" << std::endl;
+  //std::cout << "Beginning the sorting of the output" << std::endl;
 	// Split input fasta into chunks to sort individually
 	while (std::getline(inputfile, line).good()) {
 
@@ -64,7 +64,7 @@ int disk_sort_file(string outputdir, string tobe_sorted_file_name, string sorted
 
 			free_lines(lines);
 			batch++;
-      std::cout << "Batch : " << batch << std::endl;
+      //std::cout << "Batch : " << batch << std::endl;
 			// Clear the variables
 			curr_size = 0;
 			lines.clear();
@@ -74,8 +74,8 @@ int disk_sort_file(string outputdir, string tobe_sorted_file_name, string sorted
 
 	// Sort remaining sequences and write to last file
 	if (lines.size() > 0) {
-    std::cout << "Sorting the remaining sequences" << std::endl;
-    std::cout << "Batch : " << batch+1 << std::endl;
+    //std::cout << "Sorting the remaining sequences" << std::endl;
+    //std::cout << "Batch : " << batch+1 << std::endl;
 
 		sort(lines.begin(), lines.end(), comp_lines);
 
@@ -89,12 +89,12 @@ int disk_sort_file(string outputdir, string tobe_sorted_file_name, string sorted
 	}
 	inputfile.close();
 
-  std::cout << "Merging the sorted output files, there are " << filenames.size() << " files" << std::endl;
+  //std::cout << "Merging the sorted output files, there are " << filenames.size() << " files" << std::endl;
 	// Merge the sorted files and write into blocks
 	int num_blocks = merge_sorted_files_create_blocks(filenames, outputdir, sorted_file_name);
 	
 	// Remove the individual sorted files
-  std::cout << "Removing the temporary files" << std::endl;
+  //std::cout << "Removing the temporary files" << std::endl;
   std::vector<std::string>::iterator begin = filenames.begin();
   std::vector<std::string>::iterator end = filenames.end();
 	for ( ; begin != end; ++begin) {
@@ -104,7 +104,7 @@ int disk_sort_file(string outputdir, string tobe_sorted_file_name, string sorted
 	lines.clear();
 	rename(sorted_file_name.c_str(), tobe_sorted_file_name.c_str());
 
-  std::cout << "Finished the sorting" << std::endl;
+  //std::cout << "Finished the sorting" << std::endl;
 	return num_blocks;
 }
 

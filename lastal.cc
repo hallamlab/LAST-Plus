@@ -35,8 +35,6 @@ void createStructures(std::string &matrixFile){
 
   alph = new Alphabet();
   geneticCode = new GeneticCode();
-  //subsetUser = new SubsetSuffixArrayUser();
-  //gappedXdropAligner = new GappedXdropAligner();
 
   scoreMatrix = new ScoreMatrix();
 
@@ -112,7 +110,6 @@ void threadData::prepareThreadData(int identifier){
     outputVectorQueue->push(new std::vector<std::string>() );
   }
 
-  subsetUser = new SubsetSuffixArrayUser();
   gappedXdropAligner = new GappedXdropAligner();
 
   queryQueue = new std::queue<MultiSequence*>();
@@ -255,15 +252,7 @@ void readOuterPrj(const std::string &fileName, unsigned &volumes,
     std::istringstream iss(line);
     getline(iss, word, '=');
     if (word == "version") iss >> version;
-    if (word == "alphabet"){ 
-      //iss >> *(threadDatas[0]->alph);
-      iss >> (*alph);
-      /*
-      for(int i=1; i<args.threadNum; i++){
-        threadDatas[i]->alph = threadDatas[0]->alph;
-      }
-      */
-    }
+    if (word == "alphabet") iss >> (*alph);
     if (word == "numofsequences"){ 
       iss >> refSequences;
       if(refSequences > maxRefSequences){
@@ -279,7 +268,6 @@ void readOuterPrj(const std::string &fileName, unsigned &volumes,
   }
 
   if (f.eof() && !f.bad()) f.clear();
-  //if (threadDatas[0]->alph->letters.empty() || refSequences + 1 == 1 || refLetters + 1 == 1 ||
   if (alph->letters.empty() || refSequences + 1 == 1 || refLetters + 1 == 1 ||
       isCaseSensitiveSeeds < 0 || referenceFormat >= sequenceFormat::prb){
     f.setstate(std::ios::failbit);
@@ -359,8 +347,7 @@ void threadData::countMatches(char strand) {
     }
 
     for (unsigned x = 0; x < numOfIndexes; ++x)
-      subsetUser->countMatches((*matchCounts)[seqNum], query->seqReader() + i, text->seqReader(),
-          suffixArrays[x]);
+      suffixArrays[x].countMatches((*matchCounts)[seqNum], query->seqReader() + i, text->seqReader());
   }
 }
 
@@ -378,8 +365,7 @@ void threadData::alignGapless(SegmentPairPot &gaplessAlns, char strand) {
       const indexT *beg;
       const indexT *end;
 
-      subsetUser->match(beg, end, dis.b + i, dis.a, args.oneHitMultiplicity, args.minHitDepth,
-          suffixArrays[x]);
+      suffixArrays[x].match(beg, end, dis.b + i, dis.a, args.oneHitMultiplicity, args.minHitDepth);
       matchCount += end - beg;
 
       // Tried: if we hit a delimiter when using contiguous seeds, then
@@ -628,7 +614,6 @@ void readIndex(const std::string &baseName, indexT seqCount) {
   LOG("reading suffix " << baseName << "...");
   for (unsigned x = 0; x < numOfIndexes; ++x) {
     if (numOfIndexes > 1) {
-      //suffixArrays[x].fromFiles(baseName + char('a' + x), isCaseSensitiveSeeds, threadDatas[0]->alph->encode);
       suffixArrays[x].fromFiles(baseName + char('a' + x), isCaseSensitiveSeeds, alph->encode);
     } else {
       suffixArrays[x].fromFiles(baseName, isCaseSensitiveSeeds, alph->encode);
@@ -712,7 +697,6 @@ void writeHeader(std::ostream &out) {
   } else {
     if (args.outputFormat != 2) {
       if (args.inputFormat != sequenceFormat::pssm || !args.matrixFile.empty()) {
-        //threadDatas[0]->scoreMatrix->writeCommented(out);
         scoreMatrix->writeCommented(out);
         out << "#\n";
       }
@@ -1033,8 +1017,6 @@ void lastal(int argc, char **argv) {
 
   createStructures(matrixFile);
 
-  //readOuterPrj(args.lastdbName + ".prj", volumes, refSequences, refLetters);
-
   suffixArrays = new SubsetSuffixArray[numOfIndexes];
   text = new MultiSequence();
   doneSequences -= (args.threadNum)*2;
@@ -1047,9 +1029,7 @@ void lastal(int argc, char **argv) {
   char *defaultInput[] = {defaultInputName, 0};
   char **inputBegin = argv + args.inputStart;
 
-  initializeEvalueCalulator( args.lastdbName + ".prj",
-      //threadDatas[0]->scoreMatrix, *inputBegin );
-      scoreMatrix, *inputBegin );
+  initializeEvalueCalulator(args.lastdbName + ".prj", scoreMatrix, *inputBegin);
 
   for (char **i = *inputBegin ? inputBegin : defaultInput; *i; ++i) {
     std::ifstream inFileStream;

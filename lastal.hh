@@ -42,8 +42,6 @@
 #include <cstdio>
 #include <pthread.h>
 #include "semaphores.hh"
-#include "SubsetSuffixArrayUser.hh"
-#include "MultiSequenceUser.hh"
 #include "externalsort.hh"
 #include "utilities.hh"
 
@@ -91,12 +89,6 @@ namespace Phase{
 
 struct threadData{
 
-  /*
-  Alphabet *alph;
-  Alphabet *queryAlph;  // for translated alignment
-  GeneticCode *geneticCode;
-  */
-  SubsetSuffixArrayUser *subsetUser;
   GappedXdropAligner *gappedXdropAligner;
   Centroid *centroid;
 
@@ -107,17 +99,6 @@ struct threadData{
 
   std::vector<std::string> *outputVector;
   std::queue< std::vector<std::string>* > *outputVectorQueue;
-
-  /*
-  GeneralizedAffineGapCosts gapCosts;
-  ScoreMatrix *scoreMatrix;
-  OneQualityScoreMatrix *oneQualityScoreMatrix;
-  OneQualityScoreMatrix *oneQualityScoreMatrixMasked;
-  OneQualityExpMatrix *oneQualityExpMatrix;
-  QualityPssmMaker *qualityPssmMaker;
-  TwoQualityScoreMatrix *twoQualityScoreMatrix;
-  TwoQualityScoreMatrix *twoQualityScoreMatrixMasked;
-  */
 
   int identifier;
   int round;
@@ -146,12 +127,6 @@ struct threadData{
   void countMatches( char strand );
   // Write match counts for each query sequence
   void writeCounts(std::ostream& out);
-  // Set up a scoring matrix, based on the user options
-  //void makeScoreMatrix( const std::string& matrixFile) ;
-  //void makeQualityScorers();
-  // Calculate statistical parameters for the alignment scoring scheme
-  // Meaningless for PSSMs, unless they have the same scale as the score matrix
-  //void calculateScoreStatistics();
 };
 
 struct Dispatcher{
@@ -166,7 +141,6 @@ struct Dispatcher{
   int d;  // the maximum score drop
   int z;
   Alphabet *aa;
-  MultiSequenceUser user;
 
 
   Dispatcher( Phase::Enum e, MultiSequence *text, MultiSequence *query,
@@ -174,9 +148,9 @@ struct Dispatcher{
       TwoQualityScoreMatrix *twoQualityScoreMatrixMasked, 
       sequenceFormat::Enum referenceFormat, Alphabet *alph) :
 
-    a  ( user.seqReader(*text) ),
+    a  ( text->seqReader() ),
     b  ( query->seqReader() ),
-    i  ( user.qualityReader(*text) ),
+    i  ( text->qualityReader() ),
     j  ( query->qualityReader() ),
     p  ( query->pssmReader() ),
     m  ( (e < args.maskLowercase) ?
@@ -253,12 +227,13 @@ void initializeSemaphores();
 void initializeEvalueCalulator(const std::string dbPrjFile, ScoreMatrix *scoreMatrix,
     std::string dbfilePrj);
 
-
 void createStructures(std::string &matrixFile);
-
-void makeQualityScorers();
-void makeScoreMatrix( const std::string& matrixFile) ;
-void calculateScoreStatistics();
+  // Set up a scoring matrix, based on the user options
+  void makeScoreMatrix( const std::string& matrixFile) ;
+  void makeQualityScorers();
+  // Calculate statistical parameters for the alignment scoring scheme
+  // Meaningless for PSSMs, unless they have the same scale as the score matrix
+  void calculateScoreStatistics();
 
 void lastal( int argc, char** argv );
 

@@ -69,27 +69,10 @@ namespace {
   MultiSequence *text;
   MultiSequence *text2;
   indexT minSeedLimit;
-}
-
-namespace Phase{ 
-
-  enum Enum{ gapless, gapped, final }; 
-}
-
-struct threadData{
 
   Alphabet *alph;
   Alphabet *queryAlph;  // for translated alignment
   GeneticCode *geneticCode;
-  SubsetSuffixArrayUser *subsetUser;
-  GappedXdropAligner *gappedXdropAligner;
-  Centroid *centroid;
-  MultiSequence *query;  
-  std::queue<MultiSequence*> *queryQueue; 
-  std::vector< std::vector<countT> > *matchCounts;  // used if outputType == 0
-
-  std::vector<std::string> *outputVector;
-  std::queue< std::vector<std::string>* > *outputVectorQueue;
 
   GeneralizedAffineGapCosts gapCosts;
   ScoreMatrix *scoreMatrix;
@@ -99,6 +82,42 @@ struct threadData{
   QualityPssmMaker *qualityPssmMaker;
   TwoQualityScoreMatrix *twoQualityScoreMatrix;
   TwoQualityScoreMatrix *twoQualityScoreMatrixMasked;
+}
+
+namespace Phase{ 
+
+  enum Enum{ gapless, gapped, final }; 
+}
+
+struct threadData{
+
+  /*
+  Alphabet *alph;
+  Alphabet *queryAlph;  // for translated alignment
+  GeneticCode *geneticCode;
+  */
+  SubsetSuffixArrayUser *subsetUser;
+  GappedXdropAligner *gappedXdropAligner;
+  Centroid *centroid;
+
+  MultiSequence *query;  
+  
+  std::queue<MultiSequence*> *queryQueue; 
+  std::vector< std::vector<countT> > *matchCounts;  // used if outputType == 0
+
+  std::vector<std::string> *outputVector;
+  std::queue< std::vector<std::string>* > *outputVectorQueue;
+
+  /*
+  GeneralizedAffineGapCosts gapCosts;
+  ScoreMatrix *scoreMatrix;
+  OneQualityScoreMatrix *oneQualityScoreMatrix;
+  OneQualityScoreMatrix *oneQualityScoreMatrixMasked;
+  OneQualityExpMatrix *oneQualityExpMatrix;
+  QualityPssmMaker *qualityPssmMaker;
+  TwoQualityScoreMatrix *twoQualityScoreMatrix;
+  TwoQualityScoreMatrix *twoQualityScoreMatrixMasked;
+  */
 
   int identifier;
   int round;
@@ -123,17 +142,16 @@ struct threadData{
   void reverseComplementQuery();
   // Scan one batch of query sequences against all database volumes
   void scanAllVolumes();
-  void createStructures();
-  void prepareThreadData(std::string matrixFile, int identifier );
+  void prepareThreadData(int identifier );
   void countMatches( char strand );
   // Write match counts for each query sequence
   void writeCounts(std::ostream& out);
   // Set up a scoring matrix, based on the user options
-  void makeScoreMatrix( const std::string& matrixFile) ;
-  void makeQualityScorers();
+  //void makeScoreMatrix( const std::string& matrixFile) ;
+  //void makeQualityScorers();
   // Calculate statistical parameters for the alignment scoring scheme
   // Meaningless for PSSMs, unless they have the same scale as the score matrix
-  void calculateScoreStatistics();
+  //void calculateScoreStatistics();
 };
 
 struct Dispatcher{
@@ -151,25 +169,25 @@ struct Dispatcher{
   MultiSequenceUser user;
 
 
-  Dispatcher( Phase::Enum e, MultiSequence &text, MultiSequence &query,
-      ScoreMatrix &scoreMatrix, TwoQualityScoreMatrix &twoQualityScoreMatrix, 
-      TwoQualityScoreMatrix &twoQualityScoreMatrixMasked, 
-      sequenceFormat::Enum referenceFormat, Alphabet &alph) :
+  Dispatcher( Phase::Enum e, MultiSequence *text, MultiSequence *query,
+      ScoreMatrix *scoreMatrix, TwoQualityScoreMatrix *twoQualityScoreMatrix, 
+      TwoQualityScoreMatrix *twoQualityScoreMatrixMasked, 
+      sequenceFormat::Enum referenceFormat, Alphabet *alph) :
 
-    a  ( user.seqReader(text) ),
-    b  ( query.seqReader() ),
-    i  ( user.qualityReader(text) ),
-    j  ( query.qualityReader() ),
-    p  ( query.pssmReader() ),
+    a  ( user.seqReader(*text) ),
+    b  ( query->seqReader() ),
+    i  ( user.qualityReader(*text) ),
+    j  ( query->qualityReader() ),
+    p  ( query->pssmReader() ),
     m  ( (e < args.maskLowercase) ?
-        scoreMatrix.caseSensitive : scoreMatrix.caseInsensitive ),
+        scoreMatrix->caseSensitive : scoreMatrix->caseInsensitive ),
     t  ( (e < args.maskLowercase) ?
-        twoQualityScoreMatrixMasked : twoQualityScoreMatrix ),
+        *twoQualityScoreMatrixMasked : *twoQualityScoreMatrix ),
     d  ( (e == Phase::gapless) ? args.maxDropGapless :
         (e == Phase::gapped ) ? args.maxDropGapped : args.maxDropFinal ),
     z  ( (args.inputFormat == sequenceFormat::fasta) ? 0 :
         (referenceFormat  == sequenceFormat::fasta) ? 1 : 2 ),
-    aa ( aa = &alph ){}
+    aa ( aa = alph ){}
 
   // Shrink the SegmentPair to its longest run of identical matches.
   // This trims off possibly unreliable parts of the gapless alignment.
@@ -224,7 +242,7 @@ void readInnerPrj( const std::string& fileName, indexT& seqCount, indexT& seqLen
 // Read one database volume
 void readVolume( unsigned volumeNumber );
 void readIndex( const std::string& baseName, indexT seqCount );
-std::istream& appendFromFasta( std::istream& in, threadData *data, MultiSequence *query );
+std::istream& appendFromFasta( std::istream& in, MultiSequence *query );
 
 void *writerFunction(void *arguments);
 void readerFunction( std::istream& in );
@@ -234,6 +252,14 @@ void initializeThreads();
 void initializeSemaphores();
 void initializeEvalueCalulator(const std::string dbPrjFile, ScoreMatrix *scoreMatrix,
     std::string dbfilePrj);
+
+
+void createStructures(std::string &matrixFile);
+
+void makeQualityScorers();
+void makeScoreMatrix( const std::string& matrixFile) ;
+void calculateScoreStatistics();
+
 void lastal( int argc, char** argv );
 
 #endif

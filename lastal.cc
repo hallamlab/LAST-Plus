@@ -228,7 +228,7 @@ void readOuterPrj(const std::string &fileName, unsigned &volumes,
     }
     if (word == "numofsequences"){ 
       iss >> refSequences;
-      if(refSequences < maxRefSequences){
+      if(refSequences > maxRefSequences){
         maxRefSequences = refSequences;
       }
     }
@@ -262,7 +262,7 @@ void readInnerPrj(const std::string &fileName,
     getline(iss, word, '=');
     if (word == "numofsequences"){ 
       iss >> seqCount;
-      if(seqCount < maxRefSequences){
+      if(seqCount > maxRefSequences){
         maxRefSequences = seqCount;
       }
     }
@@ -1029,7 +1029,7 @@ void lastal(int argc, char **argv) {
 
 	//now sort the LAST output on the disk
 	disk_sort_file(string("/tmp"), args.outFile, std::string(args.outFile) + string("sort"),
-			               maxRefSequences, orf_extractor_from_blast);
+			               maxRefSequences/2, orf_extractor_from_blast);
 
 	// parse the top k hits from the file
 	if (args.topHits < MAX_HITS){

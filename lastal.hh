@@ -78,27 +78,27 @@ namespace Phase{
 
 struct threadData{
 
-  Alphabet alph;
-  Alphabet queryAlph;  // for translated alignment
-  GeneticCode geneticCode;
-  SubsetSuffixArrayUser subsetUser;
-  GappedXdropAligner gappedXdropAligner;
+  Alphabet *alph;
+  Alphabet *queryAlph;  // for translated alignment
+  GeneticCode *geneticCode;
+  SubsetSuffixArrayUser *subsetUser;
+  GappedXdropAligner *gappedXdropAligner;
   Centroid *centroid;
   MultiSequence *query;  
   std::queue<MultiSequence*> *queryQueue; 
-  std::vector< std::vector<countT> > matchCounts;  // used if outputType == 0
+  std::vector< std::vector<countT> > *matchCounts;  // used if outputType == 0
 
   std::vector<std::string> *outputVector;
   std::queue< std::vector<std::string>* > *outputVectorQueue;
 
   GeneralizedAffineGapCosts gapCosts;
-  ScoreMatrix scoreMatrix;
-  OneQualityScoreMatrix oneQualityScoreMatrix;
-  OneQualityScoreMatrix oneQualityScoreMatrixMasked;
-  OneQualityExpMatrix oneQualityExpMatrix;
-  QualityPssmMaker qualityPssmMaker;
-  TwoQualityScoreMatrix twoQualityScoreMatrix;
-  TwoQualityScoreMatrix twoQualityScoreMatrixMasked;
+  ScoreMatrix *scoreMatrix;
+  OneQualityScoreMatrix *oneQualityScoreMatrix;
+  OneQualityScoreMatrix *oneQualityScoreMatrixMasked;
+  OneQualityExpMatrix *oneQualityExpMatrix;
+  QualityPssmMaker *qualityPssmMaker;
+  TwoQualityScoreMatrix *twoQualityScoreMatrix;
+  TwoQualityScoreMatrix *twoQualityScoreMatrixMasked;
 
   int identifier;
   int round;
@@ -123,6 +123,7 @@ struct threadData{
   void reverseComplementQuery();
   // Scan one batch of query sequences against all database volumes
   void scanAllVolumes();
+  void createStructures();
   void prepareThreadData(std::string matrixFile, int identifier );
   void countMatches( char strand );
   // Write match counts for each query sequence
@@ -231,7 +232,7 @@ void *threadFunction(void *__threadData);
 void writeHeader( std::ostream& out );
 void initializeThreads();
 void initializeSemaphores();
-void initializeEvalueCalulator(const std::string dbPrjFile, ScoreMatrix &scoreMatrix,
+void initializeEvalueCalulator(const std::string dbPrjFile, ScoreMatrix *scoreMatrix,
     std::string dbfilePrj);
 void lastal( int argc, char** argv );
 

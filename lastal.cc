@@ -1064,13 +1064,13 @@ void lastal(int argc, char **argv) {
   }
 
   //now sort the LAST output on the disk
-  //disk_sort_file(string("/tmp"), args.outFile, std::string(args.outFile) + string("sort"),
-  //    maxRefSequences/2, orf_extractor_from_blast);
+  disk_sort_file(string("/tmp"), args.outFile, std::string(args.outFile) + string("sort"),
+      maxRefSequences/2, orf_extractor_from_blast);
 
   // parse the top k hits from the file
-  //if (args.topHits < MAX_HITS){
-  //  topHits(args.outFile, args.topHits);
-  //}
+  if (args.topHits < MAX_HITS){
+    topHits(args.outFile, args.topHits);
+  }
 }
 
 

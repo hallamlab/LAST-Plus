@@ -32,6 +32,7 @@ class MultiSequence{
   void fromFiles( const std::string& baseName, indexT seqCount,
                   std::size_t qualitiesPerLetter );
 
+  void closeFiles();
   // write all the finished sequences and their names to binary files
   void toFiles( const std::string& baseName ) const;
 

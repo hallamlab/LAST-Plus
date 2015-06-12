@@ -47,15 +47,28 @@ struct Alphabet{
 
   std::string letters;    // the "proper" letters, e.g. ACGT for DNA
   unsigned size;          // same as letters.size(): excludes delimiters
+  /*
   uchar encode[capacity];  // translate ASCII letters to codes (small integers)
   uchar decode[capacity];  // translate codes to ASCII letters
   uchar canonical[capacity];   // translate lowercase codes to uppercase codes
   uchar complement[capacity];  // translate DNA codes to their complements
+  */
+  uchar *encode;  // translate ASCII letters to codes (small integers)
+  uchar *decode;  // translate codes to ASCII letters
+  uchar *canonical;   // translate lowercase codes to uppercase codes
+  uchar *complement;  // translate DNA codes to their complements
 
   void init();
   void addLetters( const std::string& lettersToAdd, unsigned& code );
   void makeComplement();
   
+  Alphabet(){
+    encode = new uchar[capacity];  // translate ASCII letters to codes (small integers)
+    decode = new uchar[capacity];  // translate codes to ASCII letters
+    canonical = new uchar[capacity];   // translate lowercase codes to uppercase codes
+    complement = new uchar[capacity];  // translate DNA codes to their complements
+  }
+
   //Alphabet& operator=(const Alphabet &alph) const;
 
 };

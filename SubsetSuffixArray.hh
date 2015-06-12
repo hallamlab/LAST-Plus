@@ -54,6 +54,8 @@ namespace cbrc{
       void fromFiles( const std::string& baseName,
           bool isMaskLowercase, const uchar letterCode[] );
 
+      void closeFiles();
+
       void toFiles( const std::string& baseName,
           bool isAppendPrj, indexT textLength ) const;
 
@@ -97,13 +99,3 @@ public:
 
 }  // end namespace
 #endif
-
-/*
-class SubsetSuffixArray{
-private:
-  CyclicSubsetSeed seed;
-  VectorOrMmap<indexT> index;  // sorted indices
-  VectorOrMmap<indexT> buckets;
-  std::vector<indexT> bucketSteps;  // step size for each k-mer
-};
-*/

@@ -20,7 +20,7 @@ void free_lines(vector<Line *> &v) {
 }
 
 /* Sort the input sequences and divide them into blocks; return the number of blocks created */
-int disk_sort_file(string outputdir, string tobe_sorted_file_name, string sorted_file_name, 
+void disk_sort_file(string outputdir, string tobe_sorted_file_name, string sorted_file_name, 
     countT chunk_size, string(*key_extractor)(const string &)) {
 
 	string sorted_fname = outputdir + "/sorted.fasta";
@@ -91,7 +91,7 @@ int disk_sort_file(string outputdir, string tobe_sorted_file_name, string sorted
 
   //std::cout << "Merging the sorted output files, there are " << filenames.size() << " files" << std::endl;
 	// Merge the sorted files and write into blocks
-	int num_blocks = merge_sorted_files_create_blocks(filenames, outputdir, sorted_file_name);
+	merge_sorted_files_create_blocks(filenames, outputdir, sorted_file_name);
 	
 	// Remove the individual sorted files
   //std::cout << "Removing the temporary files" << std::endl;
@@ -103,13 +103,10 @@ int disk_sort_file(string outputdir, string tobe_sorted_file_name, string sorted
 	filenames.clear();
 	lines.clear();
 	rename(sorted_file_name.c_str(), tobe_sorted_file_name.c_str());
-
-  //std::cout << "Finished the sorting" << std::endl;
-	return num_blocks;
 }
 
 /* Merge the individual sorted files while writing them to blocks; return the number of blocks created */
-int merge_sorted_files_create_blocks(vector<string> &filenames, string outputdir, string sorted_file_name) {
+void merge_sorted_files_create_blocks(vector<string> &filenames, string outputdir, string sorted_file_name) {
 	vector<istream_iterator<Line> > f_its;
 	istream_iterator<Line> empty_it;
 
@@ -174,6 +171,7 @@ int merge_sorted_files_create_blocks(vector<string> &filenames, string outputdir
 			heapify(values, 0, S);
 		}
 	}
+
 	// Close last block file
 	outputfile.close();
 	f_its.clear();
@@ -188,8 +186,6 @@ int merge_sorted_files_create_blocks(vector<string> &filenames, string outputdir
     delete *begin;
   }
   */
-
-	return 1;
 }
 
 /* Write the given sequences to a file in the order given by ids_lengths */

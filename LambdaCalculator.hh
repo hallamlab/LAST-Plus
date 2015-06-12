@@ -22,7 +22,8 @@ class LambdaCalculator{
  public:
   LambdaCalculator() { setBad(); }
 
-  void calculate( int matrix[MAT][MAT], int alphSize );
+  //void calculate( int matrix[MAT][MAT], int alphSize );
+  void calculate( int **matrix, int alphSize );
 
   // Put us in the bad/undefined state.
   void setBad();

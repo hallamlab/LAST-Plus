@@ -72,9 +72,11 @@ namespace cbrc{
         const TwoQualityScoreMatrix& sm2qual,
         const uchar* qual1, const uchar* qual2 );
 
-    void write( const MultiSequence& seq1, const MultiSequence& seq2,
+    void write( 
+        double scoreCutoff, double evalueCutoff,
+        const MultiSequence& seq1, const MultiSequence& seq2,
         char strand, bool isTranslated, const Alphabet& alph,
-        int format, LastalArguments &args, std::vector<std::string> *outputVector,
+        int format, std::vector<std::string> *outputVector,
         const AlignmentExtras& extras = AlignmentExtras() ) const;
 
     // data:
@@ -112,10 +114,11 @@ namespace cbrc{
                    *outputVector ) const;
 
 
-    void writeBlastOutput( const MultiSequence& seq1, const MultiSequence& seq2,
+    void writeBlastOutput( 
+        double scoreCutoff, double evalueCutoff, 
+        const MultiSequence& seq1, const MultiSequence& seq2,
         char strand, bool isTranslated, const Alphabet& alph,
-        const AlignmentExtras& extras, std::vector<std::string> *outputVector, LastalArguments
-                                                                                  &args ) const;
+        const AlignmentExtras& extras, std::vector<std::string> *outputVector) const;
 
     void writeMaf( const MultiSequence& seq1, const MultiSequence& seq2,
         char strand, bool isTranslated, const Alphabet& alph, const AlignmentExtras& extras ) const;

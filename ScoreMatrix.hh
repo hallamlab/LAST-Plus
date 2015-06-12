@@ -32,10 +32,25 @@ struct ScoreMatrix{
   std::string rows;                       // row headings (letters)
   std::string cols;                       // column headings (letters)
   std::vector< std::vector<int> > cells;  // scores
+  /*
   int caseSensitive[MAT][MAT];
   int caseInsensitive[MAT][MAT];
+  */
+  int **caseSensitive;
+  int **caseInsensitive;
   int minScore;
   int maxScore;
+
+  ScoreMatrix(){
+    caseSensitive = new int*[MAT];
+    caseInsensitive = new int*[MAT];
+
+    for (int i=0; i<MAT; i++){
+      caseSensitive[i] = new int[MAT];
+      caseInsensitive[i] = new int[MAT];
+    }
+  }
+
 };
 
 std::istream& operator>>( std::istream& stream, ScoreMatrix& mat );

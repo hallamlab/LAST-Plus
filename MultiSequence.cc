@@ -44,6 +44,15 @@ void MultiSequence::fromFiles( const std::string& baseName, indexT seqCount,
                         ends.m.back() * qualitiesPerLetter );
 }
 
+void MultiSequence::closeFiles(){
+  ends.m.close(); 
+  seq.m.close();
+  nameEnds.m.close(); 
+  names.m.close();
+  qualityScores.m.close();
+}
+
+
 void MultiSequence::toFiles( const std::string& baseName ) const{
   memoryToBinaryFile( ends.begin(), ends.end(), baseName + ".ssp" );
 

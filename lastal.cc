@@ -38,60 +38,60 @@ void createStructures(std::string &matrixFile){
 
   scoreMatrix = new ScoreMatrix();
 
-  if (args.maskLowercase > 0)
+  if (args->maskLowercase > 0)
     oneQualityScoreMatrixMasked = new OneQualityScoreMatrix();
-  if (args.maskLowercase < 3)
+  if (args->maskLowercase < 3)
     oneQualityScoreMatrix = new OneQualityScoreMatrix();
-  if (args.outputType > 3) {
+  if (args->outputType > 3) {
     oneQualityExpMatrix = new OneQualityExpMatrix();
   }
 
-  if (args.inputFormat == sequenceFormat::prb) {
+  if (args->inputFormat == sequenceFormat::prb) {
     qualityPssmMaker = new QualityPssmMaker();
   }
 
     twoQualityScoreMatrixMasked = new TwoQualityScoreMatrix();
     twoQualityScoreMatrix = new TwoQualityScoreMatrix();
 
-  readOuterPrj(args.lastdbName + ".prj", volumes, refSequences, refLetters);
+  readOuterPrj(args->lastdbName + ".prj", volumes, refSequences, refLetters);
 
   if (minSeedLimit > 1) {
-    if (args.outputType == 0)
+    if (args->outputType == 0)
       ERR("can't use option -j 0: need to re-run lastdb with i <= 1");
-    if (minSeedLimit > args.oneHitMultiplicity)
+    if (minSeedLimit > args->oneHitMultiplicity)
       ERR("can't use option -m < " + stringify(minSeedLimit) +
           ": need to re-run lastdb with i <= " +
-          stringify(args.oneHitMultiplicity));
+          stringify(args->oneHitMultiplicity));
   }
 
   bool isMultiVolume = volumes > 1;
-  args.setDefaultsFromAlphabet(alph->letters == alph->dna, alph->isProtein(),
+  args->setDefaultsFromAlphabet(alph->letters == alph->dna, alph->isProtein(),
       isCaseSensitiveSeeds, isMultiVolume);
   makeScoreMatrix(matrixFile);
 
-  gapCosts.assign(args.gapExistCost, args.gapExtendCost,
-      args.insExistCost, args.insExtendCost, args.gapPairCost);
-  if (args.outputType > 0) {
+  gapCosts.assign(args->gapExistCost, args->gapExtendCost,
+      args->insExistCost, args->insExtendCost, args->gapPairCost);
+  if (args->outputType > 0) {
     calculateScoreStatistics();
   }
-  args.setDefaultsFromMatrix(lambdaCalculator.lambda());
-  minScoreGapless = args.calcMinScoreGapless(refLetters, numOfIndexes);
+  args->setDefaultsFromMatrix(lambdaCalculator->lambda());
+  minScoreGapless = args->calcMinScoreGapless(refLetters, numOfIndexes);
   if (!isMultiVolume) {
-    args.minScoreGapless = minScoreGapless;
+    args->minScoreGapless = minScoreGapless;
   }
-  if (args.outputType > 0) {
+  if (args->outputType > 0) {
     makeQualityScorers();
   }
 
-  if (args.isTranslated()) {
+  if (args->isTranslated()) {
     if (alph->letters == alph->dna) { // allow user-defined alphabet
       ERR("expected protein database, but got DNA");
     }
     queryAlph->fromString(queryAlph->dna);
-    if (args.geneticCodeFile.empty()) {
+    if (args->geneticCodeFile.empty()) {
       geneticCode->fromString(geneticCode->standard);
     } else {
-      geneticCode->fromFile(args.geneticCodeFile);
+      geneticCode->fromFile(args->geneticCodeFile);
     }
     geneticCode->codeTableSet(*alph, *queryAlph);
   } else {
@@ -101,7 +101,7 @@ void createStructures(std::string &matrixFile){
 
 void threadData::prepareThreadData(int identifier){
 
-  if (args.outputType == 0) {  // we just want match counts
+  if (args->outputType == 0) {  // we just want match counts
     matchCounts = new std::vector< std::vector<countT> >();  
   }
 
@@ -116,7 +116,7 @@ void threadData::prepareThreadData(int identifier){
   MultiSequence *query1 = new MultiSequence();
   MultiSequence *query2 = new MultiSequence();
 
-  if (args.isTranslated()) {
+  if (args->isTranslated()) {
     query1->initForAppending(3);
     query2->initForAppending(3);
   } else {
@@ -157,12 +157,12 @@ void makeScoreMatrix(const std::string &matrixFile) {
   if (!matrixFile.empty()) {
     scoreMatrix->fromString(matrixFile);
   }
-  else if (args.matchScore < 0 && args.mismatchCost < 0 && alph->isProtein()) {
-    const char *b = args.isTranslated() ? "BLOSUM80" : "BLOSUM62";
+  else if (args->matchScore < 0 && args->mismatchCost < 0 && alph->isProtein()) {
+    const char *b = args->isTranslated() ? "BLOSUM80" : "BLOSUM62";
     scoreMatrix->fromString(ScoreMatrix::stringFromName(b));
   }
   else {
-    scoreMatrix->matchMismatch(args.matchScore, args.mismatchCost, alph->letters);
+    scoreMatrix->matchMismatch(args->matchScore, args->mismatchCost, alph->letters);
   }
 
   scoreMatrix->init(alph->encode);
@@ -171,53 +171,53 @@ void makeScoreMatrix(const std::string &matrixFile) {
   // maximum score should not be used.  Here, we try to set it to a
   // high enough value that it has no effect.  This is a kludge - it
   // would be nice to use the maximum PSSM score.
-  if (args.inputFormat == sequenceFormat::pssm) scoreMatrix->maxScore = 10000;
+  if (args->inputFormat == sequenceFormat::pssm) scoreMatrix->maxScore = 10000;
   // This would work, except the maxDrops aren't finalized yet:
   // maxScore = std::max(args.maxDropGapped, args.maxDropFinal) + 1;
 }
 
 void makeQualityScorers() {
   const ScoreMatrixRow *m = scoreMatrix->caseSensitive;  // case isn't relevant
-  double lambda = lambdaCalculator.lambda();
-  const std::vector<double> &lp1 = lambdaCalculator.letterProbs1();
+  double lambda = lambdaCalculator->lambda();
+  const std::vector<double> &lp1 = lambdaCalculator->letterProbs1();
   bool isPhred1 = isPhred(referenceFormat);
   int offset1 = qualityOffset(referenceFormat);
-  const std::vector<double> &lp2 = lambdaCalculator.letterProbs2();
-  bool isPhred2 = isPhred(args.inputFormat);
-  int offset2 = qualityOffset(args.inputFormat);
+  const std::vector<double> &lp2 = lambdaCalculator->letterProbs2();
+  bool isPhred2 = isPhred(args->inputFormat);
+  int offset2 = qualityOffset(args->inputFormat);
 
   if (referenceFormat == sequenceFormat::fasta) {
-    if (isFastq(args.inputFormat)) {
-      if (args.maskLowercase > 0)
+    if (isFastq(args->inputFormat)) {
+      if (args->maskLowercase > 0)
         oneQualityScoreMatrixMasked->init(m, alph->size, lambda,
             &lp2[0], isPhred2, offset2,
             alph->canonical, true);
-      if (args.maskLowercase < 3)
+      if (args->maskLowercase < 3)
         oneQualityScoreMatrix->init(m, alph->size, lambda,
             &lp2[0], isPhred2, offset2,
             alph->canonical, false);
-      if (args.outputType > 3) {
-        const OneQualityScoreMatrix &m = (args.maskLowercase < 3) ?
+      if (args->outputType > 3) {
+        const OneQualityScoreMatrix &m = (args->maskLowercase < 3) ?
           *oneQualityScoreMatrix : *oneQualityScoreMatrixMasked;
-        oneQualityExpMatrix->init(m, args.temperature);
+        oneQualityExpMatrix->init(m, args->temperature);
       }
-    } else if (args.inputFormat == sequenceFormat::prb) {
-      bool isMatchMismatch = (args.matrixFile.empty() && args.matchScore > 0);
+    } else if (args->inputFormat == sequenceFormat::prb) {
+      bool isMatchMismatch = (args->matrixFile.empty() && args->matchScore > 0);
       qualityPssmMaker->init(m, alph->size, lambda, isMatchMismatch,
-          args.matchScore, -args.mismatchCost,
+          args->matchScore, -args->mismatchCost,
           offset2, alph->canonical);
     }
   } else {
-    if (isFastq(args.inputFormat)) {
-      if (args.maskLowercase > 0)
+    if (isFastq(args->inputFormat)) {
+      if (args->maskLowercase > 0)
         twoQualityScoreMatrixMasked->init(m, lambda, &lp1[0], &lp2[0],
             isPhred1, offset1, isPhred2, offset2,
             alph->canonical, true);
-      if (args.maskLowercase < 3)
+      if (args->maskLowercase < 3)
         twoQualityScoreMatrix->init(m, lambda, &lp1[0], &lp2[0],
             isPhred1, offset1, isPhred2, offset2,
             alph->canonical, false);
-      if (args.outputType > 3) {
+      if (args->outputType > 3) {
         ERR("fastq-versus-fastq column probabilities not implemented");
       }
     } else {
@@ -229,14 +229,14 @@ void makeQualityScorers() {
 void calculateScoreStatistics() {
   LOG("calculating matrix probabilities...");
   // the case-sensitivity of the matrix makes no difference here
-  lambdaCalculator.calculate(scoreMatrix->caseSensitive, alph->size);
-  if (lambdaCalculator.isBad()) {
-    if (isQuality(args.inputFormat) ||
-        (args.temperature < 0 && args.outputType > 3))
+  lambdaCalculator->calculate(scoreMatrix->caseSensitive, alph->size);
+  if (lambdaCalculator->isBad()) {
+    if (isQuality(args->inputFormat) ||
+        (args->temperature < 0 && args->outputType > 3))
       ERR("can't get probabilities for this score matrix");
     else LOG("can't get probabilities for this score matrix");
   } else {
-    LOG("lambda=" << lambdaCalculator.lambda());
+    LOG("lambda=" << lambdaCalculator->lambda());
   }
 }
 
@@ -317,7 +317,7 @@ void threadData::writeCounts(std::ostream &out) {
   for (indexT i = 0; i < matchCounts->size(); ++i) {
     outstream << query->seqName(i) << "\n";
 
-    for (indexT j = args.minHitDepth; j < matchCounts[i].size(); ++j) {
+    for (indexT j = args->minHitDepth; j < matchCounts[i].size(); ++j) {
       outstream << j << "\t" << (*matchCounts)[i][j] << "\n";
     }
 
@@ -330,7 +330,7 @@ void threadData::countMatches(char strand) {
   LOG("counting...");
   indexT seqNum = strand == '+' ? 0 : query->finishedSequences() - 1;
 
-  for (indexT i = 0; i < query->finishedSize(); i += args.queryStep) {
+  for (indexT i = 0; i < query->finishedSize(); i += args->queryStep) {
     if (strand == '+') {
       for (; ;) {
         if (seqNum == query->finishedSequences()) return;
@@ -338,7 +338,7 @@ void threadData::countMatches(char strand) {
         ++seqNum;
       }
       // speed-up:
-      if (args.minHitDepth > query->seqEnd(seqNum) - i) continue;
+      if (args->minHitDepth > query->seqEnd(seqNum) - i) continue;
     }
     else {
       indexT j = query->finishedSize() - i;
@@ -348,7 +348,7 @@ void threadData::countMatches(char strand) {
         --seqNum;
       }
       // speed-up:
-      if (args.minHitDepth > j - query->seqBeg(seqNum)) continue;
+      if (args->minHitDepth > j - query->seqBeg(seqNum)) continue;
     }
 
     for (unsigned x = 0; x < numOfIndexes; ++x)
@@ -363,14 +363,14 @@ void threadData::alignGapless(SegmentPairPot &gaplessAlns, char strand) {
   DiagonalTable dt;  // record already-covered positions on each diagonal
   countT matchCount = 0, gaplessExtensionCount = 0, gaplessAlignmentCount = 0;
 
-  for (indexT i = 0; i < query->finishedSize(); i += args.queryStep) {
+  for (indexT i = 0; i < query->finishedSize(); i += args->queryStep) {
 
     for (unsigned x = 0; x < numOfIndexes; ++x) {
 
       const indexT *beg;
       const indexT *end;
 
-      suffixArrays[x].match(beg, end, dis.b + i, dis.a, args.oneHitMultiplicity, args.minHitDepth);
+      suffixArrays[x].match(beg, end, dis.b + i, dis.a, args->oneHitMultiplicity, args->minHitDepth);
       matchCount += end - beg;
 
       // Tried: if we hit a delimiter when using contiguous seeds, then
@@ -381,7 +381,7 @@ void threadData::alignGapless(SegmentPairPot &gaplessAlns, char strand) {
 
       for ( /* no-op*/; beg < end; ++beg) { // loop over suffix-array matches
 
-        if (gaplessAlignmentsPerQueryPosition == args.maxGaplessAlignmentsPerQueryPosition) break;
+        if (gaplessAlignmentsPerQueryPosition == args->maxGaplessAlignmentsPerQueryPosition) break;
 
         indexT j = *beg;  // coordinate in the reference sequence
 
@@ -403,10 +403,10 @@ void threadData::alignGapless(SegmentPairPot &gaplessAlns, char strand) {
         if (!dis.isOptimalGapless(tBeg, tEnd, qBeg)) continue;
         SegmentPair sp(tBeg, qBeg, tEnd - tBeg, score);
 
-        if (args.outputType == 1) {  // we just want gapless alignments
+        if (args->outputType == 1) {  // we just want gapless alignments
           Alignment aln(identifier);
           aln.fromSegmentPair(sp);
-          aln.write(*text, *query, strand, args.isTranslated(), *alph, args.outputFormat, args,
+          aln.write(args->scoreCutoff, args->evalueCutoff, *text, *query, strand, args->isTranslated(), *alph, args->outputFormat,
               outputVector);
         }
         else {
@@ -428,7 +428,7 @@ void threadData::alignGapped(AlignmentPot &gappedAlns, SegmentPairPot &gaplessAl
 
   Dispatcher dis(phase, text, query, scoreMatrix, twoQualityScoreMatrix, twoQualityScoreMatrixMasked,
       referenceFormat, alph);
-  indexT frameSize = args.isTranslated() ? (query->finishedSize() / 3) : 0;
+  indexT frameSize = args->isTranslated() ? (query->finishedSize() / 3) : 0;
   countT gappedExtensionCount = 0, gappedAlignmentCount = 0;
 
   // Redo the gapless extensions, using gapped score parameters.
@@ -451,7 +451,7 @@ void threadData::alignGapped(AlignmentPot &gappedAlns, SegmentPairPot &gaplessAl
 
   erase_if(gaplessAlns.items, SegmentPairPot::isMarked);
 
-  gaplessAlns.cull(args.cullingLimitForGaplessAlignments);
+  gaplessAlns.cull(args->cullingLimitForGaplessAlignments);
   gaplessAlns.sort();  // sort by score descending, and remove duplicates
 
   LOG("redone gapless alignments=" << gaplessAlns.size());
@@ -469,16 +469,16 @@ void threadData::alignGapped(AlignmentPot &gappedAlns, SegmentPairPot &gaplessAl
 
     // do gapped extension from each end of the seed:
     // third...
-    aln.makeXdrop(*gappedXdropAligner, *centroid, dis.a, dis.b, args.globality,
+    aln.makeXdrop(*gappedXdropAligner, *centroid, dis.a, dis.b, args->globality,
         dis.m, scoreMatrix->maxScore, gapCosts, dis.d,
-        args.frameshiftCost, frameSize, dis.p,
+        args->frameshiftCost, frameSize, dis.p,
         dis.t, dis.i, dis.j, *alph, extras);
     ++gappedExtensionCount;
 
-    if (aln.score < args.minScoreGapped) continue;
+    if (aln.score < args->minScoreGapped) continue;
 
-    if (!aln.isOptimal(dis.a, dis.b, args.globality, dis.m, dis.d, gapCosts,
-          args.frameshiftCost, frameSize, dis.p,
+    if (!aln.isOptimal(dis.a, dis.b, args->globality, dis.m, dis.d, gapCosts,
+          args->frameshiftCost, frameSize, dis.p,
           dis.t, dis.i, dis.j)) {
       // If retained, non-"optimal" alignments can hide "optimal"
       // alignments, e.g. during non-redundantization.
@@ -486,7 +486,7 @@ void threadData::alignGapped(AlignmentPot &gappedAlns, SegmentPairPot &gaplessAl
     }
 
     gaplessAlns.markAllOverlaps(aln.blocks);
-    gaplessAlns.markTandemRepeats(aln.seed, args.maxRepeatDistance);
+    gaplessAlns.markTandemRepeats(aln.seed, args->maxRepeatDistance);
 
     if (phase == Phase::final) gappedAlns.add(aln);
     else SegmentPairPot::markAsGood(sp);
@@ -502,44 +502,44 @@ void threadData::alignFinish(const AlignmentPot &gappedAlns, char strand) {
 
   Dispatcher dis(Phase::final, text, query, scoreMatrix, twoQualityScoreMatrix,
       twoQualityScoreMatrixMasked, referenceFormat, alph);
-  indexT frameSize = args.isTranslated() ? (query->finishedSize() / 3) : 0;
+  indexT frameSize = args->isTranslated() ? (query->finishedSize() / 3) : 0;
 
-  if (args.outputType > 3) {
+  if (args->outputType > 3) {
     if (dis.p) {
       LOG("exponentiating PSSM...");
-      centroid->setPssm(dis.p, query->finishedSize(), args.temperature,
+      centroid->setPssm(dis.p, query->finishedSize(), args->temperature,
           *oneQualityExpMatrix, dis.b, dis.j);
     }
     else {
-      centroid->setScoreMatrix(dis.m, args.temperature);
+      centroid->setScoreMatrix(dis.m, args->temperature);
     }
-    centroid->setOutputType(args.outputType);
+    centroid->setOutputType(args->outputType);
   }
 
   LOG("finishing...");
 
   for (size_t i = 0; i < gappedAlns.size(); ++i) {
     const Alignment &aln = gappedAlns.items[i];
-    if (args.outputType < 4) {
-      aln.write(*text, *query, strand, args.isTranslated(), *alph, args.outputFormat, args, outputVector);
+    if (args->outputType < 4) {
+      aln.write(args->scoreCutoff, args->evalueCutoff, *text, *query, strand, args->isTranslated(), *alph, args->outputFormat, outputVector);
     }else{  // calculate match probabilities:
       Alignment probAln(identifier);
       AlignmentExtras extras;
       probAln.seed = aln.seed;
       probAln.makeXdrop(*gappedXdropAligner, *centroid,
-          dis.a, dis.b, args.globality,
+          dis.a, dis.b, args->globality,
           dis.m, scoreMatrix->maxScore, gapCosts, dis.d,
-          args.frameshiftCost, frameSize, dis.p, dis.t,
+          args->frameshiftCost, frameSize, dis.p, dis.t,
           dis.i, dis.j, *alph, extras,
-          args.gamma, args.outputType);
-      probAln.write(*text, *query, strand, args.isTranslated(),
-          *alph, args.outputFormat, args, outputVector, extras);
+          args->gamma, args->outputType);
+      probAln.write(args->scoreCutoff, args->evalueCutoff, *text, *query, strand, args->isTranslated(),
+          *alph, args->outputFormat, outputVector, extras);
     }
   }
 }
 
 void threadData::makeQualityPssm(bool isApplyMasking) {
-  if (!isQuality(args.inputFormat) || isQuality(referenceFormat)) return;
+  if (!isQuality(args->inputFormat) || isQuality(referenceFormat)) return;
 
   LOG("making PSSM...");
   query->resizePssm();
@@ -549,7 +549,7 @@ void threadData::makeQualityPssm(bool isApplyMasking) {
   const uchar *q = query->qualityReader();
   int *pssm = *query->pssmWriter();
 
-  if (args.inputFormat == sequenceFormat::prb) {
+  if (args->inputFormat == sequenceFormat::prb) {
     qualityPssmMaker->make(seqBeg, seqEnd, q, pssm, isApplyMasking);
   }
   else {
@@ -561,33 +561,33 @@ void threadData::makeQualityPssm(bool isApplyMasking) {
 
 void threadData::scan(char strand) {
 
-  if (args.outputType == 0) {  // we just want match counts
+  if (args->outputType == 0) {  // we just want match counts
     countMatches(strand);
     return;
   }
 
-  bool isApplyMasking = (args.maskLowercase > 0);
+  bool isApplyMasking = (args->maskLowercase > 0);
   makeQualityPssm(isApplyMasking);
 
   LOG("scanning...");
 
   SegmentPairPot gaplessAlns;
   alignGapless(gaplessAlns, strand);
-  if (args.outputType == 1) return;  // we just want gapless alignments
+  if (args->outputType == 1) return;  // we just want gapless alignments
 
-  if (args.maskLowercase == 1) makeQualityPssm(false);
+  if (args->maskLowercase == 1) makeQualityPssm(false);
 
   AlignmentPot gappedAlns;
 
-  if (args.maskLowercase == 2 || args.maxDropFinal != args.maxDropGapped) {
+  if (args->maskLowercase == 2 || args->maxDropFinal != args->maxDropGapped) {
     alignGapped(gappedAlns, gaplessAlns, Phase::gapped);
     erase_if(gaplessAlns.items, SegmentPairPot::isNotMarkedAsGood);
   }
-  if (args.maskLowercase == 2) makeQualityPssm(false);
+  if (args->maskLowercase == 2) makeQualityPssm(false);
 
   alignGapped(gappedAlns, gaplessAlns, Phase::final);
 
-  if (args.outputType > 2) {  // we want non-redundant alignments
+  if (args->outputType > 2) {  // we want non-redundant alignments
     gappedAlns.eraseSuboptimal();
     LOG("nonredundant gapped alignments=" << gappedAlns.size());
   }
@@ -598,7 +598,7 @@ void threadData::scan(char strand) {
 
 void threadData::translateAndScan(char strand) {
 
-  if (args.isTranslated()) {
+  if (args->isTranslated()) {
     LOG("translating...");
     std::vector<uchar> translation(query->finishedSize());
     geneticCode->translate(query->seqReader(),
@@ -615,12 +615,15 @@ void threadData::translateAndScan(char strand) {
 void readIndex(const std::string &baseName, indexT seqCount) {
 
   LOG("reading " << baseName << "...");
+  text->closeFiles();
   text->fromFiles(baseName, seqCount, isFastq(referenceFormat));
   LOG("reading suffix " << baseName << "...");
   for (unsigned x = 0; x < numOfIndexes; ++x) {
     if (numOfIndexes > 1) {
+      suffixArrays[x].closeFiles();
       suffixArrays[x].fromFiles(baseName + char('a' + x), isCaseSensitiveSeeds, alph->encode);
     } else {
+      suffixArrays[x].closeFiles();
       suffixArrays[x].fromFiles(baseName, isCaseSensitiveSeeds, alph->encode);
     }
   }
@@ -629,11 +632,11 @@ void readIndex(const std::string &baseName, indexT seqCount) {
 
 void readVolume(unsigned volumeNumber) {
 
-  std::string baseName = args.lastdbName + stringify(volumeNumber);
+  std::string baseName = args->lastdbName + stringify(volumeNumber);
   indexT seqCount = indexT(-1);
   indexT seqLen = indexT(-1);
   readInnerPrj(baseName + ".prj", seqCount, seqLen);
-  minScoreGapless = args.calcMinScoreGapless(seqLen, numOfIndexes);
+  minScoreGapless = args->calcMinScoreGapless(seqLen, numOfIndexes);
   readIndex(baseName, seqCount);
 }
 
@@ -655,33 +658,33 @@ void threadData::reverseComplementPssm() {
 void threadData::reverseComplementQuery() {
   LOG("reverse complementing...");
   queryAlph->rc(query->seqWriter(), query->seqWriter() + query->finishedSize());
-  if (isQuality(args.inputFormat)) {
+  if (isQuality(args->inputFormat)) {
     std::reverse(query->qualityWriter(),
         query->qualityWriter() + query->finishedSize() * query->qualsPerLetter());
-  } else if (args.inputFormat == sequenceFormat::pssm) {
+  } else if (args->inputFormat == sequenceFormat::pssm) {
     reverseComplementPssm();
   }
 }
 
 void threadData::scanAllVolumes(){
 
-  if (args.strand == 2 && round > 0) {
+  if (args->strand == 2 && round > 0) {
     reverseComplementQuery();
   }
 
-  if (args.strand != 0) {
+  if (args->strand != 0) {
     translateAndScan('+');
   }
 
-  if (args.strand == 2 || (args.strand == 0 && round == 0)) {
+  if (args->strand == 2 || (args->strand == 0 && round == 0)) {
     reverseComplementQuery();
   }
 
-  if (args.strand != 1) {
+  if (args->strand != 1) {
     translateAndScan('-');
   }
 
-  //if (args.outputType == 0){
+  //if (args->outputType == 0){
   // writeCounts(out);
   //}
 
@@ -694,14 +697,14 @@ void writeHeader(std::ostream &out) {
 
 #include "version.hh"
     << "\n" << "#\n";
-  args.writeCommented(out);
+  args->writeCommented(out);
   out << "# Reference sequences=" << refSequences << " normal letters=" << refLetters << "\n" << "#\n";
 
-  if (args.outputType == 0) {
+  if (args->outputType == 0) {
     out << "# length\tcount\n";
   } else {
-    if (args.outputFormat != 2) {
-      if (args.inputFormat != sequenceFormat::pssm || !args.matrixFile.empty()) {
+    if (args->outputFormat != 2) {
+      if (args->inputFormat != sequenceFormat::pssm || !args->matrixFile.empty()) {
         scoreMatrix->writeCommented(out);
         out << "#\n";
       }
@@ -709,10 +712,10 @@ void writeHeader(std::ostream &out) {
       out << "# in the reverse complement of the 2nd sequence are used.\n";
       out << "#\n";
     }
-    if (args.outputFormat == 0) {  // tabular format
+    if (args->outputFormat == 0) {  // tabular format
       out << "# score\tname1\tstart1\talnSize1\tstrand1\tseqSize1\t"
         << "name2\tstart2\talnSize2\tstrand2\tseqSize2\tblocks\n";
-    } else if (args.outputFormat == 2) { //blast-like format
+    } else if (args->outputFormat == 2) { //blast-like format
       out <<
         "# Q_ID\tS_ID\tIDENT\tALIGN_LEN\tMISMATCHES\tGAPS\tQ_BEG\tQ_END\tS_BEG\tS_END\tE_VAL\tBIT_SCORE\n";
     } else {  // MAF format
@@ -724,8 +727,8 @@ void writeHeader(std::ostream &out) {
 
 std::istream& appendFromFasta(std::istream &in, MultiSequence *query) {
 
-  indexT maxSeqLen = args.batchSize;
-  if (maxSeqLen < args.batchSize) maxSeqLen = indexT(-1);
+  indexT maxSeqLen = args->batchSize;
+  if (maxSeqLen < args->batchSize) maxSeqLen = indexT(-1);
   if (query->finishedSequences() == 0) maxSeqLen = indexT(-1);
 
   int count = 0;
@@ -734,13 +737,13 @@ std::istream& appendFromFasta(std::istream &in, MultiSequence *query) {
 
     size_t oldUnfinishedSize = query->unfinishedSize();
 
-    if (args.inputFormat == sequenceFormat::fasta) {
+    if (args->inputFormat == sequenceFormat::fasta) {
       query->appendFromFasta(in, maxSeqLen);
-    } else if (args.inputFormat == sequenceFormat::prb) {
+    } else if (args->inputFormat == sequenceFormat::prb) {
       query->appendFromPrb(in, maxSeqLen, queryAlph->size, queryAlph->decode);
-    } else if (args.inputFormat == sequenceFormat::pssm) {
+    } else if (args->inputFormat == sequenceFormat::pssm) {
       query->appendFromPssm(in, maxSeqLen, queryAlph->encode,
-          args.maskLowercase > 1);
+          args->maskLowercase > 1);
     } else {
       query->appendFromFastq(in, maxSeqLen);
     }
@@ -751,10 +754,10 @@ std::istream& appendFromFasta(std::istream &in, MultiSequence *query) {
     queryAlph->tr(query->seqWriter() + oldUnfinishedSize,
         query->seqWriter() + query->unfinishedSize());
 
-    if (isPhred(args.inputFormat))  // assumes one quality code per letter:
+    if (isPhred(args->inputFormat))  // assumes one quality code per letter:
       checkQualityCodes(query->qualityReader() + oldUnfinishedSize,
           query->qualityReader() + query->unfinishedSize(),
-          qualityOffset(args.inputFormat));
+          qualityOffset(args->inputFormat));
     count++;
   }
 
@@ -768,7 +771,7 @@ void initializeEvalueCalulator(const std::string dbPrjFile, ScoreMatrix *scoreMa
   fastaFileSequenceStats(dbfilePrj, &_stats1);
   _stats2 = readStats(dbPrjFile);
 
-  cbrc::LastexArguments args1(args.gapExistCost, args.gapExtendCost);
+  cbrc::LastexArguments args1(args->gapExistCost, args->gapExtendCost);
   initializeEvalueCalculator(args1, *scoreMatrix, _stats1, _stats2);
 
   makeEvaluer();
@@ -776,10 +779,10 @@ void initializeEvalueCalulator(const std::string dbPrjFile, ScoreMatrix *scoreMa
 
 void initializeThreads() {
 
-  threadDatas = new threadData*[args.threadNum];
-  threads = new pthread_t[args.threadNum];
+  threadDatas = new threadData*[args->threadNum];
+  threads = new pthread_t[args->threadNum];
 
-  for (int i = 0; i < args.threadNum; i++) {
+  for (int i = 0; i < args->threadNum; i++) {
     threadData *data = new threadData();
     threadDatas[i] = data;
   }
@@ -841,7 +844,7 @@ void *writerFunction(void *arguments){
   bool state;
   std::vector< std::string >* current;
   std::ofstream outFileStream;
-  std::ostream &out = openOut(args.outFile, outFileStream);
+  std::ostream &out = openOut(args->outFile, outFileStream);
 
   while (1) {
     SEM_WAIT(writerSema);
@@ -900,7 +903,7 @@ void readerFunction( std::istream& in ){
   MultiSequence *current;
 
   if (volumes == 1) {
-    readIndex(args.lastdbName, refSequences);
+    readIndex(args->lastdbName, refSequences);
   }
 
   for (unsigned i = 0; i < volumes; ++i){
@@ -917,7 +920,7 @@ void readerFunction( std::istream& in ){
       readVolume(i);
       SEM_POST(ioSema);
 
-      for(int j=0; j<args.threadNum; j++){
+      for(int j=0; j<args->threadNum; j++){
         threadDatas[j]->round = i;
       }
     }
@@ -971,7 +974,7 @@ void *threadFunction(void *__threadData){
 
   struct threadData *data = (struct threadData *) __threadData;
 
-  if (args.outputType == 0) {
+  if (args->outputType == 0) {
     data->matchCounts->clear();
     data->matchCounts->resize(data->query->finishedSequences());
   }
@@ -1008,13 +1011,17 @@ void *threadFunction(void *__threadData){
 
 void lastal(int argc, char **argv) {
 
-  args.fromArgs(argc, argv);
+
+  lambdaCalculator = new LambdaCalculator();
+  args = new LastalArguments();
+
+  args->fromArgs(argc, argv);
   std::string matrixFile;
 
-  if (!args.matrixFile.empty()) {
-    matrixFile = ScoreMatrix::stringFromName(args.matrixFile);
-    args.fromString(matrixFile);  // read options from the matrix file
-    args.fromArgs(argc, argv);  // command line overrides matrix file
+  if (!args->matrixFile.empty()) {
+    matrixFile = ScoreMatrix::stringFromName(args->matrixFile);
+    args->fromString(matrixFile);  // read options from the matrix file
+    args->fromArgs(argc, argv);  // command line overrides matrix file
   }
 
   initializeThreads();
@@ -1024,28 +1031,28 @@ void lastal(int argc, char **argv) {
 
   suffixArrays = new SubsetSuffixArray[numOfIndexes];
   text = new MultiSequence();
-  doneSequences -= (args.threadNum)*2;
+  doneSequences -= (args->threadNum)*2;
 
-  for (int i=0; i<args.threadNum; i++){
+  for (int i=0; i<args->threadNum; i++){
     threadDatas[i]->prepareThreadData(i);
   }
 
   char defaultInputName[] = "-";
   char *defaultInput[] = {defaultInputName, 0};
-  char **inputBegin = argv + args.inputStart;
+  char **inputBegin = argv + args->inputStart;
 
-  initializeEvalueCalulator(args.lastdbName + ".prj", scoreMatrix, *inputBegin);
+  initializeEvalueCalulator(args->lastdbName + ".prj", scoreMatrix, *inputBegin);
 
   for (char **i = *inputBegin ? inputBegin : defaultInput; *i; ++i) {
     std::ifstream inFileStream;
     std::istream &in = openIn(*i, inFileStream);
 
     pthread_create(&writerThread, 0, writerFunction, 0);
-    for (int j = 0; j < args.threadNum; j++) {
+    for (int j = 0; j < args->threadNum; j++) {
       pthread_create(&(threads[j]), 0, threadFunction, (void *) threadDatas[j]);
     }
 
-    for (int j = 0; j < args.threadNum; j++) {
+    for (int j = 0; j < args->threadNum; j++) {
       for(int k=0; k<2; k++) {
         SEM_POST(threadDatas[j]->readSema);
       }
@@ -1054,12 +1061,12 @@ void lastal(int argc, char **argv) {
   }
 
   //now sort the LAST output on the disk
-  disk_sort_file(string("/tmp"), args.outFile, std::string(args.outFile) + string("sort"),
+  disk_sort_file(string("/tmp"), args->outFile, std::string(args->outFile) + string("sort"),
       maxRefSequences/2, orf_extractor_from_blast);
 
   // parse the top k hits from the file
-  if (args.topHits < MAX_HITS){
-    topHits(args.outFile, args.topHits);
+  if (args->topHits < MAX_HITS){
+    topHits(args->outFile, args->topHits);
   }
 }
 

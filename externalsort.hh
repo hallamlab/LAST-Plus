@@ -20,10 +20,10 @@ using namespace std;
 typedef unsigned long long countT;
 typedef Line *LINE;
 
-int disk_sort_file(string outputdir, string tobe_sorted_file_name, string sorted_file_name,
+void disk_sort_file(string outputdir, string tobe_sorted_file_name, string sorted_file_name,
      countT chunk_size, string(*key_extractor)(const string &) ) ;
 
-int merge_sorted_files_create_blocks(vector<string>& filenames, string outputdir, string sorted_filename); 
+void merge_sorted_files_create_blocks(vector<string>& filenames, string outputdir, string sorted_filename); 
 
 void write_sorted_sequences(vector<Line *>& lines, string filename); 
 

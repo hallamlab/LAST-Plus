@@ -17,7 +17,8 @@ namespace cbrc{
 // might be fast.
 enum { scoreMatrixRowSize = 64 };
 
-typedef int ScoreMatrixRow[scoreMatrixRowSize];
+//typedef int ScoreMatrixRow[scoreMatrixRowSize];
+typedef int *ScoreMatrixRow;
 
 // An "infinite" score.  Delimiters at the ends of sequences get a
 // score of -INF.  We want it high enough to terminate alignments

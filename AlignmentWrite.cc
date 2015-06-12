@@ -69,8 +69,10 @@ static void writeSignedDifference( size_t x, size_t y, std::ostream& os ){
   else          os << '-' << y - x;
 }
 
-void Alignment::write( const MultiSequence& seq1, const MultiSequence& seq2,
-		       char strand, bool isTranslated, const Alphabet& alph, int format, LastalArguments &args, 
+void Alignment::write(
+           double scoreCutoff, double evalueCutoff,
+           const MultiSequence& seq1, const MultiSequence& seq2,
+		       char strand, bool isTranslated, const Alphabet& alph, int format, 
            std::vector<std::string> *outputVector, const AlignmentExtras& extras ) const{
 
   assert( !blocks.empty() );
@@ -78,7 +80,7 @@ void Alignment::write( const MultiSequence& seq1, const MultiSequence& seq2,
   if( format == 0 ) 
        writeTab( seq1, seq2, strand, isTranslated, extras, outputVector );
   else if( format == 2 )  {
-       writeBlastOutput( seq1, seq2, strand, isTranslated, alph, extras, outputVector, args );
+       writeBlastOutput(scoreCutoff, evalueCutoff, seq1, seq2, strand, isTranslated, alph, extras, outputVector);
   }
   else 
        writeMaf( seq1, seq2, strand, isTranslated, alph, extras );
@@ -86,10 +88,10 @@ void Alignment::write( const MultiSequence& seq1, const MultiSequence& seq2,
 }
 
 //!!
-void Alignment::writeBlastOutput( const MultiSequence& seq1, const MultiSequence& seq2,
+void Alignment::writeBlastOutput(
+              double scoreCutoff, double evalueCutoff, const MultiSequence& seq1, const MultiSequence& seq2,
               char strand, bool isTranslated, const Alphabet& alph, 
-			        const AlignmentExtras& extras, std::vector<std::string> *outputVector,
-			                            LastalArguments &args) const{
+			        const AlignmentExtras& extras, std::vector<std::string> *outputVector) const{
 
   std::stringstream outputStream;
   outputStream.precision(3);
@@ -173,7 +175,7 @@ void Alignment::writeBlastOutput( const MultiSequence& seq1, const MultiSequence
   double bitscore = (lambda*score-log(k))/log(2);
   double evalue2 = area*pow(2,-bitscore);
 
-  if(bitscore >= args.scoreCutoff && evalue2 <= args.evalueCutoff){
+  if(bitscore >= scoreCutoff && evalue2 <= evalueCutoff){
   
     outputStream << seq2.seqName(w2) << tab
        << seq1.seqName(w1) << tab

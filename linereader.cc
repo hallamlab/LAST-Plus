@@ -25,11 +25,10 @@ std::istream& operator>>(std::istream& stream, Line& rhs)
     char buf[10000];
     std::string _line;
     if (getline(stream, _line)) {
-        //rhs.line.assign(_line.begin(), _line.end());
         rhs.line = _line;
         char *field = split_n_pick(_line, buf, '\t', 0);
         rhs.orfid = string(field);
-        //std::cout << _line << std::endl;
+        rhs.evalue = evalue_extractor_from_blast(_line);
     }
     return stream;
 }

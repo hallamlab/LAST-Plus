@@ -46,7 +46,7 @@
 #include "utilities.hh"
 
 #define ERR(x) throw std::runtime_error(x)
-#define LOG(x) if( args.verbosity > 0 ) std::cerr << "lastal: " << x << '\n'
+#define LOG(x) if( args->verbosity > 0 ) std::cerr << "lastal: " << x << '\n'
 
 #define INPUT_SIZE 10000
 
@@ -57,15 +57,14 @@ typedef unsigned long long countT;
 
 namespace {
 
-  LastalArguments args;
-  LambdaCalculator lambdaCalculator;
+  LastalArguments *args;
+  LambdaCalculator *lambdaCalculator;
   int minScoreGapless;
   int isCaseSensitiveSeeds = -1;  // initialize it to an "error" value
   unsigned numOfIndexes = 1;  // assume this value, if unspecified
   sequenceFormat::Enum referenceFormat = sequenceFormat::fasta;
   SubsetSuffixArray *suffixArrays;
   MultiSequence *text;
-  MultiSequence *text2;
   indexT minSeedLimit;
 
   Alphabet *alph;
@@ -153,13 +152,13 @@ struct Dispatcher{
     i  ( text->qualityReader() ),
     j  ( query->qualityReader() ),
     p  ( query->pssmReader() ),
-    m  ( (e < args.maskLowercase) ?
+    m  ( (e < args->maskLowercase) ?
         scoreMatrix->caseSensitive : scoreMatrix->caseInsensitive ),
-    t  ( (e < args.maskLowercase) ?
+    t  ( (e < args->maskLowercase) ?
         *twoQualityScoreMatrixMasked : *twoQualityScoreMatrix ),
-    d  ( (e == Phase::gapless) ? args.maxDropGapless :
-        (e == Phase::gapped ) ? args.maxDropGapped : args.maxDropFinal ),
-    z  ( (args.inputFormat == sequenceFormat::fasta) ? 0 :
+    d  ( (e == Phase::gapless) ? args->maxDropGapless :
+        (e == Phase::gapped ) ? args->maxDropGapped : args->maxDropFinal ),
+    z  ( (args->inputFormat == sequenceFormat::fasta) ? 0 :
         (referenceFormat  == sequenceFormat::fasta) ? 1 : 2 ),
     aa ( aa = alph ){}
 

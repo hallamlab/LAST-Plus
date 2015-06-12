@@ -59,6 +59,12 @@ void SubsetSuffixArray::fromFiles( const std::string& baseName,
   buckets.m.open( baseName + ".bck", bucketSteps[0] );
 }
 
+void SubsetSuffixArray::closeFiles(){
+
+  index.m.close();;
+  buckets.m.close();
+}
+
 void SubsetSuffixArray::toFiles( const std::string& baseName,
 				 bool isAppendPrj, indexT textLength ) const{
   assert( textLength > index.size() );

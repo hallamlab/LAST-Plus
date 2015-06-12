@@ -246,6 +246,7 @@ void readOuterPrj(const std::string &fileName, unsigned &volumes,
   std::ifstream f(fileName.c_str());
   if (!f) ERR("can't open file: " + fileName);
   unsigned version = 0;
+  unsigned tmp_maxRefSequences = 0;
 
   std::string line, word;
   while (getline(f, line)) {
@@ -256,7 +257,7 @@ void readOuterPrj(const std::string &fileName, unsigned &volumes,
     if (word == "numofsequences"){ 
       iss >> refSequences;
       if(refSequences > maxRefSequences){
-        maxRefSequences = refSequences;
+        tmp_maxRefSequences = refSequences;
       }
     }
     if (word == "numofletters") iss >> refLetters;
@@ -265,6 +266,10 @@ void readOuterPrj(const std::string &fileName, unsigned &volumes,
     if (word == "sequenceformat") iss >> referenceFormat;
     if (word == "volumes") iss >> volumes;
     if (word == "numofindexes") iss >> numOfIndexes;
+  }
+
+  if (volumes == 1){
+    maxRefSequences = tmp_maxRefSequences;
   }
 
   if (f.eof() && !f.bad()) f.clear();

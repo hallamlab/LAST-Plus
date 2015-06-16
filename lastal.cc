@@ -893,7 +893,6 @@ void *writerFunction(void *arguments){
       break;
     }
   }
-
 }
 
 void readerFunction( std::istream& in ){
@@ -1058,6 +1057,11 @@ void lastal(int argc, char **argv) {
       }
     }
     readerFunction(in);
+  }
+
+  text->closeFiles();
+  for (unsigned x = 0; x < numOfIndexes; ++x) {
+    suffixArrays[x].closeFiles();
   }
 
   //now sort the LAST output on the disk

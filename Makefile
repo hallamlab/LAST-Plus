@@ -2,7 +2,7 @@ CXX = g++
 CC  = gcc
 
 CXXFLAGS = -O3 -w -m64 
-CFLAGS =   -O3 -w -m64
+CFLAGS =   -O3 -w -m64 
 
 DBOBJ = Alphabet.o MultiSequence.o CyclicSubsetSeed.o	\
 SubsetSuffixArray.o LastdbArguments.o io.o fileMap.o	\

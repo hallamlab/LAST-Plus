@@ -615,15 +615,12 @@ void threadData::translateAndScan(char strand) {
 void readIndex(const std::string &baseName, indexT seqCount) {
 
   LOG("reading " << baseName << "...");
-  text->closeFiles();
   text->fromFiles(baseName, seqCount, isFastq(referenceFormat));
   LOG("reading suffix " << baseName << "...");
   for (unsigned x = 0; x < numOfIndexes; ++x) {
     if (numOfIndexes > 1) {
-      suffixArrays[x].closeFiles();
       suffixArrays[x].fromFiles(baseName + char('a' + x), isCaseSensitiveSeeds, alph->encode);
     } else {
-      suffixArrays[x].closeFiles();
       suffixArrays[x].fromFiles(baseName, isCaseSensitiveSeeds, alph->encode);
     }
   }

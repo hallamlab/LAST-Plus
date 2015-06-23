@@ -11,7 +11,6 @@
 
 #include <algorithm>  // swap
 #include <stdexcept>
-#include <iostream>
 
 #include "fileMap.hh"
 #include "stringify.hh"
@@ -66,6 +65,8 @@ private:
 
 template<typename T>
 void Mmap<T>::open( const std::string& fileName, std::size_t s ){
+
+  close();
 
   std::size_t bytes = s * sizeof(T);
 

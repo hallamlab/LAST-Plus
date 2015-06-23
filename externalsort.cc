@@ -40,14 +40,12 @@ int disk_sort_file(string outputdir, string tobe_sorted_file_name, string sorted
 	string line;
 	Line *lineptr;
 
-    std::cout << "going to sort\n";
     TEMPFILES *listptr = new  TEMPFILES( "/tmp", "LASTtemp0");
     listptr->clear();
     TEMPFILES *newlistptr = new  TEMPFILES( "/tmp", "LASTtemp1");
     newlistptr->clear();
 
 	// Split input fasta into chunks to sort individually
-    std::cout << "writing to files\n";
 
 
 	while (std::getline(inputfile, line).good()) {
@@ -74,7 +72,6 @@ int disk_sort_file(string outputdir, string tobe_sorted_file_name, string sorted
 		}
 		curr_size++;
 	}
-    std::cout << "done writing to files\n";
 
 	// Sort remaining sequences and write to last file
 	if (lines.size() > 0) {
@@ -86,7 +83,6 @@ int disk_sort_file(string outputdir, string tobe_sorted_file_name, string sorted
 	}
 	inputfile.close();
 
-    std::cout << "done sorting  files\n";
 	// Merge the sorted files and write into blocks
 
 	vector<string> filenames;
@@ -94,7 +90,6 @@ int disk_sort_file(string outputdir, string tobe_sorted_file_name, string sorted
     while( listptr->size() > 1 ) {
          
         filenames = listptr->getFileNames();
-        std::cout << " number of files " << filenames.size() << "\n";
         unsigned int size = listptr->size();
 
         for(unsigned int i = 0; i < size; i = i + MERGE_SIZE ) {
@@ -123,7 +118,6 @@ int disk_sort_file(string outputdir, string tobe_sorted_file_name, string sorted
     rename(listptr->getFileNames()[0].c_str(), tobe_sorted_file_name.c_str());
     listptr->clear();
 
-  //std::cout << "Finished the sorting" << std::endl;
 	return 1;
 }
 

@@ -4,6 +4,7 @@
 #define INCLUDED_FASTA_Line
 #include <string>
 #include <iterator>
+#include "utilities.hh"
 
 using namespace std;
 

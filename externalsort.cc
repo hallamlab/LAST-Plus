@@ -1,8 +1,10 @@
 #include "externalsort.hh"
 #include "lastal.hh"
+#include "tempfiles.hh"
 #include <algorithm>
 
 #define STR_BUFFER_SIZE 1000
+#define MERGE_SIZE 100
 
 bool comp_lines(const LINE &lhs, const LINE &rhs) {
 	if (lhs->orfid < rhs->orfid) return true;
@@ -19,7 +21,7 @@ void free_lines(vector<Line *> &v) {
 }
 
 /* Sort the input sequences and divide them into blocks; return the number of blocks created */
-void disk_sort_file(string outputdir, string tobe_sorted_file_name, string sorted_file_name, 
+int disk_sort_file(string outputdir, string tobe_sorted_file_name, string sorted_file_name, 
     countT chunk_size, string(*key_extractor)(const string &)) {
 
 	string sorted_fname = outputdir + "/sorted.fasta";
@@ -31,19 +33,24 @@ void disk_sort_file(string outputdir, string tobe_sorted_file_name, string sorte
 
 	countT curr_size = 0;
 	countT batch = 0;
-	char buffer[STR_BUFFER_SIZE];
 
-	vector<string> filenames;
 	
 	// The current list of sequences to sort
 	vector<Line *> lines;
 	string line;
 	Line *lineptr;
 
-  //std::cout << "Beginning the sorting of the output" << std::endl;
-	// Split input fasta into chunks to sort individually
-	while (std::getline(inputfile, line).good()) {
+    std::cout << "going to sort\n";
+    TEMPFILES *listptr = new  TEMPFILES( "/tmp", "LASTtemp0");
+    listptr->clear();
+    TEMPFILES *newlistptr = new  TEMPFILES( "/tmp", "LASTtemp1");
+    newlistptr->clear();
 
+	// Split input fasta into chunks to sort individually
+    std::cout << "writing to files\n";
+
+
+	while (std::getline(inputfile, line).good()) {
 		string orfid = key_extractor(line);
 		double evalue = evalue_extractor_from_blast(line);
 		lineptr = new Line;
@@ -56,68 +63,85 @@ void disk_sort_file(string outputdir, string tobe_sorted_file_name, string sorte
 			// Sort the vector of sequence ids/lengths
 			sort(lines.begin(), lines.end(), comp_lines);
 			// Write the sequences to a file
-			sprintf(buffer, "%d", batch);
-			string fname = sorted_fname_tmp + string(buffer);
-			filenames.push_back(fname);
-			write_sorted_sequences(lines, fname);
+			string fname =  listptr->nextFileName() ;
 
+			write_sorted_sequences(lines, fname);
 			free_lines(lines);
 			batch++;
-      //std::cout << "Batch : " << batch << std::endl;
 			// Clear the variables
 			curr_size = 0;
 			lines.clear();
 		}
 		curr_size++;
 	}
+    std::cout << "done writing to files\n";
 
 	// Sort remaining sequences and write to last file
 	if (lines.size() > 0) {
-    //std::cout << "Sorting the remaining sequences" << std::endl;
-    //std::cout << "Batch : " << batch+1 << std::endl;
-
 		sort(lines.begin(), lines.end(), comp_lines);
-
-		sprintf(buffer, "%d", batch);
-		string fname = sorted_fname_tmp + string(buffer);
-		filenames.push_back(fname);
-
+		string fname = listptr->nextFileName() ;
 		write_sorted_sequences(lines, fname);
 		free_lines(lines);
 		lines.clear();
 	}
 	inputfile.close();
 
-  //std::cout << "Merging the sorted output files, there are " << filenames.size() << " files" << std::endl;
+    std::cout << "done sorting  files\n";
 	// Merge the sorted files and write into blocks
-	merge_sorted_files_create_blocks(filenames, outputdir, sorted_file_name);
+
+	vector<string> filenames;
+
+    while( listptr->size() > 1 ) {
+         
+        filenames = listptr->getFileNames();
+        std::cout << " number of files " << filenames.size() << "\n";
+        unsigned int size = listptr->size();
+
+        for(unsigned int i = 0; i < size; i = i + MERGE_SIZE ) {
+            unsigned int adjsize = i + MERGE_SIZE > size ? size : i + MERGE_SIZE;
+            vector<string> mergelist ;
+             
+            for(unsigned int j = i; j < adjsize;  j++ ) {
+                  mergelist.push_back(filenames[j]);
+            }
+            if( mergelist.size() ==0 ) break;
+
+            string newfile_name =  newlistptr->nextFileName();
+
+            merge_sorted_files_create_blocks(mergelist, newfile_name);
+        }
+
+        listptr->clear();
+        TEMPFILES *temp = listptr;
+        listptr = newlistptr;
+        newlistptr = temp;
+    }
 	
+     
 	// Remove the individual sorted files
-  //std::cout << "Removing the temporary files" << std::endl;
-  std::vector<std::string>::iterator begin = filenames.begin();
-  std::vector<std::string>::iterator end = filenames.end();
-	for ( ; begin != end; ++begin) {
-		remove_file(*begin);
-	}
-	filenames.clear();
-	lines.clear();
-	rename(sorted_file_name.c_str(), tobe_sorted_file_name.c_str());
+    lines.clear();
+    rename(listptr->getFileNames()[0].c_str(), tobe_sorted_file_name.c_str());
+    listptr->clear();
+
+  //std::cout << "Finished the sorting" << std::endl;
+	return 1;
 }
 
 /* Merge the individual sorted files while writing them to blocks; return the number of blocks created */
-void merge_sorted_files_create_blocks(vector<string> &filenames, string outputdir, string sorted_file_name) {
+int merge_sorted_files_create_blocks(vector<string> &filenames, string sorted_file_name) {
 	vector<istream_iterator<Line> > f_its;
 	istream_iterator<Line> empty_it;
 
+    vector<ifstream *> ifstream_for_filenames;
 	// Open an istream_iterator for each fasta file
 	int i;
 	int S = filenames.size();
 	Line *curr_lines = new Line[S];
 
 	for (i = 0; i < S; i++) {
-		ifstream *f_str = new ifstream(
-				filenames[i].c_str()); // Make sure to keep the file stream "alive" outside this loop
+		ifstream *f_str = new ifstream(filenames[i].c_str()); // Make sure to keep the file stream "alive" outside this loop
 		f_its.push_back(istream_iterator<Line>(*f_str));
+        ifstream_for_filenames.push_back(f_str);
 	}
 	
 	vector<pair<int, Line *> > values;
@@ -132,14 +156,24 @@ void merge_sorted_files_create_blocks(vector<string> &filenames, string outputdi
 		}
 	}
 
-	build_heap(S, values);
+    try{
+       build_heap(S, values);
+    }
+    catch(...) {
+       std::cout << "exception \n";
+
+    }
 	
 	// Open the output file
 	ofstream outputfile;
 
 	outputfile.open((sorted_file_name).c_str());
 	if (!outputfile.is_open()) {
-		cout << "Could not open sorted.block.0 ... exiting.\n";
+		cout << "Failed to  open output  file " << sorted_file_name << " ... exiting.\n";
+        TEMPFILES *listptr = new  TEMPFILES( "/tmp", "LASTtemp0");
+        listptr->clear();
+        TEMPFILES *newlistptr = new  TEMPFILES( "/tmp", "LASTtemp1");
+        newlistptr->clear();
 		exit(0);
 	}
 
@@ -170,21 +204,21 @@ void merge_sorted_files_create_blocks(vector<string> &filenames, string outputdi
 			heapify(values, 0, S);
 		}
 	}
-
 	// Close last block file
 	outputfile.close();
 	f_its.clear();
+
+	delete[] curr_lines;
+
+    for(vector<ifstream *>::iterator it = ifstream_for_filenames.begin(); it!= ifstream_for_filenames.end(); ++it){
+        (*it)->close();
+    }
 
 	for (i = 0; i < S; i++) {
 		remove(filenames[i].c_str());
 	}
 
-	delete[] curr_lines;
-  /*
-  for (vector<istream_iterator<Line> >::iterator begin = f_its.begin(), end = f_its.end(); begin!=end; ++begin){
-    delete *begin;
-  }
-  */
+	return 1;
 }
 
 /* Write the given sequences to a file in the order given by ids_lengths */

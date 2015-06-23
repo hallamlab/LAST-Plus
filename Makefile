@@ -29,7 +29,7 @@ gumbel_params/random_gen.o gumbel_params/sls_alp.o			\
 gumbel_params/sls_alp_data.o gumbel_params/sls_alp_regression.o		\
 gumbel_params/sls_alp_sim.o gumbel_params/sls_pvalues.o\
 utils.o  \
-externalsort.o linereader.o utilities.o heapsort.o
+externalsort.o linereader.o utilities.o heapsort.o tempfiles.o
 
 SPOBJ = Alphabet.o MultiSequence.o fileMap.o split/cbrc_linalg.o	\
 split/last-split.o split/cbrc_split_aligner.o split/last-split-main.o	\
@@ -91,6 +91,7 @@ depend:
 	$(CXX) -MM -I. split/*.cc | sed 's|.*:|split/&|' >> m
 	mv m makefile
 
+tempfiles.o: tempfiles.cc tempfiles.hh 
 Alignment.o: Alignment.cc Alignment.hh ScoreMatrixRow.hh SegmentPair.hh \
  Alphabet.hh Centroid.hh GappedXdropAligner.hh \
  GeneralizedAffineGapCosts.hh OneQualityScoreMatrix.hh GeneticCode.hh \

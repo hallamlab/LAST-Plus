@@ -56,7 +56,7 @@ LastalArguments::LastalArguments() :
   scoreCutoff(20),
   evalueCutoff(1.0e-6),
   threadNum(1),
-	topHits(MAX_HITS){}
+	topHits(10){}
 
 
 void LastalArguments::fromArgs( int argc, char** argv, bool optionsOnly ){

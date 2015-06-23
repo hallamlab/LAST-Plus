@@ -10,8 +10,6 @@
 #include <iosfwd>
 #include <stddef.h>  // size_t
 
-#define MAX_HITS 10000
-
 namespace cbrc{
 
 struct LastalArguments{

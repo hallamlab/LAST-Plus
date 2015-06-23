@@ -1069,7 +1069,7 @@ void lastal(int argc, char **argv) {
       maxRefSequences, orf_extractor_from_blast);
 
   // parse the top k hits from the file
-  if (args->topHits < MAX_HITS){
+  if (args->topHits < 1000 ){
     topHits(args->outFile, args->topHits);
   }
 }

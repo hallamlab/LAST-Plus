@@ -7,7 +7,6 @@
 bool comp_lines(const LINE &lhs, const LINE &rhs) {
 	if (lhs->orfid < rhs->orfid) return true;
 	if (lhs->orfid == rhs->orfid) {
-    //std::cout << "sorting by evalue : " <<lhs->evalue << " " << rhs->evalue << std::endl;
 		return lhs->evalue < rhs->evalue;
 	}
 	return false;

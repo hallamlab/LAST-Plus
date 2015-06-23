@@ -12,8 +12,6 @@ std::ostream& Line::print(std::ostream& stream) const
 {
     if (stream.good()) {
         stream << this->line << std::endl;
-       // stream << orfid << "\t" << line << "\n";
-       // stream << line << "\n";
     }
 
 	return stream;

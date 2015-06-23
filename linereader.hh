@@ -106,6 +106,7 @@ std::ostream& operator<<(std::ostream& stream, const Line& rhs);
 // CREATORS
 inline Line::Line()
 : orfid()
+, evalue()
 , line()
 {
 }
@@ -113,6 +114,7 @@ inline Line::Line()
 inline
 Line::Line(const std::string& name, const std::string& sequence)
 : orfid(name)
+, evalue(evalue_extractor_from_blast(sequence))
 , line(sequence)
 {
 }
@@ -120,6 +122,7 @@ Line::Line(const std::string& name, const std::string& sequence)
 inline
 Line::Line(const Line& original)
 : orfid(original.orfid)
+, evalue(original.evalue)
 , line(original.line)
 {
 }
@@ -128,8 +131,9 @@ Line::Line(const Line& original)
 inline
 Line& Line::operator=(const Line& rhs)
 {
-    orfid = rhs.orfid;
-    line  = rhs.line;
+    orfid  = rhs.orfid;
+    evalue = rhs.evalue;
+    line   = rhs.line;
 
     return *this;
 }

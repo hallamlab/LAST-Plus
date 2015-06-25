@@ -164,7 +164,12 @@ void Alignment::writeBlastOutput(
   gaps += countGaps(seq2String);
   size_t identityCount = countIdentities(userString, seq2String);
   identities = 100*identityCount/userString.length();
-  mismatches = alignLength - gaps - identityCount;
+
+  if (gaps+identityCount > alignLength){
+    mismatches = 0;
+  } else {
+    mismatches = alignLength - gaps - identityCount;
+  }
 
   evalue = evalueForSequences(score,s1, s2);
 

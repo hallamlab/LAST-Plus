@@ -5,6 +5,7 @@
 #include <fstream>
 #include <sys/stat.h>
 #include <vector>
+#include <cstring>
 
 using namespace std;
 

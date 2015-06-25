@@ -30,7 +30,6 @@ void MultiSequence::reinitForAppending(){
   if( !names.v.empty() ) nameEnds.v.push_back( names.v.size() );
 }
 
-//!! IO FUNCTION
 void MultiSequence::fromFiles( const std::string& baseName, indexT seqCount,
                                std::size_t qualitiesPerLetter ){
   ends.m.open( baseName + ".ssp", seqCount + 1 );
@@ -79,10 +78,22 @@ void MultiSequence::addName( std::string& name ){
 }
 
 std::istream& MultiSequence::readFastaName( std::istream& stream ){
+
+  std::string tmp;
+  size_t pos;
+
   line = "";
   getline( stream, line );
+
+  pos = line.find_first_of(" \t");
+  if (pos != std::string::npos){
+    tmp = line.substr(0, pos);
+  }else{
+    tmp = line;
+  }
+
   if( !stream ) return stream;
-  addName(line);
+  addName(tmp);
   return stream;
 }
 

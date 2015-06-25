@@ -115,7 +115,10 @@ int disk_sort_file(string outputdir, string tobe_sorted_file_name, string sorted
      
 	// Remove the individual sorted files
     lines.clear();
-    rename(listptr->getFileNames()[0].c_str(), tobe_sorted_file_name.c_str());
+  
+    if( listptr->getFileNames().size() > 0){
+      rename(listptr->getFileNames()[0].c_str(), tobe_sorted_file_name.c_str());
+    }
     listptr->clear();
 
 	return 1;

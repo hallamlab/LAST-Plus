@@ -879,7 +879,6 @@ void *writerFunction(void *arguments){
 
     SEM_WAIT(roundCheckSema);
     if (roundDone && readSequences == doneSequences){
-      SEM_POST(roundCheckSema);
       SEM_POST(roundSema);
     }
     SEM_POST(roundCheckSema);
@@ -960,6 +959,7 @@ void readerFunction( std::istream& in ){
       SEM_POST(roundCheckSema);
       SEM_WAIT(roundSema);
       SEM_WAIT(terminationSema);
+      continue;
     }
     SEM_POST(roundCheckSema);
     SEM_WAIT(roundSema);

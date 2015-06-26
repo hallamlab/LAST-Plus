@@ -20,10 +20,10 @@ SEM_T roundSema;
 SEM_T roundCheckSema;
 SEM_T inputOutputQueueSema;
 
-bool finishedReadingFlag = 0;
 bool roundDone = 0;
 
 unsigned volumes = 1;
+unsigned volume = 0;
 int readSequences = 0;
 int doneSequences = 0;
 
@@ -880,14 +880,12 @@ void *writerFunction(void *arguments){
     SEM_WAIT(roundCheckSema);
     if (roundDone && readSequences == doneSequences){
       SEM_POST(roundSema);
+      if (volume+1 == volumes){
+        SEM_POST(terminationSema);
+        break;
+      }
     }
     SEM_POST(roundCheckSema);
-
-    if (finishedReadingFlag == 1 && readSequences == doneSequences){
-      SEM_POST(roundSema);
-      SEM_POST(terminationSema);
-      break;
-    }
   }
 }
 
@@ -903,7 +901,13 @@ void readerFunction( std::istream& in ){
 
   for (unsigned i = 0; i < volumes; ++i){
 
+    volume = i;
     LOG(i+1 << " out of " << volumes);
+
+    /*
+    std::cout << "Input : " << inputQueue.size() << std::endl;
+    std::cout << "Output : " << outputQueue.size() << std::endl;
+    */
 
     SEM_WAIT(roundCheckSema);
     roundDone = 0;
@@ -939,14 +943,12 @@ void readerFunction( std::istream& in ){
         SEM_POST(inputOutputQueueSema);
 
         SEM_WAIT(ioSema);
-        SEM_WAIT(inputOutputQueueSema);
         appendFromFasta(in, current);
+        SEM_POST(ioSema);
 
         data->queryQueue->push(current);
         readSequences++;
-        SEM_POST(ioSema);
         SEM_POST(data->readSema);
-        SEM_POST(inputOutputQueueSema);
       }
     }
     in.clear();
@@ -954,15 +956,13 @@ void readerFunction( std::istream& in ){
 
     SEM_WAIT(roundCheckSema);
     roundDone = 1;
+    SEM_POST(roundCheckSema);
+
+    SEM_WAIT(roundSema);
     if (i+1 == volumes){
-      finishedReadingFlag = 1;
-      SEM_POST(roundCheckSema);
-      SEM_WAIT(roundSema);
       SEM_WAIT(terminationSema);
       continue;
     }
-    SEM_POST(roundCheckSema);
-    SEM_WAIT(roundSema);
   }
 }
 
@@ -979,13 +979,10 @@ void *threadFunction(void *__threadData){
     SEM_WAIT(data->readSema);
     SEM_WAIT(data->writeSema);
 
-    SEM_WAIT(inputOutputQueueSema);
     data->outputVector = data->outputVectorQueue->front();
     data->outputVectorQueue->pop();
-
     data->query = data->queryQueue->front();
     data->queryQueue->pop();
-    SEM_POST(inputOutputQueueSema);
 
     data->scanAllVolumes();
 
@@ -994,7 +991,6 @@ void *threadFunction(void *__threadData){
     SEM_WAIT(inputOutputQueueSema);
     idInputQueue.push(data->identifier);
     inputQueue.push(data->query);
-
     idOutputQueue.push(data->identifier);
     outputQueue.push(data->outputVector);
     SEM_POST(inputOutputQueueSema);

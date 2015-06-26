@@ -5,7 +5,7 @@
 #include <fstream>
 #include <sys/stat.h>
 #include "tempfiles.hh"
-
+#include <assert.h>
 using namespace std;
 
 
@@ -91,31 +91,39 @@ void TEMPFILES::remove_dir(char *path) {
         struct dirent *entry = NULL;
         DIR *dir = NULL;
 
-        if( (dir = opendir(path))==0) return;
+        dir = opendir(path);
 
+        if( dir ==0) return;
         while(entry = readdir(dir))
         {   
-                DIR *sub_dir = NULL;
-                FILE *file = NULL;
-                char abs_path[100] = {0};
-                if(*(entry->d_name) != '.')
-                {   
-                        sprintf(abs_path, "%s/%s", path, entry->d_name);
-                        if(sub_dir = opendir(abs_path))
-                        {   
-                                closedir(sub_dir);
-                                remove_dir(abs_path);
-                        }   
-                        else 
-                        {   
-                                if(file = fopen(abs_path, "r"))
-                                {   
-                                        fclose(file);
-                                        remove(abs_path);
-                                }   
-                        }   
-                }   
+             DIR *sub_dir = NULL;
+             FILE *file = NULL;
+             char abs_path[200] = {0};
+             if( strcmp(entry->d_name, ".")  && strcmp(entry->d_name, ".."))
+             {   
+                  sprintf(abs_path, "%s/%s", path, entry->d_name);
+
+                  if(sub_dir = opendir(abs_path)) //if it is a directory
+                  {   
+                       closedir(sub_dir);
+                       remove_dir(abs_path);
+                  }   
+                  else 
+                  {   
+                      if(file = fopen(abs_path, "r"))
+                      {   
+                          fclose(file);
+                          remove(abs_path);
+                      }   
+                      else {
+                         remove(abs_path);
+
+                       }
+                   }   
+             }   
         }   
+
+        closedir(dir);
         remove(path);
 }
 

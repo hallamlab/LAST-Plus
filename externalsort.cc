@@ -46,8 +46,6 @@ int disk_sort_file(string outputdir, string tobe_sorted_file_name, string sorted
     newlistptr->clear();
 
 	// Split input fasta into chunks to sort individually
-
-
 	while (std::getline(inputfile, line).good()) {
 		string orfid = key_extractor(line);
 		double evalue = evalue_extractor_from_blast(line);
@@ -82,9 +80,7 @@ int disk_sort_file(string outputdir, string tobe_sorted_file_name, string sorted
 		lines.clear();
 	}
 	inputfile.close();
-
 	// Merge the sorted files and write into blocks
-
 	vector<string> filenames;
 
     while( listptr->size() > 1 ) {
@@ -115,8 +111,7 @@ int disk_sort_file(string outputdir, string tobe_sorted_file_name, string sorted
      
 	// Remove the individual sorted files
     lines.clear();
-  
-    if( listptr->getFileNames().size() > 0){
+    if(listptr->getFileNames().size() > 0){
       rename(listptr->getFileNames()[0].c_str(), tobe_sorted_file_name.c_str());
     }
     listptr->clear();
@@ -151,7 +146,11 @@ int merge_sorted_files_create_blocks(vector<string> &filenames, string sorted_fi
 			mod_line.second = curr_lines + i;
 			values.push_back(mod_line);
 		}
+        else {
+            exit(0);
+        }
 	}
+
 
     try{
        build_heap(S, values);
@@ -203,18 +202,25 @@ int merge_sorted_files_create_blocks(vector<string> &filenames, string sorted_fi
 	}
 	// Close last block file
 	outputfile.close();
+
+
 	f_its.clear();
 
 	delete[] curr_lines;
 
+
     for(vector<ifstream *>::iterator it = ifstream_for_filenames.begin(); it!= ifstream_for_filenames.end(); ++it){
         (*it)->close();
+        delete *it;
     }
 
+
+/*
 	for (i = 0; i < S; i++) {
 		remove(filenames[i].c_str());
 	}
 
+*/
 	return 1;
 }
 

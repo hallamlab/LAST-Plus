@@ -51,8 +51,8 @@ void createStructures(std::string &matrixFile){
     qualityPssmMaker = new QualityPssmMaker();
   }
 
-    twoQualityScoreMatrixMasked = new TwoQualityScoreMatrix();
-    twoQualityScoreMatrix = new TwoQualityScoreMatrix();
+  twoQualityScoreMatrixMasked = new TwoQualityScoreMatrix();
+  twoQualityScoreMatrix = new TwoQualityScoreMatrix();
 
   readOuterPrj(args->lastdbName + ".prj", volumes, refSequences, refLetters);
 
@@ -848,35 +848,27 @@ void *writerFunction(void *arguments){
     SEM_WAIT(writerSema);
 
     SEM_WAIT(inputOutputQueueSema);
-    state = outputQueue.empty();
+    current = outputQueue.front();
+    outputQueue.pop();
+    id = idOutputQueue.front();
+    idOutputQueue.pop();
     SEM_POST(inputOutputQueueSema);
 
-    while(!state){
+    threadData *data = threadDatas[id];
 
-      SEM_WAIT(inputOutputQueueSema);
-      current = outputQueue.front();
-      outputQueue.pop();
-      id = idOutputQueue.front();
-      idOutputQueue.pop();
-      state = outputQueue.empty();
-      SEM_POST(inputOutputQueueSema);
-
-      threadData *data = threadDatas[id];
-
-      SEM_WAIT(ioSema);
-      for (int j=0; j < current->size(); j++) {
-        out << current->at(j);
-      }
-      SEM_POST(ioSema);
-
-      current->clear();
-
-      SEM_WAIT(inputOutputQueueSema);
-      data->outputVectorQueue->push(current);
-      doneSequences++;
-      SEM_POST(inputOutputQueueSema);
-      SEM_POST(data->writeSema);
+    SEM_WAIT(ioSema);
+    for (int j=0; j < current->size(); j++) {
+      out << current->at(j);
     }
+    SEM_POST(ioSema);
+
+    current->clear();
+
+    SEM_WAIT(inputOutputQueueSema);
+    data->outputVectorQueue->push(current);
+    doneSequences++;
+    SEM_POST(inputOutputQueueSema);
+    SEM_POST(data->writeSema);
 
     SEM_WAIT(roundCheckSema);
     if (roundDone && readSequences == doneSequences && readSequences != readSequencesOld){
@@ -894,7 +886,6 @@ void *writerFunction(void *arguments){
 void readerFunction( std::istream& in ){
 
   int id;
-  bool state;
   MultiSequence *current;
 
   if (volumes == 1) {
@@ -921,33 +912,25 @@ void readerFunction( std::istream& in ){
       }
     }
 
-    while ( !in.eof() ) {
-      SEM_WAIT(readerSema);
+    while(!in.eof() ){
 
+      SEM_WAIT(readerSema);
       SEM_WAIT(inputOutputQueueSema);
-      state = inputQueue.empty();
+      id = idInputQueue.front();
+      idInputQueue.pop();
+      threadData *data = threadDatas[id];
+      current = inputQueue.front();
+      inputQueue.pop();
       SEM_POST(inputOutputQueueSema);
 
-      while(!state && !in.eof() ){
+      SEM_WAIT(ioSema);
+      appendFromFasta(in, current);
+      SEM_POST(ioSema);
 
-        SEM_WAIT(inputOutputQueueSema);
-        id = idInputQueue.front();
-        idInputQueue.pop();
-        threadData *data = threadDatas[id];
-        current = inputQueue.front();
-        inputQueue.pop();
-        state = inputQueue.empty();
-        SEM_POST(inputOutputQueueSema);
+      data->queryQueue->push(current);
+      readSequences++;
 
-        SEM_WAIT(ioSema);
-        appendFromFasta(in, current);
-        SEM_POST(ioSema);
-
-        data->queryQueue->push(current);
-        readSequences++;
-
-        SEM_POST(data->readSema);
-      }
+      SEM_POST(data->readSema);
     }
     in.clear();
     in.seekg(0);

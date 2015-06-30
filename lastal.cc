@@ -26,6 +26,7 @@ unsigned volumes = 1;
 unsigned volume = 0;
 int readSequences = 0;
 int doneSequences = 0;
+int readSequencesOld = -1;
 
 countT refSequences = 0;
 countT refLetters = 0;
@@ -878,7 +879,8 @@ void *writerFunction(void *arguments){
     }
 
     SEM_WAIT(roundCheckSema);
-    if (roundDone && readSequences == doneSequences){
+    if (roundDone && readSequences == doneSequences && readSequences != readSequencesOld){
+      readSequencesOld = readSequences;
       SEM_POST(roundSema);
       if (volume+1 == volumes){
         SEM_POST(terminationSema);
@@ -903,11 +905,6 @@ void readerFunction( std::istream& in ){
 
     volume = i;
     LOG(i+1 << " out of " << volumes);
-
-    /*
-    std::cout << "Input : " << inputQueue.size() << std::endl;
-    std::cout << "Output : " << outputQueue.size() << std::endl;
-    */
 
     SEM_WAIT(roundCheckSema);
     roundDone = 0;
@@ -948,6 +945,7 @@ void readerFunction( std::istream& in ){
 
         data->queryQueue->push(current);
         readSequences++;
+
         SEM_POST(data->readSema);
       }
     }
@@ -1053,12 +1051,12 @@ void lastal(int argc, char **argv) {
   }
 
   text->closeFiles();
-  for (unsigned x = 0; x < numOfIndexes; ++x) {
+  for (size_t x = 0; x < numOfIndexes; x++) {
     suffixArrays[x].closeFiles();
   }
 
   //now sort the LAST output on the disk
-  disk_sort_file(string("/tmp"), args->outFile, std::string(args->outFile) + string("sort"),
+  disk_sort_file(std::string("/tmp"), args->outFile, std::string(args->outFile) + std::string("sort"),
       maxRefSequences, orf_extractor_from_blast);
 
   // parse the top k hits from the file

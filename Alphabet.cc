@@ -114,32 +114,6 @@ void Alphabet::makeComplement(){
   }
 }
 
-/*
-Alphabet& Alphabet::operator=(const Alphabet &alph) const{
-
-  if (this == &alph)
-    return *this;
-  //static const char* dna;
-  //static const char* protein;
-
-  //std::string letters;    // the "proper" letters, e.g. ACGT for DNA
-//  unsigned size;          // same as letters.size(): excludes delimiters
-//  uchar encode[capacity];  // translate ASCII letters to codes (small integers)
-//  uchar decode[capacity];  // translate codes to ASCII letters
-//  uchar canonical[capacity];   // translate lowercase codes to uppercase codes
-//  uchar complement[capacity];  // translate DNA codes to their complements
-  //static const char* dna;
-  //static const char* protein;
-  //!! Trying to create a copy constructor
-  alph.letters = letters;    // the "proper" letters, e.g. ACGT for DNA
-  alph.size = size;          // same as letters.size(): excludes delimiters
-  memcpy(&encode, &alph.encode, capacity);  // translate ASCII letters to codes (small integers)
-  memcpy(&decode, &alph.decode, capacity);  // translate codes to ASCII letters
-  memcpy(&canonical, &alph.canonical, capacity);   // translate lowercase codes to uppercase codes
-  memcpy(&complement, &alph.complement, capacity);  // translate DNA codes to their complements
-}
-*/
-
 std::ostream& cbrc::operator<<( std::ostream& s, const Alphabet& a ){
   return s << a.letters;
 }

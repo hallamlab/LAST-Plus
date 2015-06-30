@@ -26,7 +26,6 @@ unsigned volumes = 1;
 unsigned volume = 0;
 int readSequences = 0;
 int doneSequences = 0;
-int readSequencesOld = -1;
 
 countT refSequences = 0;
 countT refLetters = 0;
@@ -871,8 +870,7 @@ void *writerFunction(void *arguments){
     SEM_POST(data->writeSema);
 
     SEM_WAIT(roundCheckSema);
-    if (roundDone && readSequences == doneSequences && readSequences != readSequencesOld){
-      readSequencesOld = readSequences;
+    if (roundDone && readSequences == doneSequences && readSequences){
       SEM_POST(roundSema);
       if (volume+1 == volumes){
         SEM_POST(terminationSema);

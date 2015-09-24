@@ -24,14 +24,14 @@ void MultiSequence::initForAppending( indexT padSizeIn ){
 void MultiSequence::reinitForAppending(){
   seq.v.erase( seq.v.begin(), seq.v.begin() + ends.v.back() - padSize );
   names.v.erase( names.v.begin(),
-                 names.v.begin() + nameEnds.v[ finishedSequences() ] );
+      names.v.begin() + nameEnds.v[ finishedSequences() ] );
   ends.v.resize(1);
   nameEnds.v.resize(1);
   if( !names.v.empty() ) nameEnds.v.push_back( names.v.size() );
 }
 
 void MultiSequence::fromFiles( const std::string& baseName, indexT seqCount,
-                               std::size_t qualitiesPerLetter ){
+    std::size_t qualitiesPerLetter ){
   ends.m.open( baseName + ".ssp", seqCount + 1 );
   seq.m.open( baseName + ".tis", ends.m.back() );
   nameEnds.m.open( baseName + ".sds", seqCount + 1 );
@@ -40,7 +40,7 @@ void MultiSequence::fromFiles( const std::string& baseName, indexT seqCount,
   padSize = ends.m[0];
 
   qualityScores.m.open( baseName + ".qua",
-                        ends.m.back() * qualitiesPerLetter );
+      ends.m.back() * qualitiesPerLetter );
 }
 
 void MultiSequence::closeFiles(){
@@ -56,18 +56,18 @@ void MultiSequence::toFiles( const std::string& baseName ) const{
   memoryToBinaryFile( ends.begin(), ends.end(), baseName + ".ssp" );
 
   memoryToBinaryFile( seq.begin(), seq.begin() + ends.back(),
-		      baseName + ".tis" );
+      baseName + ".tis" );
 
   memoryToBinaryFile( nameEnds.begin(), nameEnds.begin() + ends.size(),
-		      baseName + ".sds" );
+      baseName + ".sds" );
 
   memoryToBinaryFile( names.begin(),
-		      names.begin() + nameEnds[ finishedSequences() ],
-		      baseName + ".des" );
+      names.begin() + nameEnds[ finishedSequences() ],
+      baseName + ".des" );
 
   memoryToBinaryFile( qualityScores.begin(),
-                      qualityScores.begin() + ends.back() * qualsPerLetter(),
-                      baseName + ".qua" );
+      qualityScores.begin() + ends.back() * qualsPerLetter(),
+      baseName + ".qua" );
 }
 
 void MultiSequence::addName( std::string& name ){
@@ -97,10 +97,9 @@ std::istream& MultiSequence::readFastaName( std::istream& stream ){
   return stream;
 }
 
-std::istream& MultiSequence::appendFromFasta( std::istream& stream, indexT maxSeqLen){
-
-  char c;
+std::istream& MultiSequence::appendFromFasta( std::istream& stream, indexT maxSeqLen ){
   if( isFinished() ){
+    char c = '>';
     stream >> c;
     if( c != '>' )
       throw std::runtime_error("bad FASTA sequence data: missing '>'");
@@ -108,15 +107,15 @@ std::istream& MultiSequence::appendFromFasta( std::istream& stream, indexT maxSe
     if( !stream ) return stream;
   }
 
-  while( !stream.eof() ){
-    stream >> c; 
-    if( c == '>' ){
-      stream.unget();
-      break;  // we have hit the next FASTA sequence
-    }
+  std::istreambuf_iterator<char> inpos(stream);
+  std::istreambuf_iterator<char> endpos;
+  while( inpos != endpos ){
+    uchar c = *inpos;
+    if( c == '>' ) break;  // we have hit the next FASTA sequence
     if( !std::isspace(c) ){
       seq.v.push_back(c);
     }
+    ++inpos;
   }
 
   finish();
@@ -149,5 +148,5 @@ MultiSequence::indexT MultiSequence::whichSequence( indexT coordinate ) const{
 
 std::string MultiSequence::seqName( indexT seqNum ) const{
   return std::string( names.begin() + nameEnds[ seqNum ],
-		      names.begin() + nameEnds[ seqNum + 1 ] );
+      names.begin() + nameEnds[ seqNum + 1 ] );
 }

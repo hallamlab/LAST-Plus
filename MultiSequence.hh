@@ -19,7 +19,7 @@ namespace cbrc{
 
 class MultiSequence{
  public:
-  typedef unsigned indexT;
+  typedef std::size_t indexT;
   typedef unsigned char uchar;
 
   // initialize with leftmost delimiter pad, ready for appending sequences
@@ -40,6 +40,7 @@ class MultiSequence{
   // the concatenated sequences plus pads exceed maxSeqLen: thus it
   // may not finish reading the sequence.
   std::istream& appendFromFasta( std::istream& stream, indexT maxSeqLen);
+  std::istream& appendFromFastaLASTDB( std::istream& stream, indexT maxSeqLen, bool unlimited );
 
   // As above, but read quality scores too.
   std::istream& appendFromFastq( std::istream& stream, indexT maxSeqLen );

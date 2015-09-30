@@ -190,7 +190,7 @@ appendFromFasta( MultiSequence& multi,
   indexT oldFinishedSize = multi.finishedSize();
 
   if ( args.inputFormat == sequenceFormat::fasta )
-    multi.appendFromFasta( in, maxSeqLen );
+    multi.appendFromFastaLASTDB( in, maxSeqLen, args.unlimited );
   else
     multi.appendFromFastq( in, maxSeqLen );
 
@@ -219,6 +219,11 @@ appendFromFasta( MultiSequence& multi,
 void lastdb( int argc, char** argv ){
   LastdbArguments args;
   args.fromArgs( argc, argv );
+
+  if(args.volumeSize == std::size_t(-1)){
+    args.unlimited = true ;
+  }
+
   Alphabet alph;
   MultiSequence multi;
   SubsetSuffixArray indexes[maxNumOfIndexes];

@@ -5,11 +5,12 @@
 
 #ifndef SEGMENT_PAIR_HH
 #define SEGMENT_PAIR_HH
+#include <cstddef> // size_t
 
 namespace cbrc{
 
 struct SegmentPair{
-  typedef unsigned indexT;
+  typedef std::size_t indexT;
   typedef unsigned char uchar;
 
   SegmentPair(){}

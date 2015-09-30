@@ -29,7 +29,7 @@ namespace cbrc{
 
   class SubsetSuffixArray{
     public:
-      typedef unsigned indexT;
+      typedef std::size_t indexT;
 
       CyclicSubsetSeed& getSeed() { return seed; }
       const CyclicSubsetSeed& getSeed() const { return seed; }

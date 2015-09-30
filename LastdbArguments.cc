@@ -24,6 +24,7 @@ LastdbArguments::LastdbArguments() :
   isCaseSensitive(false),
   seedPatterns(0),
   volumeSize(-1),
+  unlimited(false),
   indexStep(0),  // depends on the subset seed
   subsetSeedFiles(0),
   userAlphabet(""),

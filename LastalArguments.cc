@@ -53,6 +53,7 @@ LastalArguments::LastalArguments() :
   gamma(1),
   geneticCodeFile(""),
   verbosity(0),
+  version(0),
   scoreCutoff(20),
   evalueCutoff(1.0e-6),
   threadNum(1),
@@ -114,6 +115,7 @@ Miscellaneous options (default settings):\n\
 -Q: input format: 0=fasta, 1=fastq-sanger, 2=fastq-solexa, 3=fastq-illumina,\n\
                   4=prb, 5=PSSM ("
     + stringify(inputFormat) + ")\n\
+-V: Version information\n\
 -S: Optional bit-Score cutoff value (" + stringify(scoreCutoff) + ")\n\
 -E: Optional e-value cutoff value (" + stringify(evalueCutoff) + ")\n\
 -P: Optional number of threads (" + stringify(threadNum) + ")\n\
@@ -126,7 +128,7 @@ LAST home page: http://last.cbrc.jp/\n\
   optind = 1;  // allows us to scan arguments more than once(???)
   int c;
   const char optionString[] =
-      "ho:u:s:f:r:q:p:a:b:A:B:c:F:x:y:z:d:e:Q:T:m:l:n:C:k:i:w:t:g:G:vj:S:E:P:K:";
+      "ho:u:s:f:r:q:p:a:b:A:B:c:F:x:y:z:d:e:Q:T:m:l:n:C:k:i:w:t:g:G:vVj:S:E:P:K:";
   while( (c = getopt(argc, argv, optionString)) != -1 ){
     switch(c){
     case 'h':
@@ -256,6 +258,11 @@ LAST home page: http://last.cbrc.jp/\n\
       break;
 
       //!!
+    case 'V':
+      std::cout <<  "LAST+ 1.0 based on LAST " <<
+#include "version.hh" 
+      << std::endl;
+      break;
     case 'S':
       unstringify(scoreCutoff, optarg );
       break;

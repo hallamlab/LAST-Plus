@@ -14,7 +14,7 @@
 namespace cbrc{
 
 struct LastdbArguments{
-  typedef unsigned indexT;
+  typedef std::size_t indexT;
 
   // set the parameters to their default values:
   LastdbArguments();
@@ -27,6 +27,7 @@ struct LastdbArguments{
   bool isCaseSensitive;
   std::vector< std::string > seedPatterns;
   std::size_t volumeSize;  // type?
+  bool unlimited;
   indexT indexStep;
   std::vector< std::string > subsetSeedFiles;
   std::string userAlphabet;

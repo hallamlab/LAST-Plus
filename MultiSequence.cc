@@ -121,6 +121,39 @@ std::istream& MultiSequence::appendFromFasta( std::istream& stream, indexT maxSe
   finish();
   return stream;
 }
+// Keep the -1 is infinity scenario.
+std::istream&
+MultiSequence::appendFromFastaLASTDB( std::istream& stream, indexT maxSeqLen, bool unlimited ){
+  if( isFinished() ){
+    char c = '>';
+    stream >> c;
+    if( c != '>' )
+      throw std::runtime_error("bad FASTA sequence data: missing '>'");
+    readFastaName(stream);
+    if( !stream ) return stream;
+  }
+
+  std::istreambuf_iterator<char> inpos(stream);
+  std::istreambuf_iterator<char> endpos;
+  while( inpos != endpos ){
+    uchar c = *inpos;
+    if( c == '>' ) break;  // we have hit the next FASTA sequence
+    if( !std::isspace(c) ){
+      if(!unlimited){
+        if( seq.v.size() >= maxSeqLen ) break;
+      }
+      seq.v.push_back(c);
+    }
+    ++inpos;
+  }
+
+  if(!unlimited){
+    if( isFinishable(maxSeqLen) ) finish();
+  }else{
+    finish();
+  }
+  return stream;
+}
 
 void MultiSequence::finish(){
   assert( !isFinished() );

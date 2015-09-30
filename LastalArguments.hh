@@ -13,7 +13,7 @@
 namespace cbrc{
 
 struct LastalArguments{
-  typedef unsigned indexT;
+  typedef std::size_t indexT;
 
   // set the parameters to their default values:
   LastalArguments();
@@ -78,6 +78,7 @@ struct LastalArguments{
   double gamma;        // parameter for gamma-centroid alignment
   std::string geneticCodeFile;
   int verbosity;
+  int version;
 
   double scoreCutoff;
   double evalueCutoff;

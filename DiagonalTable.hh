@@ -21,7 +21,7 @@
 namespace cbrc{
 
 struct DiagonalTable{
-  typedef unsigned indexT;
+  typedef std::size_t indexT;
   typedef std::pair<indexT, indexT> pairT;
 
   enum { BINS = 256 };  // use a power-of-two for faster modulus (maybe)

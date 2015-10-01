@@ -36,6 +36,7 @@ struct LastdbArguments{
   indexT bucketDepth;
   bool isCountsOnly;
   int verbosity;
+  bool version;
   sequenceFormat::Enum inputFormat;
 
   // positional arguments:

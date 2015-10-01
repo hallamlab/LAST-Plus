@@ -32,6 +32,7 @@ LastdbArguments::LastdbArguments() :
   bucketDepth(indexT(-1)),  // means: use the default (adapts to the data)
   isCountsOnly(false),
   verbosity(0),
+  version(false),
   inputFormat(sequenceFormat::fasta){}
 
 void LastdbArguments::fromArgs( int argc, char** argv ){
@@ -49,7 +50,7 @@ Main Options:\n\
 Advanced Options (default settings):\n\
 -Q: input format: 0=fasta, 1=fastq-sanger, 2=fastq-solexa, 3=fastq-illumina ("
       + stringify(inputFormat) + ")\n\
--s: volume size (unlimited)\n\
+-s: volume size (platform specific)\n\
 -m: seed pattern\n\
 -u: subset seed (yass.seed)\n\
 -w: index step\n\
@@ -59,13 +60,14 @@ Advanced Options (default settings):\n\
 -b: bucket depth\n\
 -x: just count sequences and letters\n\
 -v: be verbose: write messages about what lastdb is doing\n\
+-V: print out version information\n\
 \n\
 Report bugs to: last-align (ATmark) googlegroups (dot) com\n\
 LAST home page: http://last.cbrc.jp/\n\
 ";
 
   int c;
-  while( (c = getopt(argc, argv, "hpcm:s:w:u:a:i:b:xvQ:")) != -1 ) {
+  while( (c = getopt(argc, argv, "hpcm:s:w:u:a:i:b:xvVQ:")) != -1 ) {
     switch(c){
     case 'h':
       std::cout << help;
@@ -103,6 +105,11 @@ LAST home page: http://last.cbrc.jp/\n\
       break;
     case 'v':
       ++verbosity;
+      break;
+    case 'V':
+      std::cout << "LAST+ 1.0 based on LAST " 
+      #include "version.hh"
+      << std::endl;
       break;
     case 'Q':
       unstringify( inputFormat, optarg );

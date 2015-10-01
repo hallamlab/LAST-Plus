@@ -122,28 +122,6 @@ void TEMPFILES::remove_dir(char *path) {
                    }   
              }   
         }   
-
         closedir(dir);
         remove(path);
 }
-
-/*
-int main() {
-
-  std::cout << "hello";
-
-  TEMPFILES t( "/tmp", "mytemp");
-  t.setFanOut(10);
-
-  for(int i =0; i < 40102 ; i++ ) {
-      string name = t.nextFileName();
-      std::cout << "file : " << name  << "\n";
-      ofstream ofile(name.c_str(), std::ifstream::out);
-      ofile.close();
-
-  }
-
-  t.clean();
-  return 0;
-}
-*/

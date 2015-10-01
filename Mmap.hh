@@ -11,6 +11,7 @@
 
 #include <algorithm>  // swap
 #include <stdexcept>
+#include <iostream>
 
 #include "fileMap.hh"
 #include "stringify.hh"

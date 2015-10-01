@@ -10,7 +10,8 @@
 namespace cbrc{
 
 struct SegmentPair{
-  typedef std::size_t indexT;
+  //typedef std::size_t indexT;
+  typedef unsigned indexT;
   typedef unsigned char uchar;
 
   SegmentPair(){}

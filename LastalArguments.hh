@@ -13,7 +13,8 @@
 namespace cbrc{
 
 struct LastalArguments{
-  typedef std::size_t indexT;
+  //typedef std::size_t indexT;
+  typedef unsigned indexT;
 
   // set the parameters to their default values:
   LastalArguments();

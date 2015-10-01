@@ -19,7 +19,8 @@ namespace cbrc{
 
 class MultiSequence{
  public:
-  typedef std::size_t indexT;
+  //typedef std::size_t indexT;
+  typedef unsigned indexT;
   typedef unsigned char uchar;
 
   // initialize with leftmost delimiter pad, ready for appending sequences
@@ -113,8 +114,7 @@ class MultiSequence{
   std::size_t qualsPerLetter() const
   { return qualityScores.size() / seq.size(); }
 
- //private:
-  public:
+  private:
   indexT padSize;  // number of delimiter chars between sequences
   VectorOrMmap<uchar> seq;  // concatenated sequences
   VectorOrMmap<indexT> ends;  // coordinates of ends of delimiter pads

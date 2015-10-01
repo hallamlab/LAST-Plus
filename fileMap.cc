@@ -31,9 +31,8 @@ static void primeMemory( void* begin, std::size_t bytes ){
   static std::size_t z = 0;
   std::size_t stepSize = 1024;
   const char* x = static_cast<char*>(begin);
-  const char* y = x + (bytes / stepSize) * stepSize;
+  const char* y = x + bytes;
   while( x < y ){
-    z += *x;
     x += stepSize;
   }
 }
@@ -51,7 +50,6 @@ void* openFileMap( const std::string& fileName, std::size_t bytes ){
 
   int e = close(f);
   if( e < 0 ) err( "can't close file " + fileName );
-
   primeMemory( m, bytes );
 
   return m;

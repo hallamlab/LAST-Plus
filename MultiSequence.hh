@@ -19,11 +19,12 @@ namespace cbrc{
 
 class MultiSequence{
  public:
-  //typedef std::size_t indexT;
   typedef unsigned indexT;
+  //typedef std::size_t indexT;
   typedef unsigned char uchar;
 
   // initialize with leftmost delimiter pad, ready for appending sequences
+  //void initForAppending( indexT padSizeIn );
   void initForAppending( indexT padSizeIn );
 
   // re-initialize, but keep the last sequence if it is unfinished
@@ -71,7 +72,7 @@ class MultiSequence{
   indexT finishedSize() const{ return ends.back(); }
 
   // total length of finished and unfinished sequences plus delimiters
-  std::size_t unfinishedSize() const{ return seq.size(); }
+  indexT unfinishedSize() const{ return seq.size(); }
 
   // which sequence is the coordinate in?
   indexT whichSequence( indexT coordinate ) const;

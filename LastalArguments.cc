@@ -22,7 +22,7 @@ namespace cbrc{
 
 LastalArguments::LastalArguments() :
   outFile("-"),
-  outputFormat(1), 
+  outputFormat(2), 
   outputType(3),
   strand(-1),  // depends on the alphabet
   globality(0),
@@ -62,7 +62,7 @@ LastalArguments::LastalArguments() :
 
 void LastalArguments::fromArgs( int argc, char** argv, bool optionsOnly ){
   std::string usage =
-      "Usage: lastal [options] lastdb-name fasta-sequence-file(s)";
+      "Usage: lastal [options] -o outputFile lastdb-name fasta-sequence-file(s)";
 
   std::string help = usage + "\n\
 Find local sequence alignments.\n\
@@ -87,8 +87,8 @@ Cosmetic options (default settings):\n\
 -h: show all options and their default settings\n\
 -v: be verbose: write messages about what lastal is doing\n\
 -o: output file\n\
--f: output format: 0=tabular, 1=maf ("
-    + stringify(outputFormat) + ") 2=BLAST-like\n\
+-f: output format: 0=tabular, 1=maf 2=BLAST-like ("
+    + stringify(outputFormat) + ")\n\
 \n\
 Miscellaneous options (default settings):\n\
 -s: strand: 0=reverse, 1=forward, 2=both (2 for DNA, 1 for protein)\n\
@@ -300,6 +300,10 @@ LAST home page: http://last.cbrc.jp/\n\
 
   if( globality == 1 && outputType == 1 )
     ERR( "can't combine option -T 1 with option -j 1" );
+
+  if(outFile == "-"){
+   ERR("Please specify the name of the output file using the -o flag");
+  }
 
   if( optionsOnly ) return;
   if( optind >= argc )

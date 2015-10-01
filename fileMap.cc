@@ -27,8 +27,6 @@ static void err( const std::string& s ) {
 // random access can be horribly slow (at least on two Linux 2.6
 // systems).
 static void primeMemory( void* begin, std::size_t bytes ){
-  // use "static" to stop the compiler optimizing the whole function away:
-  static std::size_t z = 0;
   std::size_t stepSize = 1024;
   const char* x = static_cast<char*>(begin);
   const char* y = x + bytes;

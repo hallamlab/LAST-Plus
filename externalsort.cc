@@ -112,7 +112,14 @@ int disk_sort_file(string outputdir, string tobe_sorted_file_name, string sorted
 	// Remove the individual sorted files
 	lines.clear();
 	if(listptr->getFileNames().size() > 0){
-		rename(listptr->getFileNames()[0].c_str(), tobe_sorted_file_name.c_str());
+    // If the /tmp directory is on a different mount from the original output file
+    // we will have problems. So copy the sorted file over and remove the sorted file in the /tmp directory
+		if(rename(listptr->getFileNames()[0].c_str(), tobe_sorted_file_name.c_str()) == -1 ){
+      std::ifstream  src(listptr->getFileNames()[0].c_str());
+      std::ofstream  dst(tobe_sorted_file_name.c_str());
+      dst << src.rdbuf();
+      remove(listptr->getFileNames()[0].c_str());
+    }
 	}
 	listptr->clear();
 

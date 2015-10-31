@@ -130,8 +130,8 @@ struct threadData{
 
 struct Dispatcher{
 
-  const uchar* a;  // the reference sequence
-  const uchar* b;  // the query sequence
+  const uchar* reference;  // the reference sequence
+  const uchar* query;  // the query sequence
   const uchar* i;  // the reference quality data
   const uchar* j;  // the query quality data
   const ScoreMatrixRow* p;  // the query PSSM
@@ -147,8 +147,8 @@ struct Dispatcher{
       TwoQualityScoreMatrix *twoQualityScoreMatrixMasked, 
       sequenceFormat::Enum referenceFormat, Alphabet *alph) :
 
-    a  ( text->seqReader() ),
-    b  ( query->seqReader() ),
+    reference  ( text->seqReader() ),
+    query  ( query->seqReader() ),
     i  ( text->qualityReader() ),
     j  ( query->qualityReader() ),
     p  ( query->pssmReader() ),
@@ -167,44 +167,44 @@ struct Dispatcher{
   // It may not be the best strategy for protein alignment with subset
   // seeds: there could be few or no identical matches...
   void shrinkToLongestIdenticalRun(SegmentPair &sp) {
-    sp.maxIdenticalRun(a, b, aa->canonical);
+    sp.maxIdenticalRun(reference, query, aa->canonical);
     sp.score = gaplessScore(sp.beg1(), sp.end1(), sp.beg2());
   }
 
   int forwardGaplessScore( indexT x, indexT y ) const{
-    if( z==0 ) return forwardGaplessXdropScore( a+x, b+y, m, d );
-    if( z==1 ) return forwardGaplessPssmXdropScore( a+x, p+y, d );
-    return forwardGaplessTwoQualityXdropScore( a+x, i+x, b+y, j+y, t, d );
+    if( z==0 ) return forwardGaplessXdropScore( reference+x, query+y, m, d );
+    if( z==1 ) return forwardGaplessPssmXdropScore( reference+x, p+y, d );
+    return forwardGaplessTwoQualityXdropScore( reference+x, i+x, query+y, j+y, t, d );
   }
 
   int reverseGaplessScore( indexT x, indexT y ) const{
-    if( z==0 ) return reverseGaplessXdropScore( a+x, b+y, m, d );
-    if( z==1 ) return reverseGaplessPssmXdropScore( a+x, p+y, d );
-    return reverseGaplessTwoQualityXdropScore( a+x, i+x, b+y, j+y, t, d );
+    if( z==0 ) return reverseGaplessXdropScore( reference+x, query+y, m, d );
+    if( z==1 ) return reverseGaplessPssmXdropScore( reference+x, p+y, d );
+    return reverseGaplessTwoQualityXdropScore( reference+x, i+x, query+y, j+y, t, d );
   }
 
   indexT forwardGaplessEnd( indexT x, indexT y, int s ) const{
-    if( z==0 ) return forwardGaplessXdropEnd( a+x, b+y, m, s ) - a;
-    if( z==1 ) return forwardGaplessPssmXdropEnd( a+x, p+y, s ) - a;
-    return forwardGaplessTwoQualityXdropEnd( a+x, i+x, b+y, j+y, t, s ) - a;
+    if( z==0 ) return forwardGaplessXdropEnd( reference+x, query+y, m, s ) - reference;
+    if( z==1 ) return forwardGaplessPssmXdropEnd( reference+x, p+y, s ) - reference;
+    return forwardGaplessTwoQualityXdropEnd( reference+x, i+x, query+y, j+y, t, s ) - reference;
   }
 
   indexT reverseGaplessEnd( indexT x, indexT y, int s ) const{
-    if( z==0 ) return reverseGaplessXdropEnd( a+x, b+y, m, s ) - a;
-    if( z==1 ) return reverseGaplessPssmXdropEnd( a+x, p+y, s ) - a;
-    return reverseGaplessTwoQualityXdropEnd( a+x, i+x, b+y, j+y, t, s ) - a;
+    if( z==0 ) return reverseGaplessXdropEnd( reference+x, query+y, m, s ) - reference;
+    if( z==1 ) return reverseGaplessPssmXdropEnd( reference+x, p+y, s ) - reference;
+    return reverseGaplessTwoQualityXdropEnd( reference+x, i+x, query+y, j+y, t, s ) - reference;
   }
 
   bool isOptimalGapless( indexT x, indexT e, indexT y ) const{
-    if( z==0 ) return isOptimalGaplessXdrop( a+x, a+e, b+y, m, d );
-    if( z==1 ) return isOptimalGaplessPssmXdrop( a+x, a+e, p+y, d );
-    return isOptimalGaplessTwoQualityXdrop( a+x, a+e, i+x, b+y, j+y, t, d );
+    if( z==0 ) return isOptimalGaplessXdrop( reference+x, reference+e, query+y, m, d );
+    if( z==1 ) return isOptimalGaplessPssmXdrop( reference+x, reference+e, p+y, d );
+    return isOptimalGaplessTwoQualityXdrop( reference+x, reference+e, i+x, query+y, j+y, t, d );
   }
 
   int gaplessScore( indexT x, indexT e, indexT y ) const{
-    if( z==0 ) return gaplessAlignmentScore( a+x, a+e, b+y, m );
-    if( z==1 ) return gaplessPssmAlignmentScore( a+x, a+e, p+y );
-    return gaplessTwoQualityAlignmentScore( a+x, a+e, i+x, b+y, j+y, t );
+    if( z==0 ) return gaplessAlignmentScore( reference+x, reference+e, query+y, m );
+    if( z==1 ) return gaplessPssmAlignmentScore( reference+x, reference+e, p+y );
+    return gaplessTwoQualityAlignmentScore( reference+x, reference+e, i+x, query+y, j+y, t );
   }
 };
 

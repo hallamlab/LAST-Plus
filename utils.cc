@@ -66,10 +66,6 @@ bool  isFastaFileProtein(std::string fastaFile) {
   return false;
 }
 
-
-
-
-
 void fastaFileSequenceStats(std::string fastaFile,  SequenceStatistics *stats ){
   using namespace cbrc;
   Alphabet alph;

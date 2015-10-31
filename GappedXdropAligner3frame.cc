@@ -107,10 +107,10 @@ void GappedXdropAligner::initAntidiagonal3(std::size_t seq1beg,
 // deletion, insertion.  But it will find these equal-score
 // alignments: reverse frameshift, insertion, deletion.
 
-int GappedXdropAligner::align3(const uchar *seq1,
-                               const uchar *seq2frame0,
-                               const uchar *seq2frame1,  // the +1 frame
-                               const uchar *seq2frame2,  // the -1 frame
+int GappedXdropAligner::align3(const uchar *reference,
+                               const uchar *query_frame0,
+                               const uchar *query_frame1,  // the +1 frame
+                               const uchar *query_frame2,  // the -1 frame
                                bool isForward,
                                const ScoreMatrixRow *scorer,
                                int gapExistenceCost,
@@ -140,11 +140,11 @@ int GappedXdropAligner::align3(const uchar *seq1,
     initAntidiagonal3(seq1beg, scoreEnd, numCells);
 
     const uchar *seq2 =
-        whichFrame(antidiagonal, seq2frame0, seq2frame1, seq2frame2);
+        whichFrame(antidiagonal, query_frame0, query_frame1, query_frame2);
 
     std::size_t seq2pos = (antidiagonal - 7) / 3 - seq1beg;
 
-    const uchar *s1 = isForward ? seq1 + seq1beg : seq1 - seq1beg - 1;
+    const uchar *s1 = isForward ? reference + seq1beg : reference - seq1beg - 1;
     const uchar *s2 = isForward ? seq2 + seq2pos : seq2 - seq2pos - 1;
 
     if (isDelimiter(*s2, *scorer)) {

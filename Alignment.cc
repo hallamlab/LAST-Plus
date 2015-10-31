@@ -71,7 +71,7 @@ static bool isNext( const SegmentPair& x, const SegmentPair& y ){
 }
 
 void Alignment::makeXdrop( GappedXdropAligner& aligner, Centroid& centroid,
-			   const uchar* seq1, const uchar* seq2, int globality,
+			   const uchar* reference, const uchar* query, int globality,
 			   const ScoreMatrixRow* scoreMatrix, int smMax,
 			   const GeneralizedAffineGapCosts& gap, int maxDrop,
 			   int frameshiftCost, size_t frameSize,
@@ -91,14 +91,14 @@ void Alignment::makeXdrop( GappedXdropAligner& aligner, Centroid& centroid,
     std::vector<double>& expectedCounts = extras.expectedCounts;
     expectedCounts.resize( numEmissionCounts + numTransitionCounts );
     countSeedMatches( &expectedCounts[0],
-		      seq1 + seed.beg1(), seq1 + seed.end1(),
-		      seq2 + seed.beg2(), alph );
+		      reference + seed.beg1(), reference + seed.end1(),
+		      query + seed.beg2(), alph );
     expectedCounts[ numEmissionCounts ] += seed.size;  // match count
   }
 
   // extend a gapped alignment in the left/reverse direction from the seed:
   std::vector<uchar>& columnAmbiguityCodes = extras.columnAmbiguityCodes;
-  extend( blocks, columnAmbiguityCodes, aligner, centroid, seq1, seq2,
+  extend( blocks, columnAmbiguityCodes, aligner, centroid, reference, query,
 	  seed.beg1(), seed.beg2(), false, globality,
 	  scoreMatrix, smMax, maxDrop, gap, frameshiftCost,
 	  frameSize, pssm2, sm2qual, qual1, qual2, alph,
@@ -118,7 +118,7 @@ void Alignment::makeXdrop( GappedXdropAligner& aligner, Centroid& centroid,
   // extend a gapped alignment in the right/forward direction from the seed:
   std::vector<SegmentPair> forwardBlocks;
   std::vector<uchar> forwardAmbiguities;
-  extend( forwardBlocks, forwardAmbiguities, aligner, centroid, seq1, seq2,
+  extend( forwardBlocks, forwardAmbiguities, aligner, centroid, reference, query,
 	  seed.end1(), seed.end2(), true, globality,
 	  scoreMatrix, smMax, maxDrop, gap, frameshiftCost,
 	  frameSize, pssm2, sm2qual, qual1, qual2, alph,
@@ -167,7 +167,7 @@ void Alignment::makeXdrop( GappedXdropAligner& aligner, Centroid& centroid,
                                forwardAmbiguities.rend() );
 }
 
-bool Alignment::isOptimal( const uchar* seq1, const uchar* seq2, int globality,
+bool Alignment::isOptimal( const uchar* reference, const uchar* query, int globality,
 			   const ScoreMatrixRow* scoreMatrix, int maxDrop,
 			   const GeneralizedAffineGapCosts& gap,
 			   int frameshiftCost, size_t frameSize,
@@ -194,9 +194,9 @@ bool Alignment::isOptimal( const uchar* seq1, const uchar* seq2, int globality,
       if( runningScore < maxScore - maxDrop ) return false;
     }
 
-    const uchar* s1 = seq1 + i->beg1();
-    const uchar* s2 = seq2 + i->beg2();
-    const uchar* e1 = seq1 + i->end1();
+    const uchar* s1 = reference + i->beg1();
+    const uchar* s2 = query + i->beg2();
+    const uchar* e1 = reference + i->end1();
     const ScoreMatrixRow* p2 = pssm2 ? pssm2 + i->beg2() : 0;
     const uchar* q1 = qual1 ? qual1 + i->beg1() : 0;
     const uchar* q2 = qual2 ? qual2 + i->beg2() : 0;
@@ -219,7 +219,7 @@ bool Alignment::isOptimal( const uchar* seq1, const uchar* seq2, int globality,
 void Alignment::extend( std::vector< SegmentPair >& chunks,
 			std::vector< uchar >& ambiguityCodes,
 			GappedXdropAligner& aligner, Centroid& centroid,
-			const uchar* seq1, const uchar* seq2,
+			const uchar* reference, const uchar* query,
 			size_t start1, size_t start2,
 			bool isForward, int globality,
 			const ScoreMatrixRow* sm, int smMax, int maxDrop,
@@ -242,11 +242,12 @@ void Alignment::extend( std::vector< SegmentPair >& chunks,
     size_t f = aaToDna( start2, frameSize ) + 1;
     size_t r = aaToDna( start2, frameSize ) - 1;
 
-    const uchar* frame0 = seq2 + start2;
-    const uchar* frame1 = seq2 + dnaToAa( isForward ? f : r, frameSize );
-    const uchar* frame2 = seq2 + dnaToAa( isForward ? r : f, frameSize );
+    const uchar* frame0 = query + start2;
+    const uchar* frame1 = query + dnaToAa( isForward ? f : r, frameSize );
+    const uchar* frame2 = query + dnaToAa( isForward ? r : f, frameSize );
 
-    score += aligner.align3( seq1 + start1, frame0, frame1, frame2, isForward,
+    //!! Here is where the alignment magic happens
+    score += aligner.align3( reference + start1, frame0, frame1, frame2, isForward,
                              sm, gap.delExist, gap.delExtend, gap.pairExtend,
 			     frameshiftCost, maxDrop, smMax );
 
@@ -261,18 +262,18 @@ void Alignment::extend( std::vector< SegmentPair >& chunks,
   }
 
   int extensionScore =
-    sm2qual ? aligner.align2qual( seq1 + start1, qual1 + start1,
-				  seq2 + start2, qual2 + start2,
+    sm2qual ? aligner.align2qual( reference + start1, qual1 + start1,
+				  query + start2, qual2 + start2,
 				  isForward, globality, sm2qual,
 				  gap.delExist, gap.delExtend,
 				  gap.insExist, gap.insExtend,
 				  gap.pairExtend, maxDrop, smMax )
-    : pssm2 ? aligner.alignPssm( seq1 + start1, pssm2 + start2,
+    : pssm2 ? aligner.alignPssm( reference + start1, pssm2 + start2,
 				 isForward, globality,
 				 gap.delExist, gap.delExtend,
 				 gap.insExist, gap.insExtend,
 				 gap.pairExtend, maxDrop, smMax )
-    :         aligner.align( seq1 + start1, seq2 + start2,
+    :         aligner.align( reference + start1, query + start2,
 			     isForward, globality, sm,
 			     gap.delExist, gap.delExtend,
 			     gap.insExist, gap.insExtend,
@@ -297,8 +298,8 @@ void Alignment::extend( std::vector< SegmentPair >& chunks,
   if( outputType > 3 ){  // calculate match probabilities
     assert( !sm2qual );
     centroid.reset();
-    centroid.forward( seq1, seq2, start1, start2, isForward, globality, gap );
-    centroid.backward( seq1, seq2, start1, start2, isForward, globality, gap );
+    centroid.forward( reference, query, start1, start2, isForward, globality, gap );
+    centroid.backward( reference, query, start1, start2, isForward, globality, gap );
 
     if( outputType > 4 && outputType < 7 ){  // gamma-centroid / LAMA alignment
       centroid.dp( gamma );
@@ -310,7 +311,7 @@ void Alignment::extend( std::vector< SegmentPair >& chunks,
 
     if( outputType == 7 ){
       ExpectedCount ec;
-      centroid.computeExpectedCounts( seq1, seq2, start1, start2,
+      centroid.computeExpectedCounts( reference, query, start1, start2,
 				      isForward, gap, ec );
       addExpectedCounts( &extras.expectedCounts[0], ec, alph );
     }

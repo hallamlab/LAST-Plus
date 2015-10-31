@@ -21,11 +21,22 @@ typedef unsigned char uchar;
 struct Alphabet{
   typedef unsigned long long countT;
 
+  /* STATIC */
   static const char* dna;
   static const char* protein;
 
   static const unsigned capacity = 256;
 
+  /* FIELDS */
+  std::string letters;    // the "proper" letters, e.g. ACGT for DNA
+  unsigned size;          // same as letters.size(): excludes delimiters
+
+  uchar *encode;  // translate ASCII letters to codes (small integers)
+  uchar *decode;  // translate codes to ASCII letters
+  uchar *canonical;   // translate lowercase codes to uppercase codes
+  uchar *complement;  // translate DNA codes to their complements
+
+  /* METHODS */
   // does this alphabet start with the standard protein alphabet?
   bool isProtein() const{ return letters.find( protein ) == 0; }
 
@@ -45,23 +56,11 @@ struct Alphabet{
   // reverse and complement a sequence of numbers, in place
   void rc( uchar* beg, uchar* end ) const;
 
-  std::string letters;    // the "proper" letters, e.g. ACGT for DNA
-  unsigned size;          // same as letters.size(): excludes delimiters
-  /*
-  uchar encode[capacity];  // translate ASCII letters to codes (small integers)
-  uchar decode[capacity];  // translate codes to ASCII letters
-  uchar canonical[capacity];   // translate lowercase codes to uppercase codes
-  uchar complement[capacity];  // translate DNA codes to their complements
-  */
-  uchar *encode;  // translate ASCII letters to codes (small integers)
-  uchar *decode;  // translate codes to ASCII letters
-  uchar *canonical;   // translate lowercase codes to uppercase codes
-  uchar *complement;  // translate DNA codes to their complements
-
   void init();
   void addLetters( const std::string& lettersToAdd, unsigned& code );
   void makeComplement();
-  
+
+  /* CON/DE STRUCTORS */ 
   Alphabet(){
     encode = new uchar[capacity];  // translate ASCII letters to codes (small integers)
     decode = new uchar[capacity];  // translate codes to ASCII letters
@@ -69,8 +68,12 @@ struct Alphabet{
     complement = new uchar[capacity];  // translate DNA codes to their complements
   }
 
-  //Alphabet& operator=(const Alphabet &alph) const;
-
+  ~Alphabet(){
+    delete[] encode;
+    delete[] decode;
+    delete[] canonical;
+    delete[]complement;
+  }
 };
 
 std::ostream& operator<<( std::ostream& s, const Alphabet& a );

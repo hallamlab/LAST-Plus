@@ -370,7 +370,7 @@ void threadData::alignGapless(SegmentPairPot &gaplessAlns, char strand) {
       const indexT *beg;
       const indexT *end;
 
-      suffixArrays[x].match(beg, end, dis.b + i, dis.a, args->oneHitMultiplicity, args->minHitDepth);
+      suffixArrays[x].match(beg, end, dis.query + i, dis.reference, args->oneHitMultiplicity, args->minHitDepth);
       matchCount += end - beg;
 
       // Tried: if we hit a delimiter when using contiguous seeds, then
@@ -469,7 +469,7 @@ void threadData::alignGapped(AlignmentPot &gappedAlns, SegmentPairPot &gaplessAl
 
     // do gapped extension from each end of the seed:
     // third...
-    aln.makeXdrop(*gappedXdropAligner, *centroid, dis.a, dis.b, args->globality,
+    aln.makeXdrop(*gappedXdropAligner, *centroid, dis.reference, dis.query, args->globality,
         dis.m, scoreMatrix->maxScore, gapCosts, dis.d,
         args->frameshiftCost, frameSize, dis.p,
         dis.t, dis.i, dis.j, *alph, extras);
@@ -477,7 +477,7 @@ void threadData::alignGapped(AlignmentPot &gappedAlns, SegmentPairPot &gaplessAl
 
     if (aln.score < args->minScoreGapped) continue;
 
-    if (!aln.isOptimal(dis.a, dis.b, args->globality, dis.m, dis.d, gapCosts,
+    if (!aln.isOptimal(dis.reference, dis.query, args->globality, dis.m, dis.d, gapCosts,
           args->frameshiftCost, frameSize, dis.p,
           dis.t, dis.i, dis.j)) {
       // If retained, non-"optimal" alignments can hide "optimal"
@@ -508,7 +508,7 @@ void threadData::alignFinish(const AlignmentPot &gappedAlns, char strand) {
     if (dis.p) {
       LOG("exponentiating PSSM...");
       centroid->setPssm(dis.p, query->finishedSize(), args->temperature,
-          *oneQualityExpMatrix, dis.b, dis.j);
+          *oneQualityExpMatrix, dis.query, dis.j);
     }
     else {
       centroid->setScoreMatrix(dis.m, args->temperature);
@@ -527,7 +527,7 @@ void threadData::alignFinish(const AlignmentPot &gappedAlns, char strand) {
       AlignmentExtras extras;
       probAln.seed = aln.seed;
       probAln.makeXdrop(*gappedXdropAligner, *centroid,
-          dis.a, dis.b, args->globality,
+          dis.reference, dis.query, args->globality,
           dis.m, scoreMatrix->maxScore, gapCosts, dis.d,
           args->frameshiftCost, frameSize, dis.p, dis.t,
           dis.i, dis.j, *alph, extras,

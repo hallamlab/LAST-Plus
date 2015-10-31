@@ -50,7 +50,7 @@ namespace cbrc{
     // If outputType > 3: calculates match probabilities.
     // If outputType > 4: does gamma-centroid alignment.
     void makeXdrop( GappedXdropAligner& aligner, Centroid& centroid,
-        const uchar* seq1, const uchar* seq2, int globality,
+        const uchar* reference, const uchar* query, int globality,
         const ScoreMatrixRow* scoreMatrix, int smMax,
         const GeneralizedAffineGapCosts& gap, int maxDrop,
         int frameshiftCost, size_t frameSize,
@@ -64,7 +64,7 @@ namespace cbrc{
     // with score <= 0, and no sub-segment with score < -maxDrop.
     // Alignments that pass this test may be non-optimal in other ways.
     // If "globality" is non-zero, skip the prefix and suffix checks.
-    bool isOptimal( const uchar* seq1, const uchar* seq2, int globality,
+    bool isOptimal( const uchar* reference, const uchar* query, int globality,
         const ScoreMatrixRow* scoreMatrix, int maxDrop,
         const GeneralizedAffineGapCosts& gap,
         int frameshiftCost, size_t frameSize,
@@ -74,7 +74,7 @@ namespace cbrc{
 
     void write( 
         double scoreCutoff, double evalueCutoff,
-        const MultiSequence& seq1, const MultiSequence& seq2,
+        const MultiSequence& reference, const MultiSequence& query,
         char strand, bool isTranslated, const Alphabet& alph,
         int format, std::vector<std::string> *outputVector,
         const AlignmentExtras& extras = AlignmentExtras() ) const;
@@ -97,7 +97,7 @@ namespace cbrc{
     void extend( std::vector< SegmentPair >& chunks,
         std::vector< uchar >& ambiguityCodes,
         GappedXdropAligner& aligner, Centroid& centroid,
-        const uchar* seq1, const uchar* seq2,
+        const uchar* reference, const uchar* query,
         size_t start1, size_t start2,
         bool isForward, int globality,
         const ScoreMatrixRow* sm, int smMax, int maxDrop,
@@ -109,18 +109,18 @@ namespace cbrc{
         const Alphabet& alph, AlignmentExtras& extras,
         double gamma, int outputType );
 
-    void writeTab( const MultiSequence& seq1, const MultiSequence& seq2,
+    void writeTab( const MultiSequence& reference, const MultiSequence& query,
         char strand, bool isTranslated, const AlignmentExtras& extras, std::vector<std::string>
                    *outputVector ) const;
 
 
     void writeBlastOutput( 
         double scoreCutoff, double evalueCutoff, 
-        const MultiSequence& seq1, const MultiSequence& seq2,
+        const MultiSequence& reference, const MultiSequence& query,
         char strand, bool isTranslated, const Alphabet& alph,
         const AlignmentExtras& extras, std::vector<std::string> *outputVector) const;
 
-    void writeMaf( const MultiSequence& seq1, const MultiSequence& seq2,
+    void writeMaf( const MultiSequence& reference, const MultiSequence& query,
         char strand, bool isTranslated, const Alphabet& alph, const AlignmentExtras& extras ) const;
 
     size_t numColumns( size_t frameSize ) const;

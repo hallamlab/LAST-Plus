@@ -42,7 +42,7 @@ USING_NCBI_SCOPE;
 USING_SCOPE(blast);
 USING_SCOPE(Sls);
 
-
+//!! data object is used to construct the evaluer
 alp_sim::alp_sim(//constructor
 alp_data *alp_data_)
 {

@@ -107,6 +107,7 @@ void LocalAlignmentEvaluer::initGapped(const std::vector<double>& letterProbs1,
                                     letterProbs1, letterProbs2,
                                     maxSeconds, maxMegabytes, randomSeed);
 
+    //!! data object is constructed and sent for transformation
     ncbi::blast::Sls::alp_sim sim(&data);
 
     params.lambda       = sim.m_Lambda;

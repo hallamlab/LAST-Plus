@@ -34,6 +34,7 @@ countT maxRefSequences = 0;
 void createStructures(std::string &matrixFile){
 
   alph = new Alphabet();
+  queryAlph = new Alphabet();
   geneticCode = new GeneticCode();
 
   scoreMatrix = new ScoreMatrix();

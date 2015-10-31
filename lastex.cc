@@ -44,6 +44,7 @@ bool isBad( const SequenceStatistics& s ){
   }
 
   for( unsigned i = 0; i < s.letterProbs.size(); ++i ){
+    std::cout << s.letterProbs[i] << std::endl;
     if( s.letterProbs[i] > 0 ) return false;
   }
 

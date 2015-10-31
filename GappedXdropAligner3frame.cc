@@ -52,7 +52,7 @@
 
 #include "GappedXdropAligner.hh"
 #include "GappedXdropAlignerInl.hh"
-//#include <iostream>  // for debugging
+#include <iostream>  // for debugging
 
 namespace cbrc {
 
@@ -121,6 +121,8 @@ int GappedXdropAligner::align3(const uchar *reference,
                                int maxMatchScore) {
   bool isAffine = gapUnalignedCost >= gapExistenceCost + 2 * gapExtensionCost;
 
+  std::cout << "HELLO WORLD" << std::endl;
+
   std::size_t maxSeq1begs[] = { 9, 9, 0, 9, 9, 9, 9 };
   std::size_t minSeq1ends[] = { 0, 0, 1, 0, 0, 0, 0 };
 
@@ -129,27 +131,36 @@ int GappedXdropAligner::align3(const uchar *reference,
   init3();
 
   for (std::size_t antidiagonal = 7; /* noop */; ++antidiagonal) {
-    std::size_t seq1beg = arrayMin(maxSeq1begs);
-    std::size_t seq1end = arrayMax(minSeq1ends);
+    std::size_t reference_beg = arrayMin(maxSeq1begs);
+    std::size_t reference_end = arrayMax(minSeq1ends);
 
-    if (seq1beg >= seq1end) break;
+    if (reference_beg >= reference_end) break;
 
     std::size_t scoreEnd = scoreEnds.back();
-    std::size_t numCells = seq1end - seq1beg;
+    std::size_t numCells = reference_end - reference_beg;
 
-    initAntidiagonal3(seq1beg, scoreEnd, numCells);
+    initAntidiagonal3(reference_beg, scoreEnd, numCells);
 
-    const uchar *seq2 =
+    const uchar *chosen_query_frame =
         whichFrame(antidiagonal, query_frame0, query_frame1, query_frame2);
 
-    std::size_t seq2pos = (antidiagonal - 7) / 3 - seq1beg;
+    std::cout << antidiagonal % 3 << std::endl;
 
-    const uchar *s1 = isForward ? reference + seq1beg : reference - seq1beg - 1;
-    const uchar *s2 = isForward ? seq2 + seq2pos : seq2 - seq2pos - 1;
+    std::size_t chosen_query_framepos = (antidiagonal - 7) / 3 - reference_beg;
 
-    if (isDelimiter(*s2, *scorer)) {
+    const uchar *reference_location; 
+    const uchar *query_location;
+    if(isForward){
+      reference_location = reference + reference_beg;
+      query_location = chosen_query_frame + chosen_query_framepos;
+    }else{
+      reference_location = reference - reference_beg - 1;
+      query_location = chosen_query_frame - chosen_query_framepos - 1;
+    }
+
+    if (isDelimiter(*query_location, *scorer)) {
       // prevent forward frameshifts from jumping over delimiters:
-      if (maxSeq1begs[1] == seq1beg) ++maxSeq1begs[1];
+      if (maxSeq1begs[1] == reference_beg) ++maxSeq1begs[1];
       // Update maxScoreDrop in some clever way?
       // But be careful if the -1 frame starts in an initial delimiter.
     }
@@ -159,11 +170,11 @@ int GappedXdropAligner::align3(const uchar *reference,
     int *x0 = &xScores[scoreEnd];
     int *y0 = &yScores[scoreEnd];
     int *z0 = &zScores[scoreEnd];
-    const int *y3 = &yScores[hori3(antidiagonal, seq1beg)];
-    const int *z3 = &zScores[vert3(antidiagonal, seq1beg)];
-    const int *x6 = &xScores[diag3(antidiagonal, seq1beg)];
-    const int *x5 = &xScores[diag3(antidiagonal + 1, seq1beg)];
-    const int *x7 = &xScores[diag3(antidiagonal - 1, seq1beg)];
+    const int *y3 = &yScores[hori3(antidiagonal, reference_beg)];
+    const int *z3 = &zScores[vert3(antidiagonal, reference_beg)];
+    const int *x6 = &xScores[diag3(antidiagonal, reference_beg)];
+    const int *x5 = &xScores[diag3(antidiagonal + 1, reference_beg)];
+    const int *x7 = &xScores[diag3(antidiagonal - 1, reference_beg)];
 
     *x0++ = *y0++ = *z0++ = -INF;  // add one pad cell
 
@@ -171,7 +182,7 @@ int GappedXdropAligner::align3(const uchar *reference,
 
     *x0++ = *y0++ = *z0++ = -INF;  // add one pad cell
 
-    const int *x0base = x0 - seq1beg;
+    const int *x0base = x0 - reference_beg;
 
     if (isAffine) {
       if (isForward)
@@ -183,14 +194,14 @@ int GappedXdropAligner::align3(const uchar *reference,
           int b = maxValue(x, y, z);
           if (b >= minScore) {
             updateBest(bestScore, b, antidiagonal, x0, x0base);
-            *x0 = b + scorer[*s1][*s2];
+            *x0 = b + scorer[*reference_location][*query_location];
             int g = b - gapExistenceCost;
             *y0 = maxValue(g, y);
             *z0 = maxValue(g, z);
           }
           else *x0 = *y0 = *z0 = -INF;
           if (x0 == x0last) break;
-          ++s1;  --s2;  ++x0;  ++y0;  ++z0;  ++y3;  ++z3;  ++x5;  ++x6;  ++x7;
+          ++reference_location;  --query_location;  ++x0;  ++y0;  ++z0;  ++y3;  ++z3;  ++x5;  ++x6;  ++x7;
         }
       else
         while (1) {
@@ -201,18 +212,18 @@ int GappedXdropAligner::align3(const uchar *reference,
           int b = maxValue(x, y, z);
           if (b >= minScore) {
             updateBest(bestScore, b, antidiagonal, x0, x0base);
-            *x0 = b + scorer[*s1][*s2];
+            *x0 = b + scorer[*reference_location][*query_location];
             int g = b - gapExistenceCost;
             *y0 = maxValue(g, y);
             *z0 = maxValue(g, z);
           }
           else *x0 = *y0 = *z0 = -INF;
           if (x0 == x0last) break;
-          --s1;  ++s2;  ++x0;  ++y0;  ++z0;  ++y3;  ++z3;  ++x5;  ++x6;  ++x7;
+          --reference_location;  ++query_location;  ++x0;  ++y0;  ++z0;  ++y3;  ++z3;  ++x5;  ++x6;  ++x7;
         }
     } else {
-      const int *y6 = &yScores[diag3(antidiagonal, seq1beg)];
-      const int *z6 = &zScores[diag3(antidiagonal, seq1beg)];
+      const int *y6 = &yScores[diag3(antidiagonal, reference_beg)];
+      const int *z6 = &zScores[diag3(antidiagonal, reference_beg)];
       while (1) {
         int s = maxValue(*x5, *x7);
         int x = maxValue(*x6, s - frameshiftCost);
@@ -221,7 +232,7 @@ int GappedXdropAligner::align3(const uchar *reference,
         int b = maxValue(x, y, z);
         if (b >= minScore) {
           updateBest(bestScore, b, antidiagonal, x0, x0base);
-          *x0 = b + scorer[*s1][*s2];
+          *x0 = b + scorer[*reference_location][*query_location];
           int g = b - gapExistenceCost;
           *y0 = maxValue(g, y);
           *z0 = maxValue(g, z);
@@ -229,17 +240,16 @@ int GappedXdropAligner::align3(const uchar *reference,
         else *x0 = *y0 = *z0 = -INF;
         if (x0 == x0last) break;
         ++x0;  ++y0;  ++z0;  ++y3;  ++z3;  ++x5;  ++x6;  ++x7;  ++y6;  ++z6;
-        if (isForward) { ++s1;  --s2; }
-        else           { --s1;  ++s2; }
+        if (isForward) { ++reference_location;  --query_location; }
+        else           { --reference_location;  ++query_location; }
       }
     }
-
-    if (isDelimiter(*s1, *scorer))
+    if (isDelimiter(*reference_location, *scorer))
       updateMaxScoreDrop(maxScoreDrop, numCells, maxMatchScore);
 
     updateFiniteEdges3(maxSeq1begs, minSeq1ends, x0base, x0 + 1, numCells);
   }
-
+  std::cout << "GOODBYE WORLD" << std::endl;
   return bestScore;
 }
 

@@ -37,6 +37,22 @@ void split(const string  &strn, std::vector<char *> &v, char *buf, char d) {
     }
 }
 
+
+
+string random_str(const int len) {
+    static const char alphanum[] =
+        "0123456789"
+        "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+        "abcdefghijklmnopqrstuvwxyz";
+
+    string str;
+
+    for (int i = 0; i < len; ++i) {
+        str += alphanum[rand() % (sizeof(alphanum) - 1)];
+    }
+    return str;
+}
+
 void split_seq_name(const string  &strn, std::vector<char *> &v, char *buf) {
     strcpy(buf, strn.c_str());
 

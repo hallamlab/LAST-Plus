@@ -18,6 +18,8 @@ char * split_n_pick(const string  &strn,  char *buf, char d, unsigned int n);
 
 void split_seq_name(const std::string  &strn, std::vector<char *> &v, char *buf);
 
+std::string random_str(const int len);
+
 std::string get_orf_name(std::string & strn, std::vector<char *> &v, char *buf);
 
 bool matchString(const string &str, const string & stringtomatch, bool fromstart=false);

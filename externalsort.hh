@@ -23,9 +23,11 @@ typedef Line *LINE;
 int disk_sort_file(string outputdir, string tobe_sorted_file_name, string sorted_file_name,
      countT chunk_size, string(*key_extractor)(const string &) ) ;
 
-int merge_sorted_files_create_blocks(vector<string> &filenames, string sorted_file_name);
+int merge_sorted_files_create_blocks(vector<string> &filenames, string sorted_file_name, string randstr);
 
 void write_sorted_sequences(vector<Line *>& lines, string filename); 
 
 void remove_file(string filename); 
+
+string generate_directory_name();
 #endif // _EXTERNAL_SORT

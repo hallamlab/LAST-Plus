@@ -7,10 +7,17 @@
 #include <stdlib.h>
 #include <iostream>
 #include <fstream>
+#include <algorithm>
+#include <sys/stat.h>
 
 #include "heapsort.hh"
 #include "linereader.hh"
 #include "utilities.hh"
+#include "lastal.hh"
+#include "tempfiles.hh"
+
+#define STR_BUFFER_SIZE 1000
+#define MERGE_SIZE 100
 /*
 All functions required for the initial sequence sorting and blocking
 */
@@ -30,4 +37,5 @@ void write_sorted_sequences(vector<Line *>& lines, string filename);
 void remove_file(string filename); 
 
 string generate_directory_name();
+void place_output_where_designated_by_arguments(TEMPFILES *listptr, string tobe_sorted_file_name);
 #endif // _EXTERNAL_SORT

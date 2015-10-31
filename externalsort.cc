@@ -1,12 +1,4 @@
 #include "externalsort.hh"
-#include "lastal.hh"
-#include "tempfiles.hh"
-#include <algorithm>
-#include <sys/stat.h>
-
-#define STR_BUFFER_SIZE 1000
-#define MERGE_SIZE 100
-
 
 // Generate random string for output in order to allow mutiple LAST+ binaries to run simultaneously on a single machine.
 // Check if the directory structure already exists. If it does we need to generate a new randstr
@@ -21,6 +13,20 @@ string generate_directory_name(){
     err = stat(potential_directory.c_str(), &potential_directory_stat);
   } while(err != -1);
   return random_string;
+}
+
+void place_output_where_designated_by_arguments(TEMPFILES *listptr, string tobe_sorted_file_name){
+	if(listptr->getFileNames().size() > 0){
+    // If the /tmp directory is on a different mount from the original output file
+    // we will have problems. So copy the sorted file over and remove the sorted file in the /tmp directory
+		if(rename(listptr->getFileNames()[0].c_str(), tobe_sorted_file_name.c_str()) == -1 ){
+      std::ifstream  src(listptr->getFileNames()[0].c_str());
+      std::ofstream  dst(tobe_sorted_file_name.c_str());
+      dst << src.rdbuf();
+      remove(listptr->getFileNames()[0].c_str());
+    }
+	}
+	listptr->clear();
 }
 
 bool comp_lines(const LINE &lhs, const LINE &rhs) {
@@ -125,16 +131,12 @@ int disk_sort_file(string outputdir, string tobe_sorted_file_name, string sorted
     newlistptr = temp;
   }
 
+	// Remove the individual sorted files
+	lines.clear();
 
-  // Remove the individual sorted files
-  lines.clear();
+  place_output_where_designated_by_arguments(listptr, tobe_sorted_file_name);
 
-  if(listptr->getFileNames().size() > 0){
-    rename(listptr->getFileNames()[0].c_str(), tobe_sorted_file_name.c_str());
-  }
-  listptr->clear();
-
-  return 1;
+	return 1;
 }
 
 /* Merge the individual sorted files while writing them to blocks; return the number of blocks created */

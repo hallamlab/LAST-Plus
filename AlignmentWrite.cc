@@ -81,7 +81,9 @@ void Alignment::write(
   if( format == 0 ) 
        writeTab( reference, query, strand, isTranslated, extras, outputVector );
   else if( format == 2 )  {
-       writeBlastOutput(scoreCutoff, evalueCutoff, reference, query, strand, isTranslated, alph, extras, outputVector);
+       writeBlastOutput(scoreCutoff, evalueCutoff, reference, query, strand, 
+       isTranslated, alph, extras, outputVector,
+       evaluer);
   }
   else 
        writeMaf( reference, query, strand, isTranslated, alph, extras );
@@ -92,7 +94,8 @@ void Alignment::write(
 void Alignment::writeBlastOutput(
               double scoreCutoff, double evalueCutoff, const MultiSequence& reference, const MultiSequence& query,
               char strand, bool isTranslated, const Alphabet& alph, 
-			        const AlignmentExtras& extras, std::vector<std::string> *outputVector) const{
+			        const AlignmentExtras& extras, std::vector<std::string> *outputVector,
+              LastEvaluer evaluer) const{
 
   std::stringstream outputStream;
   outputStream.precision(3);
@@ -177,7 +180,6 @@ void Alignment::writeBlastOutput(
   double bitscore = 0;
   double bit_evalue = 0;
   
-/*
   // If we are dealing with DNA query and Amino Acid reference use the first.
   // If we are dealing with Amino acid to Amino Acid go with the second. 
   if(isTranslated){
@@ -193,14 +195,14 @@ void Alignment::writeBlastOutput(
     bitscore = (lambda*score-log(k))/log(2);
     bit_evalue = area*pow(2,-bitscore);
   }
-*/
 
+/*
     double lambda = getLambda();
     double k = getK();
     double area = getArea();
     bitscore = (lambda*score-log(k))/log(2);
     bit_evalue = area*pow(2,-bitscore);
-
+*/
 
   if(bitscore >= scoreCutoff && bit_evalue <= evalueCutoff){
   

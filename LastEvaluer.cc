@@ -247,6 +247,14 @@ namespace cbrc {
   }
 */
 
+
+
+  // Hardcoded to make it the first one. May refactor this later
+  void LastEvaluer::init_LASTP(){
+    const FrameshiftEvalueParameters &p = frameshiftEvalueParameters[0];
+    return frameshiftEvaluer.initParameters(p.parameters);
+  }
+
   //!! This checks if we are dealing with AA-AA or DNA-AA and creates the evaluer accordingly.
   void LastEvaluer::init(const char *matrixName,
       int matchScore,
@@ -290,12 +298,12 @@ namespace cbrc {
         //if (isProtein(alphabet) && isStandardGeneticCode) {
 
 
-          for (size_t i = 0; i < COUNTOF(frameshiftEvalueParameters); ++i) {
-            const FrameshiftEvalueParameters &p = frameshiftEvalueParameters[i];
-            if (isHit(p, matrixName, delOpen, delEpen, frameshiftCost)){
-              return frameshiftEvaluer.initParameters(p.parameters);
-            }
-          }
+          //for (size_t i = 0; i < COUNTOF(frameshiftEvalueParameters); ++i) {
+            //const FrameshiftEvalueParameters &p = frameshiftEvalueParameters[i];
+            //if (isHit(p, matrixName, delOpen, delEpen, frameshiftCost)){
+              //return frameshiftEvaluer.initParameters(p.parameters);
+            //}
+          //}
         //}
       //}
 

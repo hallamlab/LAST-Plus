@@ -121,7 +121,8 @@ namespace cbrc{
         double scoreCutoff, double evalueCutoff, 
         const MultiSequence& reference, const MultiSequence& query,
         char strand, bool isTranslated, const Alphabet& alph,
-        const AlignmentExtras& extras, std::vector<std::string> *outputVector) const;
+        const AlignmentExtras& extras, std::vector<std::string> *outputVector,
+        LastEvaluer evaluer) const;
 
     void writeMaf( const MultiSequence& reference, const MultiSequence& query,
         char strand, bool isTranslated, const Alphabet& alph, const AlignmentExtras& extras ) const;

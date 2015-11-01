@@ -33,6 +33,11 @@ private:
   double databaseLength;
   double numOfStrands;
 public:
+
+  //!! LASTP wrapper function
+  void init_LASTP();
+
+
   // This routine tries to initialize the object for a given set of
   // alignment parameters.  It may fail, i.e. set the object to the
   // "bad" state and throw an Sls_P::error.

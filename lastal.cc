@@ -1020,20 +1020,11 @@ void lastal(int argc, char **argv) {
   char **inputBegin = argv + args->inputStart;
 
   if(args->isTranslated()){
-  /*
-   evaluer.init( canonicalMatrixName, args.matchScore, args.mismatchCost,
-                  alph.letters.c_str(), scoreMatrix.caseSensitive,
-                  p1, p2, isGapped,
-                  gapCosts.delExist, gapCosts.delExtend,
-                  gapCosts.insExist, gapCosts.insExtend,
-                  args.frameshiftCost, geneticCode, isStandardGeneticCode );
-    evaluer.setSearchSpace( refLetters, args.numOfStrands() );
-      */
+    evaluer.init_LASTP();
+    evaluer.setSearchSpace( refLetters, args->numOfStrands() );
   }else{
     initializeEvalueCalulator(args->lastdbName + ".prj", scoreMatrix, *inputBegin);
   }
-
-  initializeEvalueCalulator(args->lastdbName + ".prj", scoreMatrix, *inputBegin);
 
   for (char **i = *inputBegin ? inputBegin : defaultInput; *i; ++i) {
     std::ifstream inFileStream;

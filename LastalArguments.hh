@@ -46,6 +46,9 @@ struct LastalArguments{
   // are we doing translated alignment (DNA versus protein)?
   bool isTranslated() const{ return frameshiftCost > 0; }
 
+  // how many strands are we scanning (1 or 2)?
+  int numOfStrands() const{ return (strand == 2) ? 2 : 1; }
+
   // options:
   std::string outFile;
   int outputFormat;

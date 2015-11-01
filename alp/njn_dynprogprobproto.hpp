@@ -39,7 +39,7 @@ Contents:
 #include <vector>
 #include <cstdlib>
 
-namespace Njn {
+namespace Njn_P {
 
     class	DynProgProbProto {
 

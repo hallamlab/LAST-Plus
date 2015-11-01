@@ -46,7 +46,7 @@ Contents: Random walk parameters
 BEGIN_NCBI_SCOPE
 BEGIN_SCOPE(blast)
 
-BEGIN_SCOPE(Njn)
+BEGIN_SCOPE(Njn_P)
 BEGIN_SCOPE(LocalMaxStatUtil)
 
 
@@ -171,7 +171,7 @@ BEGIN_SCOPE(LocalMaxStatUtil)
         const double *prob_); // probability of corresponding value  
 
 END_SCOPE(LocalMaxStatUtil)
-END_SCOPE(Njn)
+END_SCOPE(Njn_P)
 
 END_SCOPE(blast)
 END_NCBI_SCOPE

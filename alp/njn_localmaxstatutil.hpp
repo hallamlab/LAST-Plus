@@ -39,7 +39,7 @@ Contents: Random walk parameters
 #include "njn_matrix.hpp"
 
 
-namespace Njn {
+namespace Njn_P {
 	namespace LocalMaxStatUtil {
 
 

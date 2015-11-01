@@ -42,7 +42,7 @@ Contents:
 BEGIN_NCBI_SCOPE
 BEGIN_SCOPE(blast)
 
-BEGIN_SCOPE(Njn)
+BEGIN_SCOPE(Njn_P)
 BEGIN_SCOPE(DoubleType)
 
       // Constants
@@ -62,7 +62,7 @@ BEGIN_SCOPE(DoubleType)
       const double EULER         =      0.5772156649015325e+000; // Euler's constant gamma
 
 END_SCOPE(DoubleType)
-END_SCOPE(Njn)
+END_SCOPE(Njn_P)
 
 
 END_SCOPE(blast)

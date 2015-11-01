@@ -39,7 +39,7 @@ Contents:
 
 USING_NCBI_SCOPE;
 USING_SCOPE(blast);
-USING_SCOPE(Njn);
+USING_SCOPE(Njn_P);
 
    static const MatrixIO::Format FORMAT = MatrixIO::GENERAL;
    static MatrixIO::Format format = MatrixIO::GENERAL;

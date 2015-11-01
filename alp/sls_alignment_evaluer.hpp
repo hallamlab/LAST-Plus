@@ -39,7 +39,7 @@ Contents: library functions of main routines
 #include "sls_pvalues.hpp"
 #include <math.h>
 
-namespace Sls {
+namespace Sls_P {
 
 	class AlignmentEvaluer {
 

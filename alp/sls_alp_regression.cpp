@@ -35,7 +35,7 @@ Contents: Regression methods
 
 #include "sls_alp_regression.hpp"
 
-using namespace Sls;
+using namespace Sls_P;
 using namespace std;
 
 

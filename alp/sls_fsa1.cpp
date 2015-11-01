@@ -35,7 +35,7 @@ Contents: Frameshift alignment algorithms
 
 #include "sls_fsa1.hpp"
 
-using namespace Sls;
+using namespace Sls_P;
 using namespace std;
 
 static bool test_mode=true;//of true, then the test mode is activated
@@ -944,7 +944,7 @@ long int alphabet_letters_number2_,//number of letters in the sequence #2
 double *RR1_,//background probability for the sequence #1
 double *RR2_,//background probability for the sequence #2
 long int number_of_states_,//number of states
-double **transition_probabilities_,//transition probabilities between states; matrix d_number_of_states x d_number_of_states
+double **transition_prob_Pabilities_,//transition probabilities between states; matrix d_number_of_states x d_number_of_states
 pair<long int, long int> *states_description_,//description of the states; the index is a state number
 double ***states_distr_)//distributions of the states; the index is a state number
 {
@@ -1005,8 +1005,8 @@ double ***states_distr_)//distributions of the states; the index is a state numb
 		d_states_sum_distr_elements_for_all_states[i]=i;
 	};
 
-	FSA_utils::get_memory_for_matrix(d_number_of_states,d_number_of_states,d_transition_probabilities_sum);
-	FSA_utils::get_memory_for_matrix(d_number_of_states,d_number_of_states,d_transition_probabilities);
+	FSA_utils::get_memory_for_matrix(d_number_of_states,d_number_of_states,d_transition_prob_Pabilities_sum);
+	FSA_utils::get_memory_for_matrix(d_number_of_states,d_number_of_states,d_transition_prob_Pabilities);
 
 	double eps=1e-5;
 
@@ -1016,23 +1016,23 @@ double ***states_distr_)//distributions of the states; the index is a state numb
 		long int s2;
 		for(s2=0;s2<d_number_of_states;s2++)
 		{
-			d_transition_probabilities[s][s2]=transition_probabilities_[s][s2];
-			d_transition_probabilities_sum[s][s2]=transition_probabilities_[s][s2];
-			sum_tmp+=transition_probabilities_[s][s2];
+			d_transition_prob_Pabilities[s][s2]=transition_prob_Pabilities_[s][s2];
+			d_transition_prob_Pabilities_sum[s][s2]=transition_prob_Pabilities_[s][s2];
+			sum_tmp+=transition_prob_Pabilities_[s][s2];
 		};
 		if(fabs(sum_tmp-1.0)>eps)
 		{
-			throw error("Unexpected error in the parameter transition_probabilities_ of the function IS1_general::IS1_general\n",1);
+			throw error("Unexpected error in the parameter transition_prob_Pabilities_ of the function IS1_general::IS1_general\n",1);
 		};
 
 		for(s2=0;s2<d_number_of_states;s2++)
 		{
-			d_transition_probabilities[s][s2]/=sum_tmp;
+			d_transition_prob_Pabilities[s][s2]/=sum_tmp;
 		};
 
 		FSA_utils::convert_distr_into_sum(//calculates and allocates sum-distribution
 		d_number_of_states,//dimension
-		d_transition_probabilities_sum[s]);//the result; the dimention is state_distr__dim1 x state_distr__dim2
+		d_transition_prob_Pabilities_sum[s]);//the result; the dimention is state_distr__dim1 x state_distr__dim2
 
 	};
 
@@ -1066,8 +1066,8 @@ IS1_general::~IS1_general()
 
 	delete[]d_states_sum_distr_elements_for_all_states;
 	
-	FSA_utils::delete_memory_for_matrix(d_number_of_states,d_transition_probabilities_sum);
-	FSA_utils::delete_memory_for_matrix(d_number_of_states,d_transition_probabilities);
+	FSA_utils::delete_memory_for_matrix(d_number_of_states,d_transition_prob_Pabilities_sum);
+	FSA_utils::delete_memory_for_matrix(d_number_of_states,d_transition_prob_Pabilities);
 
 
 	for(s=0;s<d_number_of_states;s++)
@@ -1523,7 +1523,7 @@ long int &new_state_)//a new state
 	new_state_=FSA_utils::random_long(
 		FSA_utils::ran2(),
 		d_number_of_states,
-		d_transition_probabilities_sum[current_state_],
+		d_transition_prob_Pabilities_sum[current_state_],
 		d_states_sum_distr_elements_for_all_states);
 
 	generate_random_letters_in_a_given_state(
@@ -1887,7 +1887,7 @@ long int i2_)//the second index (corresponded to the sequence #2)
 			long int x;
 			for(x=0;x<d_IS1_general_obj->d_number_of_states;x++)
 			{
-				w_tmp+=d_IS1_general_obj->d_transition_probabilities[x][s]*d_W1[x]->get_element(i1_-dim1_tmp,i2_-dim2_tmp);
+				w_tmp+=d_IS1_general_obj->d_transition_prob_Pabilities[x][s]*d_W1[x]->get_element(i1_-dim1_tmp,i2_-dim2_tmp);
 			};
 			w_tmp*=q2;
 		};
@@ -2173,7 +2173,7 @@ std::vector<std::vector<double> > *A2_)
 										{
 											ind_count2++;
 
-											(*A2_)[ind_count][ind_count2]=d_IS1_general_obj->d_transition_probabilities[s1][s]*q2;
+											(*A2_)[ind_count][ind_count2]=d_IS1_general_obj->d_transition_prob_Pabilities[s1][s]*q2;
 
 											if(s==s1)
 											{
@@ -2197,7 +2197,7 @@ std::vector<std::vector<double> > *A2_)
 					{
 						for(s1=0;s1<d_IS1_general_obj->d_number_of_states;s1++)
 						{
-							w_tmp+=d_IS1_general_obj->d_transition_probabilities[s1][s]*sum_over_ind2[s1].get_elem(i1-dim1_tmp);
+							w_tmp+=d_IS1_general_obj->d_transition_prob_Pabilities[s1][s]*sum_over_ind2[s1].get_elem(i1-dim1_tmp);
 						};
 
 						w_tmp*=q2;
@@ -2209,7 +2209,7 @@ std::vector<std::vector<double> > *A2_)
 						{
 							if(!(d_IS1_general_obj->d_states_description[s1].first==0))
 							{
-								x2_vect_elem-=d_IS1_general_obj->d_transition_probabilities[s1][s]*sum_over_ind2[s1].get_elem(i1-dim1_tmp);
+								x2_vect_elem-=d_IS1_general_obj->d_transition_prob_Pabilities[s1][s]*sum_over_ind2[s1].get_elem(i1-dim1_tmp);
 							};
 
 						};
@@ -2425,7 +2425,7 @@ std::vector<std::vector<double> > *A2_)
 										{
 											ind_count2++;
 
-											(*A1_)[ind_count][ind_count2]=d_IS1_general_obj->d_transition_probabilities[s1][s]*q2;
+											(*A1_)[ind_count][ind_count2]=d_IS1_general_obj->d_transition_prob_Pabilities[s1][s]*q2;
 
 											if(s==s1)
 											{
@@ -2449,7 +2449,7 @@ std::vector<std::vector<double> > *A2_)
 					{
 						for(s1=0;s1<d_IS1_general_obj->d_number_of_states;s1++)
 						{
-							w_tmp+=d_IS1_general_obj->d_transition_probabilities[s1][s]*sum_over_ind1[s1].get_elem(i2-dim2_tmp);
+							w_tmp+=d_IS1_general_obj->d_transition_prob_Pabilities[s1][s]*sum_over_ind1[s1].get_elem(i2-dim2_tmp);
 						};
 
 						w_tmp*=q2;
@@ -2461,7 +2461,7 @@ std::vector<std::vector<double> > *A2_)
 						{
 							if(!(d_IS1_general_obj->d_states_description[s1].second==0))
 							{
-								x1_vect_elem-=d_IS1_general_obj->d_transition_probabilities[s1][s]*sum_over_ind1[s1].get_elem(i2-dim2_tmp);
+								x1_vect_elem-=d_IS1_general_obj->d_transition_prob_Pabilities[s1][s]*sum_over_ind1[s1].get_elem(i2-dim2_tmp);
 							};
 
 						};
@@ -2696,7 +2696,7 @@ long int x2_)
 				{
 					ind_count2++;
 
-					A2[ind_count][ind_count2]=d_transition_probabilities[s1][s]*q2;
+					A2[ind_count][ind_count2]=d_transition_prob_Pabilities[s1][s]*q2;
 
 					if(s==s1)
 					{
@@ -2771,7 +2771,7 @@ long int x2_)
 				{
 					ind_count2++;
 
-					A1[ind_count][ind_count2]=d_transition_probabilities[s1][s]*q2;
+					A1[ind_count][ind_count2]=d_transition_prob_Pabilities[s1][s]*q2;
 
 					if(s==s1)
 					{
@@ -2930,7 +2930,7 @@ double ***states_distr_)//distributions of the states; the index is a state numb
 }
 
 //=============================
-void test::FSA_IS_transition_probabilities_calculation(
+void test::FSA_IS_transition_prob_Pabilities_calculation(
 bool &FSA_flag,
 double ***&states_distr,
 
@@ -3120,9 +3120,9 @@ double &ungappedlambda)
 }
 
 void test::combine_parameters_from_forward_and_reversed_calculations_generalized(
-Sls::FALP_set_of_parameters &par_,//parameters from forward calculation
-Sls::FALP_set_of_parameters &par_reversed_,//parameters from reversed calculation
-Sls::FALP_set_of_parameters &par_result_)//the result
+Sls_P::FALP_set_of_parameters &par_,//parameters from forward calculation
+Sls_P::FALP_set_of_parameters &par_reversed_,//parameters from reversed calculation
+Sls_P::FALP_set_of_parameters &par_result_)//the result
 {
 
 	long int c12=par_.realizations_number+par_reversed_.realizations_number;
@@ -3423,7 +3423,7 @@ string gumbelparin_file_name_)//Gumbel parameters input file name
 	double time0_start;
 	FSA_utils::get_current_time(time0_start);
 
-	Sls::FALP_set_of_parameters gumbelparin;//the resulted parameters
+	Sls_P::FALP_set_of_parameters gumbelparin;//the resulted parameters
 
 	if(gumbelparin_file_name_!="")
 	{
@@ -3434,7 +3434,7 @@ string gumbelparin_file_name_)//Gumbel parameters input file name
 		FALP_pvalues::compute_intercepts(gumbelparin);
 	};
 
-	static Sls::FALP_pvalues pvalues_obj;
+	static Sls_P::FALP_pvalues pvalues_obj;
 
 	long int **smatr=NULL;
 
@@ -3808,8 +3808,8 @@ bool insertions_after_deletions_,//if true, then insertions after deletions are 
 double mult_for_is_lambda_,//multiplier for lambda in the IS
 
 //the result
-Sls::FALP_set_of_parameters &par_result_,//the resulted parameters
-Sls::par_test1_type *par_test1_)//for tests
+Sls_P::FALP_set_of_parameters &par_result_,//the resulted parameters
+Sls_P::par_test1_type *par_test1_)//for tests
 {
 	double seconds1;
 	FSA_utils::get_current_time(seconds1);
@@ -3877,7 +3877,7 @@ Sls::par_test1_type *par_test1_)//for tests
 	{
 		number_of_states++;
 	};
-	double **transition_probabilities=NULL;//transition probabilities between states; matrix d_number_of_states x d_number_of_states
+	double **transition_prob_Pabilities=NULL;//transition probabilities between states; matrix d_number_of_states x d_number_of_states
 	pair<long int, long int> *states_description=NULL;//description of the states; the index is a state number
 	double ***states_distr=NULL;//distributions of the states; the index is a state number
 								//the second and the third indexes correspond to an array of dimensions d_A_letters^state_description_type.first x d_B_letters^state_description_type.second
@@ -3887,7 +3887,7 @@ Sls::par_test1_type *par_test1_)//for tests
 //crude sampling
 	pair<long int, long int> *states_description_cs=NULL;
 	double ***states_distr_cs=NULL;
-	double **transition_probabilities_cs=NULL;
+	double **transition_prob_Pabilities_cs=NULL;
 //crude sampling - end
 
 //simplified sampling
@@ -4140,7 +4140,7 @@ Sls::par_test1_type *par_test1_)//for tests
 		RR1_AA);//the resulted frequencies
 
 		
-		Njn::LocalMaxStatMatrix local_max_stat_matrix(number_of_letters2_tmp,
+		Njn_P::LocalMaxStatMatrix local_max_stat_matrix(number_of_letters2_tmp,
 							  smatr,
 							  RR1_AA,
 							  RR2,
@@ -4359,166 +4359,166 @@ Sls::par_test1_type *par_test1_)//for tests
 
 	if(FSA_flag)
 	{
-		FSA_utils::get_memory_for_matrix(number_of_states,number_of_states,transition_probabilities);
+		FSA_utils::get_memory_for_matrix(number_of_states,number_of_states,transition_prob_Pabilities);
 
 		if(choice_of_IS_weights==1)
 		{
-			transition_probabilities[0][0]=((-1 + exp(gamma*ungappedlambda))*(-1 + exp(minepen*ungappedlambda)))/(1 - exp(gamma*ungappedlambda) + exp(minepen*ungappedlambda) + exp((gamma + minepen)*ungappedlambda) + 4*exp((minepen - minopen)*ungappedlambda) + 2*exp((gamma + minepen - minopen)*ungappedlambda));
-			transition_probabilities[0][1]=exp((minepen + minopen)*ungappedlambda)/(4*exp(minepen*ungappedlambda) + 2*exp((gamma + minepen)*ungappedlambda) + exp(minopen*ungappedlambda) - exp((gamma + minopen)*ungappedlambda) + exp((minepen + minopen)*ungappedlambda) + exp((gamma + minepen + minopen)*ungappedlambda));
-			transition_probabilities[0][2]=exp((minepen + minopen)*ungappedlambda)/(4*exp(minepen*ungappedlambda) + 2*exp((gamma + minepen)*ungappedlambda) + exp(minopen*ungappedlambda) - exp((gamma + minopen)*ungappedlambda) + exp((minepen + minopen)*ungappedlambda) + exp((gamma + minepen + minopen)*ungappedlambda));
-			transition_probabilities[0][3]=exp((gamma + minepen)*ungappedlambda)/(4*exp(minepen*ungappedlambda) + 2*exp((gamma + minepen)*ungappedlambda) + exp(minopen*ungappedlambda) - exp((gamma + minopen)*ungappedlambda) + exp((minepen + minopen)*ungappedlambda) + exp((gamma + minepen + minopen)*ungappedlambda));
-			transition_probabilities[0][4]=exp(minepen*ungappedlambda)/(4*exp(minepen*ungappedlambda) + 2*exp((gamma + minepen)*ungappedlambda) + exp(minopen*ungappedlambda) - exp((gamma + minopen)*ungappedlambda) + exp((minepen + minopen)*ungappedlambda) + exp((gamma + minepen + minopen)*ungappedlambda));
-			transition_probabilities[0][5]=exp(minepen*ungappedlambda)/(4*exp(minepen*ungappedlambda) + 2*exp((gamma + minepen)*ungappedlambda) + exp(minopen*ungappedlambda) - exp((gamma + minopen)*ungappedlambda) + exp((minepen + minopen)*ungappedlambda) + exp((gamma + minepen + minopen)*ungappedlambda));
-			transition_probabilities[0][6]=((2 + exp(gamma*ungappedlambda))*exp(minepen*ungappedlambda))/(4*exp(minepen*ungappedlambda) + 2*exp((gamma + minepen)*ungappedlambda) + exp(minopen*ungappedlambda) - exp((gamma + minopen)*ungappedlambda) + exp((minepen + minopen)*ungappedlambda) + exp((gamma + minepen + minopen)*ungappedlambda));
-			transition_probabilities[1][0]=((-1 + exp(gamma*ungappedlambda))*(-1 + exp(minepen*ungappedlambda)))/(1 - exp(gamma*ungappedlambda) + exp(minepen*ungappedlambda) + exp((gamma + minepen)*ungappedlambda) + 4*exp((minepen - minopen)*ungappedlambda) + 2*exp((gamma + minepen - minopen)*ungappedlambda));
-			transition_probabilities[1][1]=exp((minepen + minopen)*ungappedlambda)/(4*exp(minepen*ungappedlambda) + 2*exp((gamma + minepen)*ungappedlambda) + exp(minopen*ungappedlambda) - exp((gamma + minopen)*ungappedlambda) + exp((minepen + minopen)*ungappedlambda) + exp((gamma + minepen + minopen)*ungappedlambda));
-			transition_probabilities[1][2]=exp((minepen + minopen)*ungappedlambda)/(4*exp(minepen*ungappedlambda) + 2*exp((gamma + minepen)*ungappedlambda) + exp(minopen*ungappedlambda) - exp((gamma + minopen)*ungappedlambda) + exp((minepen + minopen)*ungappedlambda) + exp((gamma + minepen + minopen)*ungappedlambda));
-			transition_probabilities[1][3]=exp((gamma + minepen)*ungappedlambda)/(4*exp(minepen*ungappedlambda) + 2*exp((gamma + minepen)*ungappedlambda) + exp(minopen*ungappedlambda) - exp((gamma + minopen)*ungappedlambda) + exp((minepen + minopen)*ungappedlambda) + exp((gamma + minepen + minopen)*ungappedlambda));
-			transition_probabilities[1][4]=exp(minepen*ungappedlambda)/(4*exp(minepen*ungappedlambda) + 2*exp((gamma + minepen)*ungappedlambda) + exp(minopen*ungappedlambda) - exp((gamma + minopen)*ungappedlambda) + exp((minepen + minopen)*ungappedlambda) + exp((gamma + minepen + minopen)*ungappedlambda));
-			transition_probabilities[1][5]=exp(minepen*ungappedlambda)/(4*exp(minepen*ungappedlambda) + 2*exp((gamma + minepen)*ungappedlambda) + exp(minopen*ungappedlambda) - exp((gamma + minopen)*ungappedlambda) + exp((minepen + minopen)*ungappedlambda) + exp((gamma + minepen + minopen)*ungappedlambda));
-			transition_probabilities[1][6]=((2 + exp(gamma*ungappedlambda))*exp(minepen*ungappedlambda))/(4*exp(minepen*ungappedlambda) + 2*exp((gamma + minepen)*ungappedlambda) + exp(minopen*ungappedlambda) - exp((gamma + minopen)*ungappedlambda) + exp((minepen + minopen)*ungappedlambda) + exp((gamma + minepen + minopen)*ungappedlambda));
-			transition_probabilities[2][0]=((-1 + exp(gamma*ungappedlambda))*(-1 + exp(minepen*ungappedlambda)))/(1 - exp(gamma*ungappedlambda) + exp(minepen*ungappedlambda) + exp((gamma + minepen)*ungappedlambda) + 4*exp((minepen - minopen)*ungappedlambda) + 2*exp((gamma + minepen - minopen)*ungappedlambda));
-			transition_probabilities[2][1]=exp((minepen + minopen)*ungappedlambda)/(4*exp(minepen*ungappedlambda) + 2*exp((gamma + minepen)*ungappedlambda) + exp(minopen*ungappedlambda) - exp((gamma + minopen)*ungappedlambda) + exp((minepen + minopen)*ungappedlambda) + exp((gamma + minepen + minopen)*ungappedlambda));
-			transition_probabilities[2][2]=exp((minepen + minopen)*ungappedlambda)/(4*exp(minepen*ungappedlambda) + 2*exp((gamma + minepen)*ungappedlambda) + exp(minopen*ungappedlambda) - exp((gamma + minopen)*ungappedlambda) + exp((minepen + minopen)*ungappedlambda) + exp((gamma + minepen + minopen)*ungappedlambda));
-			transition_probabilities[2][3]=exp((gamma + minepen)*ungappedlambda)/(4*exp(minepen*ungappedlambda) + 2*exp((gamma + minepen)*ungappedlambda) + exp(minopen*ungappedlambda) - exp((gamma + minopen)*ungappedlambda) + exp((minepen + minopen)*ungappedlambda) + exp((gamma + minepen + minopen)*ungappedlambda));
-			transition_probabilities[2][4]=exp(minepen*ungappedlambda)/(4*exp(minepen*ungappedlambda) + 2*exp((gamma + minepen)*ungappedlambda) + exp(minopen*ungappedlambda) - exp((gamma + minopen)*ungappedlambda) + exp((minepen + minopen)*ungappedlambda) + exp((gamma + minepen + minopen)*ungappedlambda));
-			transition_probabilities[2][5]=exp(minepen*ungappedlambda)/(4*exp(minepen*ungappedlambda) + 2*exp((gamma + minepen)*ungappedlambda) + exp(minopen*ungappedlambda) - exp((gamma + minopen)*ungappedlambda) + exp((minepen + minopen)*ungappedlambda) + exp((gamma + minepen + minopen)*ungappedlambda));
-			transition_probabilities[2][6]=((2 + exp(gamma*ungappedlambda))*exp(minepen*ungappedlambda))/(4*exp(minepen*ungappedlambda) + 2*exp((gamma + minepen)*ungappedlambda) + exp(minopen*ungappedlambda) - exp((gamma + minopen)*ungappedlambda) + exp((minepen + minopen)*ungappedlambda) + exp((gamma + minepen + minopen)*ungappedlambda));
-			transition_probabilities[3][0]=(-1 + exp(gamma*ungappedlambda))*(-1 + exp(minepen*ungappedlambda))*exp(-((gamma + minepen)*ungappedlambda));
-			transition_probabilities[3][1]=(exp(-(gamma*ungappedlambda)) - exp(-((gamma + minepen)*ungappedlambda)))/2.;
-			transition_probabilities[3][2]=(exp(-(gamma*ungappedlambda)) - exp(-((gamma + minepen)*ungappedlambda)))/2.;
-			transition_probabilities[3][3]=(-1 + exp(gamma*ungappedlambda))*exp(-((gamma + minepen)*ungappedlambda));
-			transition_probabilities[3][4]=exp(-((gamma + minepen)*ungappedlambda))/2.;
-			transition_probabilities[3][5]=exp(-((gamma + minepen)*ungappedlambda))/2.;
-			transition_probabilities[3][6]=0;
-			transition_probabilities[4][0]=(-1 + exp(gamma*ungappedlambda))*(-1 + exp(minepen*ungappedlambda))*exp(-((gamma + minepen)*ungappedlambda));
-			transition_probabilities[4][1]=(exp(-(gamma*ungappedlambda)) - exp(-((gamma + minepen)*ungappedlambda)))/2.;
-			transition_probabilities[4][2]=(exp(-(gamma*ungappedlambda)) - exp(-((gamma + minepen)*ungappedlambda)))/2.;
-			transition_probabilities[4][3]=(-1 + exp(gamma*ungappedlambda))*exp(-((gamma + minepen)*ungappedlambda));
-			transition_probabilities[4][4]=exp(-((gamma + minepen)*ungappedlambda))/2.;
-			transition_probabilities[4][5]=exp(-((gamma + minepen)*ungappedlambda))/2.;
-			transition_probabilities[4][6]=0;
-			transition_probabilities[5][0]=(-1 + exp(gamma*ungappedlambda))*(-1 + exp(minepen*ungappedlambda))*exp(-((gamma + minepen)*ungappedlambda));
-			transition_probabilities[5][1]=(exp(-(gamma*ungappedlambda)) - exp(-((gamma + minepen)*ungappedlambda)))/2.;
-			transition_probabilities[5][2]=(exp(-(gamma*ungappedlambda)) - exp(-((gamma + minepen)*ungappedlambda)))/2.;
-			transition_probabilities[5][3]=(-1 + exp(gamma*ungappedlambda))*exp(-((gamma + minepen)*ungappedlambda));
-			transition_probabilities[5][4]=exp(-((gamma + minepen)*ungappedlambda))/2.;
-			transition_probabilities[5][5]=exp(-((gamma + minepen)*ungappedlambda))/2.;
-			transition_probabilities[5][6]=0;
-			transition_probabilities[6][0]=1 - exp(-(gamma*ungappedlambda)) - exp(-(minepen*ungappedlambda)) + 2*exp(-((gamma + minepen)*ungappedlambda));
-			transition_probabilities[6][1]=((-1 + exp(minepen*ungappedlambda))*exp(-((gamma + minepen)*ungappedlambda)))/2.;
-			transition_probabilities[6][2]=(exp(-(gamma*ungappedlambda)) - exp(-((gamma + minepen)*ungappedlambda)))/2.;
-			transition_probabilities[6][3]=0;
-			transition_probabilities[6][4]=0;
-			transition_probabilities[6][5]=0;
-			transition_probabilities[6][6]=exp(-(minepen*ungappedlambda)) - exp(-((gamma + minepen)*ungappedlambda));
+			transition_prob_Pabilities[0][0]=((-1 + exp(gamma*ungappedlambda))*(-1 + exp(minepen*ungappedlambda)))/(1 - exp(gamma*ungappedlambda) + exp(minepen*ungappedlambda) + exp((gamma + minepen)*ungappedlambda) + 4*exp((minepen - minopen)*ungappedlambda) + 2*exp((gamma + minepen - minopen)*ungappedlambda));
+			transition_prob_Pabilities[0][1]=exp((minepen + minopen)*ungappedlambda)/(4*exp(minepen*ungappedlambda) + 2*exp((gamma + minepen)*ungappedlambda) + exp(minopen*ungappedlambda) - exp((gamma + minopen)*ungappedlambda) + exp((minepen + minopen)*ungappedlambda) + exp((gamma + minepen + minopen)*ungappedlambda));
+			transition_prob_Pabilities[0][2]=exp((minepen + minopen)*ungappedlambda)/(4*exp(minepen*ungappedlambda) + 2*exp((gamma + minepen)*ungappedlambda) + exp(minopen*ungappedlambda) - exp((gamma + minopen)*ungappedlambda) + exp((minepen + minopen)*ungappedlambda) + exp((gamma + minepen + minopen)*ungappedlambda));
+			transition_prob_Pabilities[0][3]=exp((gamma + minepen)*ungappedlambda)/(4*exp(minepen*ungappedlambda) + 2*exp((gamma + minepen)*ungappedlambda) + exp(minopen*ungappedlambda) - exp((gamma + minopen)*ungappedlambda) + exp((minepen + minopen)*ungappedlambda) + exp((gamma + minepen + minopen)*ungappedlambda));
+			transition_prob_Pabilities[0][4]=exp(minepen*ungappedlambda)/(4*exp(minepen*ungappedlambda) + 2*exp((gamma + minepen)*ungappedlambda) + exp(minopen*ungappedlambda) - exp((gamma + minopen)*ungappedlambda) + exp((minepen + minopen)*ungappedlambda) + exp((gamma + minepen + minopen)*ungappedlambda));
+			transition_prob_Pabilities[0][5]=exp(minepen*ungappedlambda)/(4*exp(minepen*ungappedlambda) + 2*exp((gamma + minepen)*ungappedlambda) + exp(minopen*ungappedlambda) - exp((gamma + minopen)*ungappedlambda) + exp((minepen + minopen)*ungappedlambda) + exp((gamma + minepen + minopen)*ungappedlambda));
+			transition_prob_Pabilities[0][6]=((2 + exp(gamma*ungappedlambda))*exp(minepen*ungappedlambda))/(4*exp(minepen*ungappedlambda) + 2*exp((gamma + minepen)*ungappedlambda) + exp(minopen*ungappedlambda) - exp((gamma + minopen)*ungappedlambda) + exp((minepen + minopen)*ungappedlambda) + exp((gamma + minepen + minopen)*ungappedlambda));
+			transition_prob_Pabilities[1][0]=((-1 + exp(gamma*ungappedlambda))*(-1 + exp(minepen*ungappedlambda)))/(1 - exp(gamma*ungappedlambda) + exp(minepen*ungappedlambda) + exp((gamma + minepen)*ungappedlambda) + 4*exp((minepen - minopen)*ungappedlambda) + 2*exp((gamma + minepen - minopen)*ungappedlambda));
+			transition_prob_Pabilities[1][1]=exp((minepen + minopen)*ungappedlambda)/(4*exp(minepen*ungappedlambda) + 2*exp((gamma + minepen)*ungappedlambda) + exp(minopen*ungappedlambda) - exp((gamma + minopen)*ungappedlambda) + exp((minepen + minopen)*ungappedlambda) + exp((gamma + minepen + minopen)*ungappedlambda));
+			transition_prob_Pabilities[1][2]=exp((minepen + minopen)*ungappedlambda)/(4*exp(minepen*ungappedlambda) + 2*exp((gamma + minepen)*ungappedlambda) + exp(minopen*ungappedlambda) - exp((gamma + minopen)*ungappedlambda) + exp((minepen + minopen)*ungappedlambda) + exp((gamma + minepen + minopen)*ungappedlambda));
+			transition_prob_Pabilities[1][3]=exp((gamma + minepen)*ungappedlambda)/(4*exp(minepen*ungappedlambda) + 2*exp((gamma + minepen)*ungappedlambda) + exp(minopen*ungappedlambda) - exp((gamma + minopen)*ungappedlambda) + exp((minepen + minopen)*ungappedlambda) + exp((gamma + minepen + minopen)*ungappedlambda));
+			transition_prob_Pabilities[1][4]=exp(minepen*ungappedlambda)/(4*exp(minepen*ungappedlambda) + 2*exp((gamma + minepen)*ungappedlambda) + exp(minopen*ungappedlambda) - exp((gamma + minopen)*ungappedlambda) + exp((minepen + minopen)*ungappedlambda) + exp((gamma + minepen + minopen)*ungappedlambda));
+			transition_prob_Pabilities[1][5]=exp(minepen*ungappedlambda)/(4*exp(minepen*ungappedlambda) + 2*exp((gamma + minepen)*ungappedlambda) + exp(minopen*ungappedlambda) - exp((gamma + minopen)*ungappedlambda) + exp((minepen + minopen)*ungappedlambda) + exp((gamma + minepen + minopen)*ungappedlambda));
+			transition_prob_Pabilities[1][6]=((2 + exp(gamma*ungappedlambda))*exp(minepen*ungappedlambda))/(4*exp(minepen*ungappedlambda) + 2*exp((gamma + minepen)*ungappedlambda) + exp(minopen*ungappedlambda) - exp((gamma + minopen)*ungappedlambda) + exp((minepen + minopen)*ungappedlambda) + exp((gamma + minepen + minopen)*ungappedlambda));
+			transition_prob_Pabilities[2][0]=((-1 + exp(gamma*ungappedlambda))*(-1 + exp(minepen*ungappedlambda)))/(1 - exp(gamma*ungappedlambda) + exp(minepen*ungappedlambda) + exp((gamma + minepen)*ungappedlambda) + 4*exp((minepen - minopen)*ungappedlambda) + 2*exp((gamma + minepen - minopen)*ungappedlambda));
+			transition_prob_Pabilities[2][1]=exp((minepen + minopen)*ungappedlambda)/(4*exp(minepen*ungappedlambda) + 2*exp((gamma + minepen)*ungappedlambda) + exp(minopen*ungappedlambda) - exp((gamma + minopen)*ungappedlambda) + exp((minepen + minopen)*ungappedlambda) + exp((gamma + minepen + minopen)*ungappedlambda));
+			transition_prob_Pabilities[2][2]=exp((minepen + minopen)*ungappedlambda)/(4*exp(minepen*ungappedlambda) + 2*exp((gamma + minepen)*ungappedlambda) + exp(minopen*ungappedlambda) - exp((gamma + minopen)*ungappedlambda) + exp((minepen + minopen)*ungappedlambda) + exp((gamma + minepen + minopen)*ungappedlambda));
+			transition_prob_Pabilities[2][3]=exp((gamma + minepen)*ungappedlambda)/(4*exp(minepen*ungappedlambda) + 2*exp((gamma + minepen)*ungappedlambda) + exp(minopen*ungappedlambda) - exp((gamma + minopen)*ungappedlambda) + exp((minepen + minopen)*ungappedlambda) + exp((gamma + minepen + minopen)*ungappedlambda));
+			transition_prob_Pabilities[2][4]=exp(minepen*ungappedlambda)/(4*exp(minepen*ungappedlambda) + 2*exp((gamma + minepen)*ungappedlambda) + exp(minopen*ungappedlambda) - exp((gamma + minopen)*ungappedlambda) + exp((minepen + minopen)*ungappedlambda) + exp((gamma + minepen + minopen)*ungappedlambda));
+			transition_prob_Pabilities[2][5]=exp(minepen*ungappedlambda)/(4*exp(minepen*ungappedlambda) + 2*exp((gamma + minepen)*ungappedlambda) + exp(minopen*ungappedlambda) - exp((gamma + minopen)*ungappedlambda) + exp((minepen + minopen)*ungappedlambda) + exp((gamma + minepen + minopen)*ungappedlambda));
+			transition_prob_Pabilities[2][6]=((2 + exp(gamma*ungappedlambda))*exp(minepen*ungappedlambda))/(4*exp(minepen*ungappedlambda) + 2*exp((gamma + minepen)*ungappedlambda) + exp(minopen*ungappedlambda) - exp((gamma + minopen)*ungappedlambda) + exp((minepen + minopen)*ungappedlambda) + exp((gamma + minepen + minopen)*ungappedlambda));
+			transition_prob_Pabilities[3][0]=(-1 + exp(gamma*ungappedlambda))*(-1 + exp(minepen*ungappedlambda))*exp(-((gamma + minepen)*ungappedlambda));
+			transition_prob_Pabilities[3][1]=(exp(-(gamma*ungappedlambda)) - exp(-((gamma + minepen)*ungappedlambda)))/2.;
+			transition_prob_Pabilities[3][2]=(exp(-(gamma*ungappedlambda)) - exp(-((gamma + minepen)*ungappedlambda)))/2.;
+			transition_prob_Pabilities[3][3]=(-1 + exp(gamma*ungappedlambda))*exp(-((gamma + minepen)*ungappedlambda));
+			transition_prob_Pabilities[3][4]=exp(-((gamma + minepen)*ungappedlambda))/2.;
+			transition_prob_Pabilities[3][5]=exp(-((gamma + minepen)*ungappedlambda))/2.;
+			transition_prob_Pabilities[3][6]=0;
+			transition_prob_Pabilities[4][0]=(-1 + exp(gamma*ungappedlambda))*(-1 + exp(minepen*ungappedlambda))*exp(-((gamma + minepen)*ungappedlambda));
+			transition_prob_Pabilities[4][1]=(exp(-(gamma*ungappedlambda)) - exp(-((gamma + minepen)*ungappedlambda)))/2.;
+			transition_prob_Pabilities[4][2]=(exp(-(gamma*ungappedlambda)) - exp(-((gamma + minepen)*ungappedlambda)))/2.;
+			transition_prob_Pabilities[4][3]=(-1 + exp(gamma*ungappedlambda))*exp(-((gamma + minepen)*ungappedlambda));
+			transition_prob_Pabilities[4][4]=exp(-((gamma + minepen)*ungappedlambda))/2.;
+			transition_prob_Pabilities[4][5]=exp(-((gamma + minepen)*ungappedlambda))/2.;
+			transition_prob_Pabilities[4][6]=0;
+			transition_prob_Pabilities[5][0]=(-1 + exp(gamma*ungappedlambda))*(-1 + exp(minepen*ungappedlambda))*exp(-((gamma + minepen)*ungappedlambda));
+			transition_prob_Pabilities[5][1]=(exp(-(gamma*ungappedlambda)) - exp(-((gamma + minepen)*ungappedlambda)))/2.;
+			transition_prob_Pabilities[5][2]=(exp(-(gamma*ungappedlambda)) - exp(-((gamma + minepen)*ungappedlambda)))/2.;
+			transition_prob_Pabilities[5][3]=(-1 + exp(gamma*ungappedlambda))*exp(-((gamma + minepen)*ungappedlambda));
+			transition_prob_Pabilities[5][4]=exp(-((gamma + minepen)*ungappedlambda))/2.;
+			transition_prob_Pabilities[5][5]=exp(-((gamma + minepen)*ungappedlambda))/2.;
+			transition_prob_Pabilities[5][6]=0;
+			transition_prob_Pabilities[6][0]=1 - exp(-(gamma*ungappedlambda)) - exp(-(minepen*ungappedlambda)) + 2*exp(-((gamma + minepen)*ungappedlambda));
+			transition_prob_Pabilities[6][1]=((-1 + exp(minepen*ungappedlambda))*exp(-((gamma + minepen)*ungappedlambda)))/2.;
+			transition_prob_Pabilities[6][2]=(exp(-(gamma*ungappedlambda)) - exp(-((gamma + minepen)*ungappedlambda)))/2.;
+			transition_prob_Pabilities[6][3]=0;
+			transition_prob_Pabilities[6][4]=0;
+			transition_prob_Pabilities[6][5]=0;
+			transition_prob_Pabilities[6][6]=exp(-(minepen*ungappedlambda)) - exp(-((gamma + minepen)*ungappedlambda));
 		};
 
 		//for test
 		if(choice_of_IS_weights==2)
 		{
-			transition_probabilities[0][0]=1/(1 + 2*exp(-(gamma*ungappedlambda)) + exp((-epen1_ - open1_)*ungappedlambda) + 2*exp((-epen1_ - gamma - open1_)*ungappedlambda) + exp((-epen2_ - open2_)*ungappedlambda));
-			transition_probabilities[0][1]=exp(-(gamma*ungappedlambda))/(1 + 2*exp(-(gamma*ungappedlambda)) + exp((-epen1_ - open1_)*ungappedlambda) + 2*exp((-epen1_ - gamma - open1_)*ungappedlambda) + exp((-epen2_ - open2_)*ungappedlambda));
-			transition_probabilities[0][2]=exp(-(gamma*ungappedlambda))/(1 + 2*exp(-(gamma*ungappedlambda)) + exp((-epen1_ - open1_)*ungappedlambda) + 2*exp((-epen1_ - gamma - open1_)*ungappedlambda) + exp((-epen2_ - open2_)*ungappedlambda));
-			transition_probabilities[0][3]=exp((-epen1_ - open1_)*ungappedlambda)/(1 + 2*exp(-(gamma*ungappedlambda)) + exp((-epen1_ - open1_)*ungappedlambda) + 2*exp((-epen1_ - gamma - open1_)*ungappedlambda) + exp((-epen2_ - open2_)*ungappedlambda));
-			transition_probabilities[0][4]=exp((-epen1_ - gamma - open1_)*ungappedlambda)/(1 + 2*exp(-(gamma*ungappedlambda)) + exp((-epen1_ - open1_)*ungappedlambda) + 2*exp((-epen1_ - gamma - open1_)*ungappedlambda) + exp((-epen2_ - open2_)*ungappedlambda));
-			transition_probabilities[0][5]=exp((-epen1_ - gamma - open1_)*ungappedlambda)/(1 + 2*exp(-(gamma*ungappedlambda)) + exp((-epen1_ - open1_)*ungappedlambda) + 2*exp((-epen1_ - gamma - open1_)*ungappedlambda) + exp((-epen2_ - open2_)*ungappedlambda));
-			transition_probabilities[0][6]=exp((-epen2_ - open2_)*ungappedlambda)/(1 + 2*exp(-(gamma*ungappedlambda)) + exp((-epen1_ - open1_)*ungappedlambda) + 2*exp((-epen1_ - gamma - open1_)*ungappedlambda) + exp((-epen2_ - open2_)*ungappedlambda));
-			transition_probabilities[1][0]=1/(1 + 2*exp(-(gamma*ungappedlambda)) + exp((-epen1_ - open1_)*ungappedlambda) + 2*exp((-epen1_ - gamma - open1_)*ungappedlambda) + exp((-epen2_ - open2_)*ungappedlambda));
-			transition_probabilities[1][1]=exp(-(gamma*ungappedlambda))/(1 + 2*exp(-(gamma*ungappedlambda)) + exp((-epen1_ - open1_)*ungappedlambda) + 2*exp((-epen1_ - gamma - open1_)*ungappedlambda) + exp((-epen2_ - open2_)*ungappedlambda));
-			transition_probabilities[1][2]=exp(-(gamma*ungappedlambda))/(1 + 2*exp(-(gamma*ungappedlambda)) + exp((-epen1_ - open1_)*ungappedlambda) + 2*exp((-epen1_ - gamma - open1_)*ungappedlambda) + exp((-epen2_ - open2_)*ungappedlambda));
-			transition_probabilities[1][3]=exp((-epen1_ - open1_)*ungappedlambda)/(1 + 2*exp(-(gamma*ungappedlambda)) + exp((-epen1_ - open1_)*ungappedlambda) + 2*exp((-epen1_ - gamma - open1_)*ungappedlambda) + exp((-epen2_ - open2_)*ungappedlambda));
-			transition_probabilities[1][4]=exp((-epen1_ - gamma - open1_)*ungappedlambda)/(1 + 2*exp(-(gamma*ungappedlambda)) + exp((-epen1_ - open1_)*ungappedlambda) + 2*exp((-epen1_ - gamma - open1_)*ungappedlambda) + exp((-epen2_ - open2_)*ungappedlambda));
-			transition_probabilities[1][5]=exp((-epen1_ - gamma - open1_)*ungappedlambda)/(1 + 2*exp(-(gamma*ungappedlambda)) + exp((-epen1_ - open1_)*ungappedlambda) + 2*exp((-epen1_ - gamma - open1_)*ungappedlambda) + exp((-epen2_ - open2_)*ungappedlambda));
-			transition_probabilities[1][6]=exp((-epen2_ - open2_)*ungappedlambda)/(1 + 2*exp(-(gamma*ungappedlambda)) + exp((-epen1_ - open1_)*ungappedlambda) + 2*exp((-epen1_ - gamma - open1_)*ungappedlambda) + exp((-epen2_ - open2_)*ungappedlambda));
-			transition_probabilities[2][0]=1/(1 + 2*exp(-(gamma*ungappedlambda)) + exp((-epen1_ - open1_)*ungappedlambda) + 2*exp((-epen1_ - gamma - open1_)*ungappedlambda) + exp((-epen2_ - open2_)*ungappedlambda));
-			transition_probabilities[2][1]=exp(-(gamma*ungappedlambda))/(1 + 2*exp(-(gamma*ungappedlambda)) + exp((-epen1_ - open1_)*ungappedlambda) + 2*exp((-epen1_ - gamma - open1_)*ungappedlambda) + exp((-epen2_ - open2_)*ungappedlambda));
-			transition_probabilities[2][2]=exp(-(gamma*ungappedlambda))/(1 + 2*exp(-(gamma*ungappedlambda)) + exp((-epen1_ - open1_)*ungappedlambda) + 2*exp((-epen1_ - gamma - open1_)*ungappedlambda) + exp((-epen2_ - open2_)*ungappedlambda));
-			transition_probabilities[2][3]=exp((-epen1_ - open1_)*ungappedlambda)/(1 + 2*exp(-(gamma*ungappedlambda)) + exp((-epen1_ - open1_)*ungappedlambda) + 2*exp((-epen1_ - gamma - open1_)*ungappedlambda) + exp((-epen2_ - open2_)*ungappedlambda));
-			transition_probabilities[2][4]=exp((-epen1_ - gamma - open1_)*ungappedlambda)/(1 + 2*exp(-(gamma*ungappedlambda)) + exp((-epen1_ - open1_)*ungappedlambda) + 2*exp((-epen1_ - gamma - open1_)*ungappedlambda) + exp((-epen2_ - open2_)*ungappedlambda));
-			transition_probabilities[2][5]=exp((-epen1_ - gamma - open1_)*ungappedlambda)/(1 + 2*exp(-(gamma*ungappedlambda)) + exp((-epen1_ - open1_)*ungappedlambda) + 2*exp((-epen1_ - gamma - open1_)*ungappedlambda) + exp((-epen2_ - open2_)*ungappedlambda));
-			transition_probabilities[2][6]=exp((-epen2_ - open2_)*ungappedlambda)/(1 + 2*exp(-(gamma*ungappedlambda)) + exp((-epen1_ - open1_)*ungappedlambda) + 2*exp((-epen1_ - gamma - open1_)*ungappedlambda) + exp((-epen2_ - open2_)*ungappedlambda));
-			transition_probabilities[3][0]=1/(1 + exp(-(epen1_*ungappedlambda)) + 2*exp((-epen1_ - gamma)*ungappedlambda) + 2*exp(-(gamma*ungappedlambda)) + exp((-epen2_ - open2_)*ungappedlambda));
-			transition_probabilities[3][1]=exp(-(gamma*ungappedlambda))/(1 + exp(-(epen1_*ungappedlambda)) + 2*exp((-epen1_ - gamma)*ungappedlambda) + 2*exp(-(gamma*ungappedlambda)) + exp((-epen2_ - open2_)*ungappedlambda));
-			transition_probabilities[3][2]=exp(-(gamma*ungappedlambda))/(1 + exp(-(epen1_*ungappedlambda)) + 2*exp((-epen1_ - gamma)*ungappedlambda) + 2*exp(-(gamma*ungappedlambda)) + exp((-epen2_ - open2_)*ungappedlambda));
-			transition_probabilities[3][3]=exp(-(epen1_*ungappedlambda))/(1 + exp(-(epen1_*ungappedlambda)) + 2*exp((-epen1_ - gamma)*ungappedlambda) + 2*exp(-(gamma*ungappedlambda)) + exp((-epen2_ - open2_)*ungappedlambda));
-			transition_probabilities[3][4]=exp((-epen1_ - gamma)*ungappedlambda)/(1 + exp(-(epen1_*ungappedlambda)) + 2*exp((-epen1_ - gamma)*ungappedlambda) + 2*exp(-(gamma*ungappedlambda)) + exp((-epen2_ - open2_)*ungappedlambda));
-			transition_probabilities[3][5]=exp((-epen1_ - gamma)*ungappedlambda)/(1 + exp(-(epen1_*ungappedlambda)) + 2*exp((-epen1_ - gamma)*ungappedlambda) + 2*exp(-(gamma*ungappedlambda)) + exp((-epen2_ - open2_)*ungappedlambda));
-			transition_probabilities[3][6]=exp((-epen2_ - open2_)*ungappedlambda)/(1 + exp(-(epen1_*ungappedlambda)) + 2*exp((-epen1_ - gamma)*ungappedlambda) + 2*exp(-(gamma*ungappedlambda)) + exp((-epen2_ - open2_)*ungappedlambda));
-			transition_probabilities[4][0]=1/(1 + exp(-(epen1_*ungappedlambda)) + 2*exp((-epen1_ - gamma)*ungappedlambda) + 2*exp(-(gamma*ungappedlambda)) + exp((-epen2_ - open2_)*ungappedlambda));
-			transition_probabilities[4][1]=exp(-(gamma*ungappedlambda))/(1 + exp(-(epen1_*ungappedlambda)) + 2*exp((-epen1_ - gamma)*ungappedlambda) + 2*exp(-(gamma*ungappedlambda)) + exp((-epen2_ - open2_)*ungappedlambda));
-			transition_probabilities[4][2]=exp(-(gamma*ungappedlambda))/(1 + exp(-(epen1_*ungappedlambda)) + 2*exp((-epen1_ - gamma)*ungappedlambda) + 2*exp(-(gamma*ungappedlambda)) + exp((-epen2_ - open2_)*ungappedlambda));
-			transition_probabilities[4][3]=exp(-(epen1_*ungappedlambda))/(1 + exp(-(epen1_*ungappedlambda)) + 2*exp((-epen1_ - gamma)*ungappedlambda) + 2*exp(-(gamma*ungappedlambda)) + exp((-epen2_ - open2_)*ungappedlambda));
-			transition_probabilities[4][4]=exp((-epen1_ - gamma)*ungappedlambda)/(1 + exp(-(epen1_*ungappedlambda)) + 2*exp((-epen1_ - gamma)*ungappedlambda) + 2*exp(-(gamma*ungappedlambda)) + exp((-epen2_ - open2_)*ungappedlambda));
-			transition_probabilities[4][5]=exp((-epen1_ - gamma)*ungappedlambda)/(1 + exp(-(epen1_*ungappedlambda)) + 2*exp((-epen1_ - gamma)*ungappedlambda) + 2*exp(-(gamma*ungappedlambda)) + exp((-epen2_ - open2_)*ungappedlambda));
-			transition_probabilities[4][6]=exp((-epen2_ - open2_)*ungappedlambda)/(1 + exp(-(epen1_*ungappedlambda)) + 2*exp((-epen1_ - gamma)*ungappedlambda) + 2*exp(-(gamma*ungappedlambda)) + exp((-epen2_ - open2_)*ungappedlambda));
-			transition_probabilities[5][0]=1/(1 + exp(-(epen1_*ungappedlambda)) + 2*exp((-epen1_ - gamma)*ungappedlambda) + 2*exp(-(gamma*ungappedlambda)) + exp((-epen2_ - open2_)*ungappedlambda));
-			transition_probabilities[5][1]=exp(-(gamma*ungappedlambda))/(1 + exp(-(epen1_*ungappedlambda)) + 2*exp((-epen1_ - gamma)*ungappedlambda) + 2*exp(-(gamma*ungappedlambda)) + exp((-epen2_ - open2_)*ungappedlambda));
-			transition_probabilities[5][2]=exp(-(gamma*ungappedlambda))/(1 + exp(-(epen1_*ungappedlambda)) + 2*exp((-epen1_ - gamma)*ungappedlambda) + 2*exp(-(gamma*ungappedlambda)) + exp((-epen2_ - open2_)*ungappedlambda));
-			transition_probabilities[5][3]=exp(-(epen1_*ungappedlambda))/(1 + exp(-(epen1_*ungappedlambda)) + 2*exp((-epen1_ - gamma)*ungappedlambda) + 2*exp(-(gamma*ungappedlambda)) + exp((-epen2_ - open2_)*ungappedlambda));
-			transition_probabilities[5][4]=exp((-epen1_ - gamma)*ungappedlambda)/(1 + exp(-(epen1_*ungappedlambda)) + 2*exp((-epen1_ - gamma)*ungappedlambda) + 2*exp(-(gamma*ungappedlambda)) + exp((-epen2_ - open2_)*ungappedlambda));
-			transition_probabilities[5][5]=exp((-epen1_ - gamma)*ungappedlambda)/(1 + exp(-(epen1_*ungappedlambda)) + 2*exp((-epen1_ - gamma)*ungappedlambda) + 2*exp(-(gamma*ungappedlambda)) + exp((-epen2_ - open2_)*ungappedlambda));
-			transition_probabilities[5][6]=exp((-epen2_ - open2_)*ungappedlambda)/(1 + exp(-(epen1_*ungappedlambda)) + 2*exp((-epen1_ - gamma)*ungappedlambda) + 2*exp(-(gamma*ungappedlambda)) + exp((-epen2_ - open2_)*ungappedlambda));
-			transition_probabilities[6][0]=1/(1 + exp(-(epen2_*ungappedlambda)) + 2*exp(-(gamma*ungappedlambda)));
-			transition_probabilities[6][1]=exp(-(gamma*ungappedlambda))/(1 + exp(-(epen2_*ungappedlambda)) + 2*exp(-(gamma*ungappedlambda)));
-			transition_probabilities[6][2]=exp(-(gamma*ungappedlambda))/(1 + exp(-(epen2_*ungappedlambda)) + 2*exp(-(gamma*ungappedlambda)));
-			transition_probabilities[6][3]=0;
-			transition_probabilities[6][4]=0;
-			transition_probabilities[6][5]=0;
-			transition_probabilities[6][6]=exp(-(epen2_*ungappedlambda))/(1 + exp(-(epen2_*ungappedlambda)) + 2*exp(-(gamma*ungappedlambda)));
+			transition_prob_Pabilities[0][0]=1/(1 + 2*exp(-(gamma*ungappedlambda)) + exp((-epen1_ - open1_)*ungappedlambda) + 2*exp((-epen1_ - gamma - open1_)*ungappedlambda) + exp((-epen2_ - open2_)*ungappedlambda));
+			transition_prob_Pabilities[0][1]=exp(-(gamma*ungappedlambda))/(1 + 2*exp(-(gamma*ungappedlambda)) + exp((-epen1_ - open1_)*ungappedlambda) + 2*exp((-epen1_ - gamma - open1_)*ungappedlambda) + exp((-epen2_ - open2_)*ungappedlambda));
+			transition_prob_Pabilities[0][2]=exp(-(gamma*ungappedlambda))/(1 + 2*exp(-(gamma*ungappedlambda)) + exp((-epen1_ - open1_)*ungappedlambda) + 2*exp((-epen1_ - gamma - open1_)*ungappedlambda) + exp((-epen2_ - open2_)*ungappedlambda));
+			transition_prob_Pabilities[0][3]=exp((-epen1_ - open1_)*ungappedlambda)/(1 + 2*exp(-(gamma*ungappedlambda)) + exp((-epen1_ - open1_)*ungappedlambda) + 2*exp((-epen1_ - gamma - open1_)*ungappedlambda) + exp((-epen2_ - open2_)*ungappedlambda));
+			transition_prob_Pabilities[0][4]=exp((-epen1_ - gamma - open1_)*ungappedlambda)/(1 + 2*exp(-(gamma*ungappedlambda)) + exp((-epen1_ - open1_)*ungappedlambda) + 2*exp((-epen1_ - gamma - open1_)*ungappedlambda) + exp((-epen2_ - open2_)*ungappedlambda));
+			transition_prob_Pabilities[0][5]=exp((-epen1_ - gamma - open1_)*ungappedlambda)/(1 + 2*exp(-(gamma*ungappedlambda)) + exp((-epen1_ - open1_)*ungappedlambda) + 2*exp((-epen1_ - gamma - open1_)*ungappedlambda) + exp((-epen2_ - open2_)*ungappedlambda));
+			transition_prob_Pabilities[0][6]=exp((-epen2_ - open2_)*ungappedlambda)/(1 + 2*exp(-(gamma*ungappedlambda)) + exp((-epen1_ - open1_)*ungappedlambda) + 2*exp((-epen1_ - gamma - open1_)*ungappedlambda) + exp((-epen2_ - open2_)*ungappedlambda));
+			transition_prob_Pabilities[1][0]=1/(1 + 2*exp(-(gamma*ungappedlambda)) + exp((-epen1_ - open1_)*ungappedlambda) + 2*exp((-epen1_ - gamma - open1_)*ungappedlambda) + exp((-epen2_ - open2_)*ungappedlambda));
+			transition_prob_Pabilities[1][1]=exp(-(gamma*ungappedlambda))/(1 + 2*exp(-(gamma*ungappedlambda)) + exp((-epen1_ - open1_)*ungappedlambda) + 2*exp((-epen1_ - gamma - open1_)*ungappedlambda) + exp((-epen2_ - open2_)*ungappedlambda));
+			transition_prob_Pabilities[1][2]=exp(-(gamma*ungappedlambda))/(1 + 2*exp(-(gamma*ungappedlambda)) + exp((-epen1_ - open1_)*ungappedlambda) + 2*exp((-epen1_ - gamma - open1_)*ungappedlambda) + exp((-epen2_ - open2_)*ungappedlambda));
+			transition_prob_Pabilities[1][3]=exp((-epen1_ - open1_)*ungappedlambda)/(1 + 2*exp(-(gamma*ungappedlambda)) + exp((-epen1_ - open1_)*ungappedlambda) + 2*exp((-epen1_ - gamma - open1_)*ungappedlambda) + exp((-epen2_ - open2_)*ungappedlambda));
+			transition_prob_Pabilities[1][4]=exp((-epen1_ - gamma - open1_)*ungappedlambda)/(1 + 2*exp(-(gamma*ungappedlambda)) + exp((-epen1_ - open1_)*ungappedlambda) + 2*exp((-epen1_ - gamma - open1_)*ungappedlambda) + exp((-epen2_ - open2_)*ungappedlambda));
+			transition_prob_Pabilities[1][5]=exp((-epen1_ - gamma - open1_)*ungappedlambda)/(1 + 2*exp(-(gamma*ungappedlambda)) + exp((-epen1_ - open1_)*ungappedlambda) + 2*exp((-epen1_ - gamma - open1_)*ungappedlambda) + exp((-epen2_ - open2_)*ungappedlambda));
+			transition_prob_Pabilities[1][6]=exp((-epen2_ - open2_)*ungappedlambda)/(1 + 2*exp(-(gamma*ungappedlambda)) + exp((-epen1_ - open1_)*ungappedlambda) + 2*exp((-epen1_ - gamma - open1_)*ungappedlambda) + exp((-epen2_ - open2_)*ungappedlambda));
+			transition_prob_Pabilities[2][0]=1/(1 + 2*exp(-(gamma*ungappedlambda)) + exp((-epen1_ - open1_)*ungappedlambda) + 2*exp((-epen1_ - gamma - open1_)*ungappedlambda) + exp((-epen2_ - open2_)*ungappedlambda));
+			transition_prob_Pabilities[2][1]=exp(-(gamma*ungappedlambda))/(1 + 2*exp(-(gamma*ungappedlambda)) + exp((-epen1_ - open1_)*ungappedlambda) + 2*exp((-epen1_ - gamma - open1_)*ungappedlambda) + exp((-epen2_ - open2_)*ungappedlambda));
+			transition_prob_Pabilities[2][2]=exp(-(gamma*ungappedlambda))/(1 + 2*exp(-(gamma*ungappedlambda)) + exp((-epen1_ - open1_)*ungappedlambda) + 2*exp((-epen1_ - gamma - open1_)*ungappedlambda) + exp((-epen2_ - open2_)*ungappedlambda));
+			transition_prob_Pabilities[2][3]=exp((-epen1_ - open1_)*ungappedlambda)/(1 + 2*exp(-(gamma*ungappedlambda)) + exp((-epen1_ - open1_)*ungappedlambda) + 2*exp((-epen1_ - gamma - open1_)*ungappedlambda) + exp((-epen2_ - open2_)*ungappedlambda));
+			transition_prob_Pabilities[2][4]=exp((-epen1_ - gamma - open1_)*ungappedlambda)/(1 + 2*exp(-(gamma*ungappedlambda)) + exp((-epen1_ - open1_)*ungappedlambda) + 2*exp((-epen1_ - gamma - open1_)*ungappedlambda) + exp((-epen2_ - open2_)*ungappedlambda));
+			transition_prob_Pabilities[2][5]=exp((-epen1_ - gamma - open1_)*ungappedlambda)/(1 + 2*exp(-(gamma*ungappedlambda)) + exp((-epen1_ - open1_)*ungappedlambda) + 2*exp((-epen1_ - gamma - open1_)*ungappedlambda) + exp((-epen2_ - open2_)*ungappedlambda));
+			transition_prob_Pabilities[2][6]=exp((-epen2_ - open2_)*ungappedlambda)/(1 + 2*exp(-(gamma*ungappedlambda)) + exp((-epen1_ - open1_)*ungappedlambda) + 2*exp((-epen1_ - gamma - open1_)*ungappedlambda) + exp((-epen2_ - open2_)*ungappedlambda));
+			transition_prob_Pabilities[3][0]=1/(1 + exp(-(epen1_*ungappedlambda)) + 2*exp((-epen1_ - gamma)*ungappedlambda) + 2*exp(-(gamma*ungappedlambda)) + exp((-epen2_ - open2_)*ungappedlambda));
+			transition_prob_Pabilities[3][1]=exp(-(gamma*ungappedlambda))/(1 + exp(-(epen1_*ungappedlambda)) + 2*exp((-epen1_ - gamma)*ungappedlambda) + 2*exp(-(gamma*ungappedlambda)) + exp((-epen2_ - open2_)*ungappedlambda));
+			transition_prob_Pabilities[3][2]=exp(-(gamma*ungappedlambda))/(1 + exp(-(epen1_*ungappedlambda)) + 2*exp((-epen1_ - gamma)*ungappedlambda) + 2*exp(-(gamma*ungappedlambda)) + exp((-epen2_ - open2_)*ungappedlambda));
+			transition_prob_Pabilities[3][3]=exp(-(epen1_*ungappedlambda))/(1 + exp(-(epen1_*ungappedlambda)) + 2*exp((-epen1_ - gamma)*ungappedlambda) + 2*exp(-(gamma*ungappedlambda)) + exp((-epen2_ - open2_)*ungappedlambda));
+			transition_prob_Pabilities[3][4]=exp((-epen1_ - gamma)*ungappedlambda)/(1 + exp(-(epen1_*ungappedlambda)) + 2*exp((-epen1_ - gamma)*ungappedlambda) + 2*exp(-(gamma*ungappedlambda)) + exp((-epen2_ - open2_)*ungappedlambda));
+			transition_prob_Pabilities[3][5]=exp((-epen1_ - gamma)*ungappedlambda)/(1 + exp(-(epen1_*ungappedlambda)) + 2*exp((-epen1_ - gamma)*ungappedlambda) + 2*exp(-(gamma*ungappedlambda)) + exp((-epen2_ - open2_)*ungappedlambda));
+			transition_prob_Pabilities[3][6]=exp((-epen2_ - open2_)*ungappedlambda)/(1 + exp(-(epen1_*ungappedlambda)) + 2*exp((-epen1_ - gamma)*ungappedlambda) + 2*exp(-(gamma*ungappedlambda)) + exp((-epen2_ - open2_)*ungappedlambda));
+			transition_prob_Pabilities[4][0]=1/(1 + exp(-(epen1_*ungappedlambda)) + 2*exp((-epen1_ - gamma)*ungappedlambda) + 2*exp(-(gamma*ungappedlambda)) + exp((-epen2_ - open2_)*ungappedlambda));
+			transition_prob_Pabilities[4][1]=exp(-(gamma*ungappedlambda))/(1 + exp(-(epen1_*ungappedlambda)) + 2*exp((-epen1_ - gamma)*ungappedlambda) + 2*exp(-(gamma*ungappedlambda)) + exp((-epen2_ - open2_)*ungappedlambda));
+			transition_prob_Pabilities[4][2]=exp(-(gamma*ungappedlambda))/(1 + exp(-(epen1_*ungappedlambda)) + 2*exp((-epen1_ - gamma)*ungappedlambda) + 2*exp(-(gamma*ungappedlambda)) + exp((-epen2_ - open2_)*ungappedlambda));
+			transition_prob_Pabilities[4][3]=exp(-(epen1_*ungappedlambda))/(1 + exp(-(epen1_*ungappedlambda)) + 2*exp((-epen1_ - gamma)*ungappedlambda) + 2*exp(-(gamma*ungappedlambda)) + exp((-epen2_ - open2_)*ungappedlambda));
+			transition_prob_Pabilities[4][4]=exp((-epen1_ - gamma)*ungappedlambda)/(1 + exp(-(epen1_*ungappedlambda)) + 2*exp((-epen1_ - gamma)*ungappedlambda) + 2*exp(-(gamma*ungappedlambda)) + exp((-epen2_ - open2_)*ungappedlambda));
+			transition_prob_Pabilities[4][5]=exp((-epen1_ - gamma)*ungappedlambda)/(1 + exp(-(epen1_*ungappedlambda)) + 2*exp((-epen1_ - gamma)*ungappedlambda) + 2*exp(-(gamma*ungappedlambda)) + exp((-epen2_ - open2_)*ungappedlambda));
+			transition_prob_Pabilities[4][6]=exp((-epen2_ - open2_)*ungappedlambda)/(1 + exp(-(epen1_*ungappedlambda)) + 2*exp((-epen1_ - gamma)*ungappedlambda) + 2*exp(-(gamma*ungappedlambda)) + exp((-epen2_ - open2_)*ungappedlambda));
+			transition_prob_Pabilities[5][0]=1/(1 + exp(-(epen1_*ungappedlambda)) + 2*exp((-epen1_ - gamma)*ungappedlambda) + 2*exp(-(gamma*ungappedlambda)) + exp((-epen2_ - open2_)*ungappedlambda));
+			transition_prob_Pabilities[5][1]=exp(-(gamma*ungappedlambda))/(1 + exp(-(epen1_*ungappedlambda)) + 2*exp((-epen1_ - gamma)*ungappedlambda) + 2*exp(-(gamma*ungappedlambda)) + exp((-epen2_ - open2_)*ungappedlambda));
+			transition_prob_Pabilities[5][2]=exp(-(gamma*ungappedlambda))/(1 + exp(-(epen1_*ungappedlambda)) + 2*exp((-epen1_ - gamma)*ungappedlambda) + 2*exp(-(gamma*ungappedlambda)) + exp((-epen2_ - open2_)*ungappedlambda));
+			transition_prob_Pabilities[5][3]=exp(-(epen1_*ungappedlambda))/(1 + exp(-(epen1_*ungappedlambda)) + 2*exp((-epen1_ - gamma)*ungappedlambda) + 2*exp(-(gamma*ungappedlambda)) + exp((-epen2_ - open2_)*ungappedlambda));
+			transition_prob_Pabilities[5][4]=exp((-epen1_ - gamma)*ungappedlambda)/(1 + exp(-(epen1_*ungappedlambda)) + 2*exp((-epen1_ - gamma)*ungappedlambda) + 2*exp(-(gamma*ungappedlambda)) + exp((-epen2_ - open2_)*ungappedlambda));
+			transition_prob_Pabilities[5][5]=exp((-epen1_ - gamma)*ungappedlambda)/(1 + exp(-(epen1_*ungappedlambda)) + 2*exp((-epen1_ - gamma)*ungappedlambda) + 2*exp(-(gamma*ungappedlambda)) + exp((-epen2_ - open2_)*ungappedlambda));
+			transition_prob_Pabilities[5][6]=exp((-epen2_ - open2_)*ungappedlambda)/(1 + exp(-(epen1_*ungappedlambda)) + 2*exp((-epen1_ - gamma)*ungappedlambda) + 2*exp(-(gamma*ungappedlambda)) + exp((-epen2_ - open2_)*ungappedlambda));
+			transition_prob_Pabilities[6][0]=1/(1 + exp(-(epen2_*ungappedlambda)) + 2*exp(-(gamma*ungappedlambda)));
+			transition_prob_Pabilities[6][1]=exp(-(gamma*ungappedlambda))/(1 + exp(-(epen2_*ungappedlambda)) + 2*exp(-(gamma*ungappedlambda)));
+			transition_prob_Pabilities[6][2]=exp(-(gamma*ungappedlambda))/(1 + exp(-(epen2_*ungappedlambda)) + 2*exp(-(gamma*ungappedlambda)));
+			transition_prob_Pabilities[6][3]=0;
+			transition_prob_Pabilities[6][4]=0;
+			transition_prob_Pabilities[6][5]=0;
+			transition_prob_Pabilities[6][6]=exp(-(epen2_*ungappedlambda))/(1 + exp(-(epen2_*ungappedlambda)) + 2*exp(-(gamma*ungappedlambda)));
 		};
 
 		if(choice_of_IS_weights==3)
 		{
-			transition_probabilities[0][0]=1/(3.*(0.3333333333333333 + (2*exp(-(gamma*ungappedlambda)))/3. + exp((-epen1_ - open1_)*ungappedlambda)/3. + (2*exp((-epen1_ - gamma - open1_)*ungappedlambda))/3. + exp((-epen2_ - open2_)*ungappedlambda)/3.));
-			transition_probabilities[0][1]=exp(-(gamma*ungappedlambda))/(3.*(0.3333333333333333 + (2*exp(-(gamma*ungappedlambda)))/3. + exp((-epen1_ - open1_)*ungappedlambda)/3. + (2*exp((-epen1_ - gamma - open1_)*ungappedlambda))/3. + exp((-epen2_ - open2_)*ungappedlambda)/3.));
-			transition_probabilities[0][2]=exp(-(gamma*ungappedlambda))/(3.*(0.3333333333333333 + (2*exp(-(gamma*ungappedlambda)))/3. + exp((-epen1_ - open1_)*ungappedlambda)/3. + (2*exp((-epen1_ - gamma - open1_)*ungappedlambda))/3. + exp((-epen2_ - open2_)*ungappedlambda)/3.));
-			transition_probabilities[0][3]=exp((-epen1_ - open1_)*ungappedlambda)/(3.*(0.3333333333333333 + (2*exp(-(gamma*ungappedlambda)))/3. + exp((-epen1_ - open1_)*ungappedlambda)/3. + (2*exp((-epen1_ - gamma - open1_)*ungappedlambda))/3. + exp((-epen2_ - open2_)*ungappedlambda)/3.));
-			transition_probabilities[0][4]=exp((-epen1_ - gamma - open1_)*ungappedlambda)/(3.*(0.3333333333333333 + (2*exp(-(gamma*ungappedlambda)))/3. + exp((-epen1_ - open1_)*ungappedlambda)/3. + (2*exp((-epen1_ - gamma - open1_)*ungappedlambda))/3. + exp((-epen2_ - open2_)*ungappedlambda)/3.));
-			transition_probabilities[0][5]=exp((-epen1_ - gamma - open1_)*ungappedlambda)/(3.*(0.3333333333333333 + (2*exp(-(gamma*ungappedlambda)))/3. + exp((-epen1_ - open1_)*ungappedlambda)/3. + (2*exp((-epen1_ - gamma - open1_)*ungappedlambda))/3. + exp((-epen2_ - open2_)*ungappedlambda)/3.));
-			transition_probabilities[0][6]=exp((-epen2_ - open2_)*ungappedlambda)/(3.*(0.3333333333333333 + (2*exp(-(gamma*ungappedlambda)))/3. + exp((-epen1_ - open1_)*ungappedlambda)/3. + (2*exp((-epen1_ - gamma - open1_)*ungappedlambda))/3. + exp((-epen2_ - open2_)*ungappedlambda)/3.));
-			transition_probabilities[1][0]=1/(3.*(0.3333333333333333 + (2*exp(-(gamma*ungappedlambda)))/3. + exp((-epen1_ - open1_)*ungappedlambda)/3. + (2*exp((-epen1_ - gamma - open1_)*ungappedlambda))/3. + exp((-epen2_ - open2_)*ungappedlambda)/3.));
-			transition_probabilities[1][1]=exp(-(gamma*ungappedlambda))/(3.*(0.3333333333333333 + (2*exp(-(gamma*ungappedlambda)))/3. + exp((-epen1_ - open1_)*ungappedlambda)/3. + (2*exp((-epen1_ - gamma - open1_)*ungappedlambda))/3. + exp((-epen2_ - open2_)*ungappedlambda)/3.));
-			transition_probabilities[1][2]=exp(-(gamma*ungappedlambda))/(3.*(0.3333333333333333 + (2*exp(-(gamma*ungappedlambda)))/3. + exp((-epen1_ - open1_)*ungappedlambda)/3. + (2*exp((-epen1_ - gamma - open1_)*ungappedlambda))/3. + exp((-epen2_ - open2_)*ungappedlambda)/3.));
-			transition_probabilities[1][3]=exp((-epen1_ - open1_)*ungappedlambda)/(3.*(0.3333333333333333 + (2*exp(-(gamma*ungappedlambda)))/3. + exp((-epen1_ - open1_)*ungappedlambda)/3. + (2*exp((-epen1_ - gamma - open1_)*ungappedlambda))/3. + exp((-epen2_ - open2_)*ungappedlambda)/3.));
-			transition_probabilities[1][4]=exp((-epen1_ - gamma - open1_)*ungappedlambda)/(3.*(0.3333333333333333 + (2*exp(-(gamma*ungappedlambda)))/3. + exp((-epen1_ - open1_)*ungappedlambda)/3. + (2*exp((-epen1_ - gamma - open1_)*ungappedlambda))/3. + exp((-epen2_ - open2_)*ungappedlambda)/3.));
-			transition_probabilities[1][5]=exp((-epen1_ - gamma - open1_)*ungappedlambda)/(3.*(0.3333333333333333 + (2*exp(-(gamma*ungappedlambda)))/3. + exp((-epen1_ - open1_)*ungappedlambda)/3. + (2*exp((-epen1_ - gamma - open1_)*ungappedlambda))/3. + exp((-epen2_ - open2_)*ungappedlambda)/3.));
-			transition_probabilities[1][6]=exp((-epen2_ - open2_)*ungappedlambda)/(3.*(0.3333333333333333 + (2*exp(-(gamma*ungappedlambda)))/3. + exp((-epen1_ - open1_)*ungappedlambda)/3. + (2*exp((-epen1_ - gamma - open1_)*ungappedlambda))/3. + exp((-epen2_ - open2_)*ungappedlambda)/3.));
-			transition_probabilities[2][0]=1/(3.*(0.3333333333333333 + (2*exp(-(gamma*ungappedlambda)))/3. + exp((-epen1_ - open1_)*ungappedlambda)/3. + (2*exp((-epen1_ - gamma - open1_)*ungappedlambda))/3. + exp((-epen2_ - open2_)*ungappedlambda)/3.));
-			transition_probabilities[2][1]=exp(-(gamma*ungappedlambda))/(3.*(0.3333333333333333 + (2*exp(-(gamma*ungappedlambda)))/3. + exp((-epen1_ - open1_)*ungappedlambda)/3. + (2*exp((-epen1_ - gamma - open1_)*ungappedlambda))/3. + exp((-epen2_ - open2_)*ungappedlambda)/3.));
-			transition_probabilities[2][2]=exp(-(gamma*ungappedlambda))/(3.*(0.3333333333333333 + (2*exp(-(gamma*ungappedlambda)))/3. + exp((-epen1_ - open1_)*ungappedlambda)/3. + (2*exp((-epen1_ - gamma - open1_)*ungappedlambda))/3. + exp((-epen2_ - open2_)*ungappedlambda)/3.));
-			transition_probabilities[2][3]=exp((-epen1_ - open1_)*ungappedlambda)/(3.*(0.3333333333333333 + (2*exp(-(gamma*ungappedlambda)))/3. + exp((-epen1_ - open1_)*ungappedlambda)/3. + (2*exp((-epen1_ - gamma - open1_)*ungappedlambda))/3. + exp((-epen2_ - open2_)*ungappedlambda)/3.));
-			transition_probabilities[2][4]=exp((-epen1_ - gamma - open1_)*ungappedlambda)/(3.*(0.3333333333333333 + (2*exp(-(gamma*ungappedlambda)))/3. + exp((-epen1_ - open1_)*ungappedlambda)/3. + (2*exp((-epen1_ - gamma - open1_)*ungappedlambda))/3. + exp((-epen2_ - open2_)*ungappedlambda)/3.));
-			transition_probabilities[2][5]=exp((-epen1_ - gamma - open1_)*ungappedlambda)/(3.*(0.3333333333333333 + (2*exp(-(gamma*ungappedlambda)))/3. + exp((-epen1_ - open1_)*ungappedlambda)/3. + (2*exp((-epen1_ - gamma - open1_)*ungappedlambda))/3. + exp((-epen2_ - open2_)*ungappedlambda)/3.));
-			transition_probabilities[2][6]=exp((-epen2_ - open2_)*ungappedlambda)/(3.*(0.3333333333333333 + (2*exp(-(gamma*ungappedlambda)))/3. + exp((-epen1_ - open1_)*ungappedlambda)/3. + (2*exp((-epen1_ - gamma - open1_)*ungappedlambda))/3. + exp((-epen2_ - open2_)*ungappedlambda)/3.));
-			transition_probabilities[3][0]=1/(3.*(0.3333333333333333 + exp(-(epen1_*ungappedlambda))/3. + (2*exp((-epen1_ - gamma)*ungappedlambda))/3. + (2*exp(-(gamma*ungappedlambda)))/3. + exp((-epen2_ - open2_)*ungappedlambda)/3.));
-			transition_probabilities[3][1]=exp(-(gamma*ungappedlambda))/(3.*(0.3333333333333333 + exp(-(epen1_*ungappedlambda))/3. + (2*exp((-epen1_ - gamma)*ungappedlambda))/3. + (2*exp(-(gamma*ungappedlambda)))/3. + exp((-epen2_ - open2_)*ungappedlambda)/3.));
-			transition_probabilities[3][2]=exp(-(gamma*ungappedlambda))/(3.*(0.3333333333333333 + exp(-(epen1_*ungappedlambda))/3. + (2*exp((-epen1_ - gamma)*ungappedlambda))/3. + (2*exp(-(gamma*ungappedlambda)))/3. + exp((-epen2_ - open2_)*ungappedlambda)/3.));
-			transition_probabilities[3][3]=exp(-(epen1_*ungappedlambda))/(3.*(0.3333333333333333 + exp(-(epen1_*ungappedlambda))/3. + (2*exp((-epen1_ - gamma)*ungappedlambda))/3. + (2*exp(-(gamma*ungappedlambda)))/3. + exp((-epen2_ - open2_)*ungappedlambda)/3.));
-			transition_probabilities[3][4]=exp((-epen1_ - gamma)*ungappedlambda)/(3.*(0.3333333333333333 + exp(-(epen1_*ungappedlambda))/3. + (2*exp((-epen1_ - gamma)*ungappedlambda))/3. + (2*exp(-(gamma*ungappedlambda)))/3. + exp((-epen2_ - open2_)*ungappedlambda)/3.));
-			transition_probabilities[3][5]=exp((-epen1_ - gamma)*ungappedlambda)/(3.*(0.3333333333333333 + exp(-(epen1_*ungappedlambda))/3. + (2*exp((-epen1_ - gamma)*ungappedlambda))/3. + (2*exp(-(gamma*ungappedlambda)))/3. + exp((-epen2_ - open2_)*ungappedlambda)/3.));
-			transition_probabilities[3][6]=exp((-epen2_ - open2_)*ungappedlambda)/(3.*(0.3333333333333333 + exp(-(epen1_*ungappedlambda))/3. + (2*exp((-epen1_ - gamma)*ungappedlambda))/3. + (2*exp(-(gamma*ungappedlambda)))/3. + exp((-epen2_ - open2_)*ungappedlambda)/3.));
-			transition_probabilities[4][0]=1/(3.*(0.3333333333333333 + exp(-(epen1_*ungappedlambda))/3. + (2*exp((-epen1_ - gamma)*ungappedlambda))/3. + (2*exp(-(gamma*ungappedlambda)))/3. + exp((-epen2_ - open2_)*ungappedlambda)/3.));
-			transition_probabilities[4][1]=exp(-(gamma*ungappedlambda))/(3.*(0.3333333333333333 + exp(-(epen1_*ungappedlambda))/3. + (2*exp((-epen1_ - gamma)*ungappedlambda))/3. + (2*exp(-(gamma*ungappedlambda)))/3. + exp((-epen2_ - open2_)*ungappedlambda)/3.));
-			transition_probabilities[4][2]=exp(-(gamma*ungappedlambda))/(3.*(0.3333333333333333 + exp(-(epen1_*ungappedlambda))/3. + (2*exp((-epen1_ - gamma)*ungappedlambda))/3. + (2*exp(-(gamma*ungappedlambda)))/3. + exp((-epen2_ - open2_)*ungappedlambda)/3.));
-			transition_probabilities[4][3]=exp(-(epen1_*ungappedlambda))/(3.*(0.3333333333333333 + exp(-(epen1_*ungappedlambda))/3. + (2*exp((-epen1_ - gamma)*ungappedlambda))/3. + (2*exp(-(gamma*ungappedlambda)))/3. + exp((-epen2_ - open2_)*ungappedlambda)/3.));
-			transition_probabilities[4][4]=exp((-epen1_ - gamma)*ungappedlambda)/(3.*(0.3333333333333333 + exp(-(epen1_*ungappedlambda))/3. + (2*exp((-epen1_ - gamma)*ungappedlambda))/3. + (2*exp(-(gamma*ungappedlambda)))/3. + exp((-epen2_ - open2_)*ungappedlambda)/3.));
-			transition_probabilities[4][5]=exp((-epen1_ - gamma)*ungappedlambda)/(3.*(0.3333333333333333 + exp(-(epen1_*ungappedlambda))/3. + (2*exp((-epen1_ - gamma)*ungappedlambda))/3. + (2*exp(-(gamma*ungappedlambda)))/3. + exp((-epen2_ - open2_)*ungappedlambda)/3.));
-			transition_probabilities[4][6]=exp((-epen2_ - open2_)*ungappedlambda)/(3.*(0.3333333333333333 + exp(-(epen1_*ungappedlambda))/3. + (2*exp((-epen1_ - gamma)*ungappedlambda))/3. + (2*exp(-(gamma*ungappedlambda)))/3. + exp((-epen2_ - open2_)*ungappedlambda)/3.));
-			transition_probabilities[5][0]=1/(3.*(0.3333333333333333 + exp(-(epen1_*ungappedlambda))/3. + (2*exp((-epen1_ - gamma)*ungappedlambda))/3. + (2*exp(-(gamma*ungappedlambda)))/3. + exp((-epen2_ - open2_)*ungappedlambda)/3.));
-			transition_probabilities[5][1]=exp(-(gamma*ungappedlambda))/(3.*(0.3333333333333333 + exp(-(epen1_*ungappedlambda))/3. + (2*exp((-epen1_ - gamma)*ungappedlambda))/3. + (2*exp(-(gamma*ungappedlambda)))/3. + exp((-epen2_ - open2_)*ungappedlambda)/3.));
-			transition_probabilities[5][2]=exp(-(gamma*ungappedlambda))/(3.*(0.3333333333333333 + exp(-(epen1_*ungappedlambda))/3. + (2*exp((-epen1_ - gamma)*ungappedlambda))/3. + (2*exp(-(gamma*ungappedlambda)))/3. + exp((-epen2_ - open2_)*ungappedlambda)/3.));
-			transition_probabilities[5][3]=exp(-(epen1_*ungappedlambda))/(3.*(0.3333333333333333 + exp(-(epen1_*ungappedlambda))/3. + (2*exp((-epen1_ - gamma)*ungappedlambda))/3. + (2*exp(-(gamma*ungappedlambda)))/3. + exp((-epen2_ - open2_)*ungappedlambda)/3.));
-			transition_probabilities[5][4]=exp((-epen1_ - gamma)*ungappedlambda)/(3.*(0.3333333333333333 + exp(-(epen1_*ungappedlambda))/3. + (2*exp((-epen1_ - gamma)*ungappedlambda))/3. + (2*exp(-(gamma*ungappedlambda)))/3. + exp((-epen2_ - open2_)*ungappedlambda)/3.));
-			transition_probabilities[5][5]=exp((-epen1_ - gamma)*ungappedlambda)/(3.*(0.3333333333333333 + exp(-(epen1_*ungappedlambda))/3. + (2*exp((-epen1_ - gamma)*ungappedlambda))/3. + (2*exp(-(gamma*ungappedlambda)))/3. + exp((-epen2_ - open2_)*ungappedlambda)/3.));
-			transition_probabilities[5][6]=exp((-epen2_ - open2_)*ungappedlambda)/(3.*(0.3333333333333333 + exp(-(epen1_*ungappedlambda))/3. + (2*exp((-epen1_ - gamma)*ungappedlambda))/3. + (2*exp(-(gamma*ungappedlambda)))/3. + exp((-epen2_ - open2_)*ungappedlambda)/3.));
-			transition_probabilities[6][0]=1/(1 + exp(-(epen2_*ungappedlambda)) + 2*exp(-(gamma*ungappedlambda)));
-			transition_probabilities[6][1]=exp(-(gamma*ungappedlambda))/(1 + exp(-(epen2_*ungappedlambda)) + 2*exp(-(gamma*ungappedlambda)));
-			transition_probabilities[6][2]=exp(-(gamma*ungappedlambda))/(1 + exp(-(epen2_*ungappedlambda)) + 2*exp(-(gamma*ungappedlambda)));
-			transition_probabilities[6][3]=0;
-			transition_probabilities[6][4]=0;
-			transition_probabilities[6][5]=0;
-			transition_probabilities[6][6]=exp(-(epen2_*ungappedlambda))/(1 + exp(-(epen2_*ungappedlambda)) + 2*exp(-(gamma*ungappedlambda)));
+			transition_prob_Pabilities[0][0]=1/(3.*(0.3333333333333333 + (2*exp(-(gamma*ungappedlambda)))/3. + exp((-epen1_ - open1_)*ungappedlambda)/3. + (2*exp((-epen1_ - gamma - open1_)*ungappedlambda))/3. + exp((-epen2_ - open2_)*ungappedlambda)/3.));
+			transition_prob_Pabilities[0][1]=exp(-(gamma*ungappedlambda))/(3.*(0.3333333333333333 + (2*exp(-(gamma*ungappedlambda)))/3. + exp((-epen1_ - open1_)*ungappedlambda)/3. + (2*exp((-epen1_ - gamma - open1_)*ungappedlambda))/3. + exp((-epen2_ - open2_)*ungappedlambda)/3.));
+			transition_prob_Pabilities[0][2]=exp(-(gamma*ungappedlambda))/(3.*(0.3333333333333333 + (2*exp(-(gamma*ungappedlambda)))/3. + exp((-epen1_ - open1_)*ungappedlambda)/3. + (2*exp((-epen1_ - gamma - open1_)*ungappedlambda))/3. + exp((-epen2_ - open2_)*ungappedlambda)/3.));
+			transition_prob_Pabilities[0][3]=exp((-epen1_ - open1_)*ungappedlambda)/(3.*(0.3333333333333333 + (2*exp(-(gamma*ungappedlambda)))/3. + exp((-epen1_ - open1_)*ungappedlambda)/3. + (2*exp((-epen1_ - gamma - open1_)*ungappedlambda))/3. + exp((-epen2_ - open2_)*ungappedlambda)/3.));
+			transition_prob_Pabilities[0][4]=exp((-epen1_ - gamma - open1_)*ungappedlambda)/(3.*(0.3333333333333333 + (2*exp(-(gamma*ungappedlambda)))/3. + exp((-epen1_ - open1_)*ungappedlambda)/3. + (2*exp((-epen1_ - gamma - open1_)*ungappedlambda))/3. + exp((-epen2_ - open2_)*ungappedlambda)/3.));
+			transition_prob_Pabilities[0][5]=exp((-epen1_ - gamma - open1_)*ungappedlambda)/(3.*(0.3333333333333333 + (2*exp(-(gamma*ungappedlambda)))/3. + exp((-epen1_ - open1_)*ungappedlambda)/3. + (2*exp((-epen1_ - gamma - open1_)*ungappedlambda))/3. + exp((-epen2_ - open2_)*ungappedlambda)/3.));
+			transition_prob_Pabilities[0][6]=exp((-epen2_ - open2_)*ungappedlambda)/(3.*(0.3333333333333333 + (2*exp(-(gamma*ungappedlambda)))/3. + exp((-epen1_ - open1_)*ungappedlambda)/3. + (2*exp((-epen1_ - gamma - open1_)*ungappedlambda))/3. + exp((-epen2_ - open2_)*ungappedlambda)/3.));
+			transition_prob_Pabilities[1][0]=1/(3.*(0.3333333333333333 + (2*exp(-(gamma*ungappedlambda)))/3. + exp((-epen1_ - open1_)*ungappedlambda)/3. + (2*exp((-epen1_ - gamma - open1_)*ungappedlambda))/3. + exp((-epen2_ - open2_)*ungappedlambda)/3.));
+			transition_prob_Pabilities[1][1]=exp(-(gamma*ungappedlambda))/(3.*(0.3333333333333333 + (2*exp(-(gamma*ungappedlambda)))/3. + exp((-epen1_ - open1_)*ungappedlambda)/3. + (2*exp((-epen1_ - gamma - open1_)*ungappedlambda))/3. + exp((-epen2_ - open2_)*ungappedlambda)/3.));
+			transition_prob_Pabilities[1][2]=exp(-(gamma*ungappedlambda))/(3.*(0.3333333333333333 + (2*exp(-(gamma*ungappedlambda)))/3. + exp((-epen1_ - open1_)*ungappedlambda)/3. + (2*exp((-epen1_ - gamma - open1_)*ungappedlambda))/3. + exp((-epen2_ - open2_)*ungappedlambda)/3.));
+			transition_prob_Pabilities[1][3]=exp((-epen1_ - open1_)*ungappedlambda)/(3.*(0.3333333333333333 + (2*exp(-(gamma*ungappedlambda)))/3. + exp((-epen1_ - open1_)*ungappedlambda)/3. + (2*exp((-epen1_ - gamma - open1_)*ungappedlambda))/3. + exp((-epen2_ - open2_)*ungappedlambda)/3.));
+			transition_prob_Pabilities[1][4]=exp((-epen1_ - gamma - open1_)*ungappedlambda)/(3.*(0.3333333333333333 + (2*exp(-(gamma*ungappedlambda)))/3. + exp((-epen1_ - open1_)*ungappedlambda)/3. + (2*exp((-epen1_ - gamma - open1_)*ungappedlambda))/3. + exp((-epen2_ - open2_)*ungappedlambda)/3.));
+			transition_prob_Pabilities[1][5]=exp((-epen1_ - gamma - open1_)*ungappedlambda)/(3.*(0.3333333333333333 + (2*exp(-(gamma*ungappedlambda)))/3. + exp((-epen1_ - open1_)*ungappedlambda)/3. + (2*exp((-epen1_ - gamma - open1_)*ungappedlambda))/3. + exp((-epen2_ - open2_)*ungappedlambda)/3.));
+			transition_prob_Pabilities[1][6]=exp((-epen2_ - open2_)*ungappedlambda)/(3.*(0.3333333333333333 + (2*exp(-(gamma*ungappedlambda)))/3. + exp((-epen1_ - open1_)*ungappedlambda)/3. + (2*exp((-epen1_ - gamma - open1_)*ungappedlambda))/3. + exp((-epen2_ - open2_)*ungappedlambda)/3.));
+			transition_prob_Pabilities[2][0]=1/(3.*(0.3333333333333333 + (2*exp(-(gamma*ungappedlambda)))/3. + exp((-epen1_ - open1_)*ungappedlambda)/3. + (2*exp((-epen1_ - gamma - open1_)*ungappedlambda))/3. + exp((-epen2_ - open2_)*ungappedlambda)/3.));
+			transition_prob_Pabilities[2][1]=exp(-(gamma*ungappedlambda))/(3.*(0.3333333333333333 + (2*exp(-(gamma*ungappedlambda)))/3. + exp((-epen1_ - open1_)*ungappedlambda)/3. + (2*exp((-epen1_ - gamma - open1_)*ungappedlambda))/3. + exp((-epen2_ - open2_)*ungappedlambda)/3.));
+			transition_prob_Pabilities[2][2]=exp(-(gamma*ungappedlambda))/(3.*(0.3333333333333333 + (2*exp(-(gamma*ungappedlambda)))/3. + exp((-epen1_ - open1_)*ungappedlambda)/3. + (2*exp((-epen1_ - gamma - open1_)*ungappedlambda))/3. + exp((-epen2_ - open2_)*ungappedlambda)/3.));
+			transition_prob_Pabilities[2][3]=exp((-epen1_ - open1_)*ungappedlambda)/(3.*(0.3333333333333333 + (2*exp(-(gamma*ungappedlambda)))/3. + exp((-epen1_ - open1_)*ungappedlambda)/3. + (2*exp((-epen1_ - gamma - open1_)*ungappedlambda))/3. + exp((-epen2_ - open2_)*ungappedlambda)/3.));
+			transition_prob_Pabilities[2][4]=exp((-epen1_ - gamma - open1_)*ungappedlambda)/(3.*(0.3333333333333333 + (2*exp(-(gamma*ungappedlambda)))/3. + exp((-epen1_ - open1_)*ungappedlambda)/3. + (2*exp((-epen1_ - gamma - open1_)*ungappedlambda))/3. + exp((-epen2_ - open2_)*ungappedlambda)/3.));
+			transition_prob_Pabilities[2][5]=exp((-epen1_ - gamma - open1_)*ungappedlambda)/(3.*(0.3333333333333333 + (2*exp(-(gamma*ungappedlambda)))/3. + exp((-epen1_ - open1_)*ungappedlambda)/3. + (2*exp((-epen1_ - gamma - open1_)*ungappedlambda))/3. + exp((-epen2_ - open2_)*ungappedlambda)/3.));
+			transition_prob_Pabilities[2][6]=exp((-epen2_ - open2_)*ungappedlambda)/(3.*(0.3333333333333333 + (2*exp(-(gamma*ungappedlambda)))/3. + exp((-epen1_ - open1_)*ungappedlambda)/3. + (2*exp((-epen1_ - gamma - open1_)*ungappedlambda))/3. + exp((-epen2_ - open2_)*ungappedlambda)/3.));
+			transition_prob_Pabilities[3][0]=1/(3.*(0.3333333333333333 + exp(-(epen1_*ungappedlambda))/3. + (2*exp((-epen1_ - gamma)*ungappedlambda))/3. + (2*exp(-(gamma*ungappedlambda)))/3. + exp((-epen2_ - open2_)*ungappedlambda)/3.));
+			transition_prob_Pabilities[3][1]=exp(-(gamma*ungappedlambda))/(3.*(0.3333333333333333 + exp(-(epen1_*ungappedlambda))/3. + (2*exp((-epen1_ - gamma)*ungappedlambda))/3. + (2*exp(-(gamma*ungappedlambda)))/3. + exp((-epen2_ - open2_)*ungappedlambda)/3.));
+			transition_prob_Pabilities[3][2]=exp(-(gamma*ungappedlambda))/(3.*(0.3333333333333333 + exp(-(epen1_*ungappedlambda))/3. + (2*exp((-epen1_ - gamma)*ungappedlambda))/3. + (2*exp(-(gamma*ungappedlambda)))/3. + exp((-epen2_ - open2_)*ungappedlambda)/3.));
+			transition_prob_Pabilities[3][3]=exp(-(epen1_*ungappedlambda))/(3.*(0.3333333333333333 + exp(-(epen1_*ungappedlambda))/3. + (2*exp((-epen1_ - gamma)*ungappedlambda))/3. + (2*exp(-(gamma*ungappedlambda)))/3. + exp((-epen2_ - open2_)*ungappedlambda)/3.));
+			transition_prob_Pabilities[3][4]=exp((-epen1_ - gamma)*ungappedlambda)/(3.*(0.3333333333333333 + exp(-(epen1_*ungappedlambda))/3. + (2*exp((-epen1_ - gamma)*ungappedlambda))/3. + (2*exp(-(gamma*ungappedlambda)))/3. + exp((-epen2_ - open2_)*ungappedlambda)/3.));
+			transition_prob_Pabilities[3][5]=exp((-epen1_ - gamma)*ungappedlambda)/(3.*(0.3333333333333333 + exp(-(epen1_*ungappedlambda))/3. + (2*exp((-epen1_ - gamma)*ungappedlambda))/3. + (2*exp(-(gamma*ungappedlambda)))/3. + exp((-epen2_ - open2_)*ungappedlambda)/3.));
+			transition_prob_Pabilities[3][6]=exp((-epen2_ - open2_)*ungappedlambda)/(3.*(0.3333333333333333 + exp(-(epen1_*ungappedlambda))/3. + (2*exp((-epen1_ - gamma)*ungappedlambda))/3. + (2*exp(-(gamma*ungappedlambda)))/3. + exp((-epen2_ - open2_)*ungappedlambda)/3.));
+			transition_prob_Pabilities[4][0]=1/(3.*(0.3333333333333333 + exp(-(epen1_*ungappedlambda))/3. + (2*exp((-epen1_ - gamma)*ungappedlambda))/3. + (2*exp(-(gamma*ungappedlambda)))/3. + exp((-epen2_ - open2_)*ungappedlambda)/3.));
+			transition_prob_Pabilities[4][1]=exp(-(gamma*ungappedlambda))/(3.*(0.3333333333333333 + exp(-(epen1_*ungappedlambda))/3. + (2*exp((-epen1_ - gamma)*ungappedlambda))/3. + (2*exp(-(gamma*ungappedlambda)))/3. + exp((-epen2_ - open2_)*ungappedlambda)/3.));
+			transition_prob_Pabilities[4][2]=exp(-(gamma*ungappedlambda))/(3.*(0.3333333333333333 + exp(-(epen1_*ungappedlambda))/3. + (2*exp((-epen1_ - gamma)*ungappedlambda))/3. + (2*exp(-(gamma*ungappedlambda)))/3. + exp((-epen2_ - open2_)*ungappedlambda)/3.));
+			transition_prob_Pabilities[4][3]=exp(-(epen1_*ungappedlambda))/(3.*(0.3333333333333333 + exp(-(epen1_*ungappedlambda))/3. + (2*exp((-epen1_ - gamma)*ungappedlambda))/3. + (2*exp(-(gamma*ungappedlambda)))/3. + exp((-epen2_ - open2_)*ungappedlambda)/3.));
+			transition_prob_Pabilities[4][4]=exp((-epen1_ - gamma)*ungappedlambda)/(3.*(0.3333333333333333 + exp(-(epen1_*ungappedlambda))/3. + (2*exp((-epen1_ - gamma)*ungappedlambda))/3. + (2*exp(-(gamma*ungappedlambda)))/3. + exp((-epen2_ - open2_)*ungappedlambda)/3.));
+			transition_prob_Pabilities[4][5]=exp((-epen1_ - gamma)*ungappedlambda)/(3.*(0.3333333333333333 + exp(-(epen1_*ungappedlambda))/3. + (2*exp((-epen1_ - gamma)*ungappedlambda))/3. + (2*exp(-(gamma*ungappedlambda)))/3. + exp((-epen2_ - open2_)*ungappedlambda)/3.));
+			transition_prob_Pabilities[4][6]=exp((-epen2_ - open2_)*ungappedlambda)/(3.*(0.3333333333333333 + exp(-(epen1_*ungappedlambda))/3. + (2*exp((-epen1_ - gamma)*ungappedlambda))/3. + (2*exp(-(gamma*ungappedlambda)))/3. + exp((-epen2_ - open2_)*ungappedlambda)/3.));
+			transition_prob_Pabilities[5][0]=1/(3.*(0.3333333333333333 + exp(-(epen1_*ungappedlambda))/3. + (2*exp((-epen1_ - gamma)*ungappedlambda))/3. + (2*exp(-(gamma*ungappedlambda)))/3. + exp((-epen2_ - open2_)*ungappedlambda)/3.));
+			transition_prob_Pabilities[5][1]=exp(-(gamma*ungappedlambda))/(3.*(0.3333333333333333 + exp(-(epen1_*ungappedlambda))/3. + (2*exp((-epen1_ - gamma)*ungappedlambda))/3. + (2*exp(-(gamma*ungappedlambda)))/3. + exp((-epen2_ - open2_)*ungappedlambda)/3.));
+			transition_prob_Pabilities[5][2]=exp(-(gamma*ungappedlambda))/(3.*(0.3333333333333333 + exp(-(epen1_*ungappedlambda))/3. + (2*exp((-epen1_ - gamma)*ungappedlambda))/3. + (2*exp(-(gamma*ungappedlambda)))/3. + exp((-epen2_ - open2_)*ungappedlambda)/3.));
+			transition_prob_Pabilities[5][3]=exp(-(epen1_*ungappedlambda))/(3.*(0.3333333333333333 + exp(-(epen1_*ungappedlambda))/3. + (2*exp((-epen1_ - gamma)*ungappedlambda))/3. + (2*exp(-(gamma*ungappedlambda)))/3. + exp((-epen2_ - open2_)*ungappedlambda)/3.));
+			transition_prob_Pabilities[5][4]=exp((-epen1_ - gamma)*ungappedlambda)/(3.*(0.3333333333333333 + exp(-(epen1_*ungappedlambda))/3. + (2*exp((-epen1_ - gamma)*ungappedlambda))/3. + (2*exp(-(gamma*ungappedlambda)))/3. + exp((-epen2_ - open2_)*ungappedlambda)/3.));
+			transition_prob_Pabilities[5][5]=exp((-epen1_ - gamma)*ungappedlambda)/(3.*(0.3333333333333333 + exp(-(epen1_*ungappedlambda))/3. + (2*exp((-epen1_ - gamma)*ungappedlambda))/3. + (2*exp(-(gamma*ungappedlambda)))/3. + exp((-epen2_ - open2_)*ungappedlambda)/3.));
+			transition_prob_Pabilities[5][6]=exp((-epen2_ - open2_)*ungappedlambda)/(3.*(0.3333333333333333 + exp(-(epen1_*ungappedlambda))/3. + (2*exp((-epen1_ - gamma)*ungappedlambda))/3. + (2*exp(-(gamma*ungappedlambda)))/3. + exp((-epen2_ - open2_)*ungappedlambda)/3.));
+			transition_prob_Pabilities[6][0]=1/(1 + exp(-(epen2_*ungappedlambda)) + 2*exp(-(gamma*ungappedlambda)));
+			transition_prob_Pabilities[6][1]=exp(-(gamma*ungappedlambda))/(1 + exp(-(epen2_*ungappedlambda)) + 2*exp(-(gamma*ungappedlambda)));
+			transition_prob_Pabilities[6][2]=exp(-(gamma*ungappedlambda))/(1 + exp(-(epen2_*ungappedlambda)) + 2*exp(-(gamma*ungappedlambda)));
+			transition_prob_Pabilities[6][3]=0;
+			transition_prob_Pabilities[6][4]=0;
+			transition_prob_Pabilities[6][5]=0;
+			transition_prob_Pabilities[6][6]=exp(-(epen2_*ungappedlambda))/(1 + exp(-(epen2_*ungappedlambda)) + 2*exp(-(gamma*ungappedlambda)));
 		};
 		//for test
 
@@ -4528,13 +4528,13 @@ Sls::par_test1_type *par_test1_)//for tests
 			long int i;
 			for(i=0;i<number_of_states;i++)
 			{
-				transition_probabilities[i][state_name_into_number["F"]]=0;
-				transition_probabilities[state_name_into_number["F"]][i]=0;
+				transition_prob_Pabilities[i][state_name_into_number["F"]]=0;
+				transition_prob_Pabilities[state_name_into_number["F"]][i]=0;
 			};
 
-			transition_probabilities[state_name_into_number["F"]][state_name_into_number["S1"]]=1.0/3.0;
-			transition_probabilities[state_name_into_number["F"]][state_name_into_number["S2"]]=1.0/3.0;
-			transition_probabilities[state_name_into_number["F"]][state_name_into_number["S3"]]=1.0-1.0/3.0-1.0/3.0;
+			transition_prob_Pabilities[state_name_into_number["F"]][state_name_into_number["S1"]]=1.0/3.0;
+			transition_prob_Pabilities[state_name_into_number["F"]][state_name_into_number["S2"]]=1.0/3.0;
+			transition_prob_Pabilities[state_name_into_number["F"]][state_name_into_number["S3"]]=1.0-1.0/3.0-1.0/3.0;
 
 		};
 
@@ -4545,7 +4545,7 @@ Sls::par_test1_type *par_test1_)//for tests
 		{
 			for(j=0;j<number_of_states;j++)
 			{
-				if(transition_probabilities[i][j]<0)
+				if(transition_prob_Pabilities[i][j]<0)
 				{
 					throw error("Error - transition probablities of the importance sampling are negative;\nthe method is not applicable for the input scoring scheme\n",1);
 				};
@@ -4565,8 +4565,8 @@ Sls::par_test1_type *par_test1_)//for tests
 
 		states_description_cs[0]=make_pair(3,1);
 
-		FSA_utils::get_memory_for_matrix(number_of_states_cs,number_of_states_cs,transition_probabilities_cs);
-		transition_probabilities_cs[0][0]=1;
+		FSA_utils::get_memory_for_matrix(number_of_states_cs,number_of_states_cs,transition_prob_Pabilities_cs);
+		transition_prob_Pabilities_cs[0][0]=1;
 	};
 
 //crude sampling - end
@@ -4625,7 +4625,7 @@ Sls::par_test1_type *par_test1_)//for tests
 	};
 
 //=========================
-	FSA_IS_transition_probabilities_calculation(
+	FSA_IS_transition_prob_Pabilities_calculation(
 	FSA_flag,
 	states_distr,
 
@@ -4652,7 +4652,7 @@ Sls::par_test1_type *par_test1_)//for tests
 		bool cs_flag_tmp=false;
 		bool sim_flag_tmp=false;
 
-		FSA_IS_transition_probabilities_calculation(
+		FSA_IS_transition_prob_Pabilities_calculation(
 		FSA_flag,
 		states_distr_reversed,
 
@@ -4722,7 +4722,7 @@ Sls::par_test1_type *par_test1_)//for tests
 		RR1,//background probability for the sequence #1
 		RR2,//background probability for the sequence #2
 		number_of_states,//number of states
-		transition_probabilities,//transition probabilities between states; matrix d_number_of_states x d_number_of_states
+		transition_prob_Pabilities,//transition probabilities between states; matrix d_number_of_states x d_number_of_states
 		states_description,//description of the states; the index is a state number
 		states_distr_reversed);//distributions of the states; the index is a state number
 
@@ -4737,7 +4737,7 @@ Sls::par_test1_type *par_test1_)//for tests
 		RR1,//background probability for the sequence #1
 		RR2,//background probability for the sequence #2
 		number_of_states,//number of states
-		transition_probabilities,//transition probabilities between states; matrix d_number_of_states x d_number_of_states
+		transition_prob_Pabilities,//transition probabilities between states; matrix d_number_of_states x d_number_of_states
 		states_description,//description of the states; the index is a state number
 		states_distr);//distributions of the states; the index is a state number
 
@@ -4756,7 +4756,7 @@ Sls::par_test1_type *par_test1_)//for tests
 		RR1,//background probability for the sequence #1
 		RR2,//background probability for the sequence #2
 		number_of_states_cs,//number of states
-		transition_probabilities_cs,//transition probabilities between states; matrix d_number_of_states x d_number_of_states
+		transition_prob_Pabilities_cs,//transition probabilities between states; matrix d_number_of_states x d_number_of_states
 		states_description_cs,//description of the states; the index is a state number
 		states_distr_cs);//distributions of the states; the index is a state number
 	};
@@ -4831,7 +4831,7 @@ Sls::par_test1_type *par_test1_)//for tests
 
 	two_dim_layer_alignment_algorithm<long int>* two_dim_layer_alignment_algorithm_test=NULL;
 
-	Sls::FALP_set_of_parameters par;
+	Sls_P::FALP_set_of_parameters par;
 
 	double time0_start;
 	FSA_utils::get_current_time(time0_start);
@@ -5178,7 +5178,7 @@ product of lengths\n";
 				bool save_states_flag=true;
 				mult_states_type *states_old1=NULL;
 				mult_states_type *states_new1=new mult_states_type;
-				Sls::FALP_set_of_parameters par1;
+				Sls_P::FALP_set_of_parameters par1;
 
 				bool further_expanding_tmp1=true;
 
@@ -5232,7 +5232,7 @@ product of lengths\n";
 				while(flag1)
 				{
 					
-					Sls::FALP_set_of_parameters par1_old;
+					Sls_P::FALP_set_of_parameters par1_old;
 
 					if(states_old1)
 					{
@@ -5959,7 +5959,7 @@ product of lengths\n";
 	IS1_general_simulation *IS1_general_simulation_reversed=NULL;
 	two_dim_layer_alignment_algorithm<long int> *two_dim_layer_alignment_algorithm_test_reversed=NULL;
 
-	Sls::FALP_set_of_parameters par_reversed;
+	Sls_P::FALP_set_of_parameters par_reversed;
 
 
 	if(FSA_flag&&futher_expanding)
@@ -6302,7 +6302,7 @@ product of lengths\n";
 	delete[]RR2_sum_elements;
 
 	FSA_utils::delete_memory_for_matrix(alphabet_letters_number1,smatr);
-	FSA_utils::delete_memory_for_matrix(number_of_states,transition_probabilities);
+	FSA_utils::delete_memory_for_matrix(number_of_states,transition_prob_Pabilities);
 
 	if(futher_expanding&&FSA_flag)
 	{
@@ -6331,7 +6331,7 @@ product of lengths\n";
 	if(cs_flag)
 	{
 
-		FSA_utils::delete_memory_for_matrix(number_of_states_cs,transition_probabilities_cs);
+		FSA_utils::delete_memory_for_matrix(number_of_states_cs,transition_prob_Pabilities_cs);
 		
 		delete two_dim_layer_alignment_algorithm_test_cs;
 		delete IS1_general_simulation_cs;
@@ -6757,7 +6757,7 @@ long int target_ALP_,//target ALP number
 double ungapped_lambda_,
 long int limit2_,
 long int number_of_sets_,//number of sets for error calculation
-Sls::FALP_set_of_parameters &par_,
+Sls_P::FALP_set_of_parameters &par_,
 bool screen_output_flag_,
 
 bool futher_expanding_,
@@ -7911,7 +7911,7 @@ long int target_ALP_,//target ALP number
 double ungapped_lambda_,
 long int limit2_,
 long int number_of_sets_,//number of sets for error calculation
-Sls::FALP_set_of_parameters &par_,
+Sls_P::FALP_set_of_parameters &par_,
 bool &inside_simulation_flag_,
 bool screen_output_flag_,
 bool screen_output_k_flag_,
@@ -10033,7 +10033,7 @@ string RR2_file_name_)//background frequencies file name for the sequence #2
 	double *RR1=NULL;//background probability for the sequence #1
 	double *RR2=NULL;//background probability for the sequence #2
 	long int number_of_states=3;//number of states
-	double **transition_probabilities=NULL;//transition probabilities between states; matrix d_number_of_states x d_number_of_states
+	double **transition_prob_Pabilities=NULL;//transition probabilities between states; matrix d_number_of_states x d_number_of_states
 	pair<long int, long int> *states_description=NULL;//description of the states; the index is a state number
 	double ***states_distr=NULL;//distributions of the states; the index is a state number
 								//the second and the third indexes correspond to an array of dimensions d_A_letters^state_description_type.first x d_B_letters^state_description_type.second
@@ -10107,7 +10107,7 @@ string RR2_file_name_)//background frequencies file name for the sequence #2
 	state_number_into_name[2]="I";
 
 
-	FSA_utils::get_memory_for_matrix(number_of_states,number_of_states,transition_probabilities);
+	FSA_utils::get_memory_for_matrix(number_of_states,number_of_states,transition_prob_Pabilities);
 
 	long int min_open=FSA_utils::Tmin(open1_,open2_);
 	long int min_epen=FSA_utils::Tmin(epen1_,epen2_);
@@ -10117,40 +10117,40 @@ string RR2_file_name_)//background frequencies file name for the sequence #2
 
 
 
-	transition_probabilities[state_name_into_number["S"]][state_name_into_number["S"]]=
+	transition_prob_Pabilities[state_name_into_number["S"]][state_name_into_number["S"]]=
 		((1-v)*(1-v))/((1+mu-v)*(1+mu-v));
 
-	transition_probabilities[state_name_into_number["S"]][state_name_into_number["D"]]=
+	transition_prob_Pabilities[state_name_into_number["S"]][state_name_into_number["D"]]=
 		mu/(1+mu-v);
 
-	transition_probabilities[state_name_into_number["S"]][state_name_into_number["I"]]=
+	transition_prob_Pabilities[state_name_into_number["S"]][state_name_into_number["I"]]=
 		(mu*(1-v))/((1+mu-v)*(1+mu-v));
 
 
 
 
-	transition_probabilities[state_name_into_number["D"]][state_name_into_number["S"]]=
+	transition_prob_Pabilities[state_name_into_number["D"]][state_name_into_number["S"]]=
 		((1-v)*(1-v))/(1+mu-v);
 
-	transition_probabilities[state_name_into_number["D"]][state_name_into_number["D"]]=
+	transition_prob_Pabilities[state_name_into_number["D"]][state_name_into_number["D"]]=
 		v;
 
-	transition_probabilities[state_name_into_number["D"]][state_name_into_number["I"]]=
+	transition_prob_Pabilities[state_name_into_number["D"]][state_name_into_number["I"]]=
 		(mu*(1-v))/(1+mu-v);
 
 
 
 
-	transition_probabilities[state_name_into_number["I"]][state_name_into_number["S"]]=
+	transition_prob_Pabilities[state_name_into_number["I"]][state_name_into_number["S"]]=
 		1-v;
 
-	transition_probabilities[state_name_into_number["I"]][state_name_into_number["D"]]=
+	transition_prob_Pabilities[state_name_into_number["I"]][state_name_into_number["D"]]=
 		0;
 
-	transition_probabilities[state_name_into_number["I"]][state_name_into_number["I"]]=
+	transition_prob_Pabilities[state_name_into_number["I"]][state_name_into_number["I"]]=
 		v;
 
-	//FSA_utils::print_matrix("mtp.out",3,3,transition_probabilities);
+	//FSA_utils::print_matrix("mtp.out",3,3,transition_prob_Pabilities);
 
 //--------------------
 	states_description=new pair<long int, long int>[number_of_states];
@@ -10205,7 +10205,7 @@ string RR2_file_name_)//background frequencies file name for the sequence #2
 	RR1,//background probability for the sequence #1
 	RR2,//background probability for the sequence #2
 	number_of_states,//number of states
-	transition_probabilities,//transition probabilities between states; matrix d_number_of_states x d_number_of_states
+	transition_prob_Pabilities,//transition probabilities between states; matrix d_number_of_states x d_number_of_states
 	states_description,//description of the states; the index is a state number
 	states_distr);//distributions of the states; the index is a state number
 
@@ -10213,12 +10213,12 @@ string RR2_file_name_)//background frequencies file name for the sequence #2
 //crude sampling object
 
 	long int number_of_states_cs=1;
-	double **transition_probabilities_cs=NULL;//transition probabilities between states; matrix d_number_of_states x d_number_of_states
+	double **transition_prob_Pabilities_cs=NULL;//transition probabilities between states; matrix d_number_of_states x d_number_of_states
 	pair<long int, long int> *states_description_cs=NULL;//description of the states; the index is a state number
 	double ***states_distr_cs=NULL;//distributions of the states; the index is a state number
 
-	FSA_utils::get_memory_for_matrix(number_of_states_cs,number_of_states_cs,transition_probabilities_cs);
-	transition_probabilities_cs[state_name_into_number["S"]][state_name_into_number["S"]]=1;
+	FSA_utils::get_memory_for_matrix(number_of_states_cs,number_of_states_cs,transition_prob_Pabilities_cs);
+	transition_prob_Pabilities_cs[state_name_into_number["S"]][state_name_into_number["S"]]=1;
 
 	states_description_cs=new pair<long int, long int>[number_of_states_cs];
 	FSA_utils::assert_mem(states_description_cs);
@@ -10255,7 +10255,7 @@ string RR2_file_name_)//background frequencies file name for the sequence #2
 	RR1,//background probability for the sequence #1
 	RR2,//background probability for the sequence #2
 	number_of_states_cs,//number of states
-	transition_probabilities_cs,//transition probabilities between states; matrix d_number_of_states x d_number_of_states
+	transition_prob_Pabilities_cs,//transition probabilities between states; matrix d_number_of_states x d_number_of_states
 	states_description_cs,//description of the states; the index is a state number
 	states_distr_cs);//distributions of the states; the index is a state number
 
@@ -10531,8 +10531,8 @@ string RR2_file_name_)//background frequencies file name for the sequence #2
 	delete[]RR2_sum_elements;
 
 	FSA_utils::delete_memory_for_matrix(alphabet_letters_number1,smatr);
-	FSA_utils::delete_memory_for_matrix(number_of_states,transition_probabilities);
-	FSA_utils::delete_memory_for_matrix(number_of_states_cs,transition_probabilities_cs);
+	FSA_utils::delete_memory_for_matrix(number_of_states,transition_prob_Pabilities);
+	FSA_utils::delete_memory_for_matrix(number_of_states_cs,transition_prob_Pabilities_cs);
 
 	for(s=0;s<number_of_states;s++)
 	{

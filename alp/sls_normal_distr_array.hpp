@@ -37,7 +37,7 @@ Contents: Normal distribution array for P-values calculation
 ******************************************************************************/
 
 
-namespace Sls {
+namespace Sls_P {
 
 #define NORMAL_DISTR_ARRAY_DIM 1000
 static double normal_distr_array_for_P_values_calculation[NORMAL_DISTR_ARRAY_DIM+1]={

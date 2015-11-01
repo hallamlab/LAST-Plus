@@ -36,7 +36,7 @@ Contents: Ascending ladder points simulation
 
 #include "sls_alp.hpp"
 
-using namespace Sls;
+using namespace Sls_P;
 
 static long int small_long=(long int)((double)LONG_MIN/2.0);
 

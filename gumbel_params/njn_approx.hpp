@@ -43,7 +43,7 @@ Contents:
 BEGIN_NCBI_SCOPE
 BEGIN_SCOPE(blast)
 
-BEGIN_SCOPE(Njn)
+BEGIN_SCOPE(Njn_P)
 BEGIN_SCOPE(Approx)
 
       // Approximation
@@ -84,7 +84,7 @@ BEGIN_SCOPE(Approx)
       template <typename T> bool le (T x_, T y_, T round_) {return ! gt (x_, y_, round_);}
 
 END_SCOPE(Approx)
-END_SCOPE(Njn)
+END_SCOPE(Njn_P)
 
 END_SCOPE(blast)
 END_NCBI_SCOPE

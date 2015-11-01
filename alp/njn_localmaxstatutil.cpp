@@ -43,8 +43,7 @@ Contents:
 
 #include "sls_basic.hpp"
 
-using namespace Njn;
-
+using namespace Njn_P;
 
 void LocalMaxStatUtil::flatten ( // allocates memory for linear probabilities and scores
 size_t dimension_, // dimension of equilProb_
@@ -161,11 +160,11 @@ const double *q_) // q_ [0...dimension_) : distribution of independent letters
 }
 
 
-   size_t n_dimension = 0; // dimension of matrices
-   const long int *n_score = 0; // score_ [0...dimension_ - 1]
-   const double *n_prob = 0; // prob_ [0...dimension_ - 1]
-   long int n_morgue = 0; // score_ [0] - 1
-   long int n_entry = 0; // n_entry = 0 : weak descending ladder epoch ; n_entry = -1 : strict descending ladder epoch 
+   size_t n_dimension_P = 0; // dimension of matrices
+   const long int *n_score_P = 0; // score_ [0...dimension_ - 1]
+   const double *n_prob_P = 0; // prob_ [0...dimension_ - 1]
+   long int n_morgue_P = 0; // score_ [0] - 1
+   long int n_entry_P = 0; // n_entry_P = 0 : weak descending ladder epoch ; n_entry_P = -1 : strict descending ladder epoch 
 
    void n_setParameters (
    size_t dimension_, // #(distinct values) of scores & probabilities (which are paired)         
@@ -173,18 +172,18 @@ const double *q_) // q_ [0...dimension_) : distribution of independent letters
    const double *prob_, // probabilities
    long int entry_ = 0) // entry_ = 0 : weak descending ladder epoch ; entry_ = -1 : strict descending ladder epoch
    {
-      n_dimension = dimension_;
-      n_score = score_;
-      n_prob = prob_;
-      n_morgue = score_ [0] - 1;
-      n_entry = entry_;
+      n_dimension_P = dimension_;
+      n_score_P = score_;
+      n_prob_P = prob_;
+      n_morgue_P = score_ [0] - 1;
+      n_entry_P = entry_;
    }
 
-   double n_totalProbAssoc (double x_)
+   double n_totalProbAssoc_P (double x_)
    {
       double sum = 0.0;
-      for (size_t i = 0; i < n_dimension; i++) {
-         sum += n_prob [i] * exp (x_ * static_cast <double> (n_score [i]));
+      for (size_t i = 0; i < n_dimension_P; i++) {
+         sum += n_prob_P [i] * exp (x_ * static_cast <double> (n_score_P [i]));
       }
       return sum;
    }
@@ -192,23 +191,23 @@ const double *q_) // q_ [0...dimension_) : distribution of independent letters
    double n_meanPowerAssoc (double x_, long int power_ = 1L)
    {
       double sum = 0.0;
-      for (size_t i = 0; i < n_dimension; i++) {
-          sum += Integer::integerPower (static_cast <double> (n_score [i]), power_) * 
-            n_prob [i] * exp (x_ * static_cast <double> (n_score [i]));
+      for (size_t i = 0; i < n_dimension_P; i++) {
+          sum += Integer::integerPower (static_cast <double> (n_score_P [i]), power_) * 
+            n_prob_P [i] * exp (x_ * static_cast <double> (n_score_P [i]));
       }
       return sum;
    }
 
-   double n_meanAssoc (double x_)
+   double n_meanAssoc_P (double x_)
    {
       return n_meanPowerAssoc (x_);
    }
 
-   void n_bracket (double *p_, double *q_)
+   void n_bracket_P (double *p_, double *q_)
    {
       const double FACTOR = 0.5;
-      *p_ = -log (n_prob [n_dimension - 1]) / static_cast <double> (n_score [n_dimension - 1]);
-      while (1.0 <= n_totalProbAssoc (*p_)) {
+      *p_ = -log (n_prob_P [n_dimension_P - 1]) / static_cast <double> (n_score_P [n_dimension_P - 1]);
+      while (1.0 <= n_totalProbAssoc_P (*p_)) {
          *p_ *= FACTOR;
       }
       *q_ = *p_ / FACTOR;
@@ -237,9 +236,9 @@ const double *prob_) // probability of corresponding value
    double p = 0.0;
    double q = 0.0;
 
-   n_bracket (&p, &q);
+   n_bracket_P (&p, &q);
 
-   return Root::bisection (1.0, n_totalProbAssoc, p, q, REL_TOL * fabs (p - q));
+   return Root::bisection (1.0, n_totalProbAssoc_P, p, q, REL_TOL * fabs (p - q));
 }
 
 double LocalMaxStatUtil::muPowerAssoc (
@@ -278,8 +277,8 @@ double lambda_) // lambda
 
    double p = 0.0;
    double q = 0.0;
-   n_bracket (&p, &q);
-   return Root::bisection (0.0, n_meanAssoc, 0.0, lambda_, REL_TOL * fabs (p - q));
+   n_bracket_P (&p, &q);
+   return Root::bisection (0.0, n_meanAssoc_P, 0.0, lambda_, REL_TOL * fabs (p - q));
 }
 
 double LocalMaxStatUtil::rMin (
@@ -294,7 +293,7 @@ double thetaMin_) // argument of rate
 
    if (thetaMin_ == 0.0) thetaMin_ = thetaMin (dimension_, score_, prob_, lambda_);
 
-   return n_totalProbAssoc (thetaMin_);
+   return n_totalProbAssoc_P (thetaMin_);
 }
 
 double LocalMaxStatUtil::r ( // r (theta)
@@ -336,14 +335,14 @@ const long int *score_) // scores
 
    long int n_step (long int oldValue_, size_t state_)
    {
-      assert (state_ < n_dimension);
-      return n_morgue < oldValue_ ? oldValue_ + n_score [state_] : oldValue_;
+      assert (state_ < n_dimension_P);
+      return n_morgue_P < oldValue_ ? oldValue_ + n_score_P [state_] : oldValue_;
    }
 
    long int n_bury (long int oldValue_, size_t state_)
    {
-      assert (state_ < n_dimension);
-      return n_entry < oldValue_ ? oldValue_ : n_morgue;
+      assert (state_ < n_dimension_P);
+      return n_entry_P < oldValue_ ? oldValue_ : n_morgue_P;
    }
 
 
@@ -405,7 +404,7 @@ bool *terminated_) // ? Was the dynamic programming computation terminated prema
 
     double time0 = 0.0;
     double time1 = 0.0;
-	if (time_ > 0.0) Sls::sls_basic::get_current_time (time0);
+	if (time_ > 0.0) Sls_P::sls_basic::get_current_time (time0);
 
     DynProgProbLim dynProgProb (n_step, dimension_, prob_, score_ [0] - 1, Y_MAX);
 
@@ -448,7 +447,7 @@ bool *terminated_) // ? Was the dynamic programming computation terminated prema
 
         if (time_ > 0.0)
         {
-			Sls::sls_basic::get_current_time (time1);
+			Sls_P::sls_basic::get_current_time (time1);
             if (time1 - time0 > time_) 
             {
                 *terminated_ = true;
@@ -530,4 +529,3 @@ const double *prob_) // corresponding probabilities
    if (score_ [dimension_ - 1] <= 0.0) return false;
    return true;
 }
-

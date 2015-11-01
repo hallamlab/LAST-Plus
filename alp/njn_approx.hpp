@@ -41,7 +41,7 @@ Contents:
 #include <math.h>
 
 
-namespace Njn { 
+namespace Njn_P { 
 	namespace Approx{
 
       // Approximation

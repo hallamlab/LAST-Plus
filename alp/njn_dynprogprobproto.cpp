@@ -35,7 +35,7 @@ Contents:
 
 #include "njn_dynprogprobproto.hpp"
 
-using namespace Njn;
+using namespace Njn_P;
 
 DynProgProbProto::~DynProgProbProto () {}
 

@@ -43,7 +43,7 @@ Contents: Additive random number generator
 #include "njn_random.hpp"
 #include <cstring>
 
-using namespace Njn;
+using namespace Njn_P;
 
 
 namespace {

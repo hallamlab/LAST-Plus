@@ -48,7 +48,7 @@ Contents:
 BEGIN_NCBI_SCOPE
 BEGIN_SCOPE(blast)
 
-BEGIN_SCOPE(Njn)
+BEGIN_SCOPE(Njn_P)
 BEGIN_SCOPE(Root)
 
 
@@ -170,13 +170,13 @@ BEGIN_SCOPE(Root)
       // huntExtreme looks for a change in sign, so y_ should not be an extremum.
 
 END_SCOPE(Root)
-END_SCOPE(Njn)
+END_SCOPE(Njn_P)
 
 //
 // There are no more declarations beyond this point.
 //
 
-BEGIN_SCOPE(Njn)
+BEGIN_SCOPE(Njn_P)
 BEGIN_SCOPE(Root)
 
 BEGIN_SCOPE()
@@ -479,7 +479,7 @@ END_SCOPE()
 
 
 END_SCOPE(Root)
-END_SCOPE(Njn)
+END_SCOPE(Njn_P)
 
 END_SCOPE(blast)
 END_NCBI_SCOPE

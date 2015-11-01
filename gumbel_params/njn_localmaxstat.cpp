@@ -48,7 +48,7 @@ Contents:
 USING_NCBI_SCOPE;
 USING_SCOPE(blast);
 
-USING_SCOPE(Njn);
+USING_SCOPE(Njn_P);
 
 double LocalMaxStat::s_time = 0.0;
 
@@ -147,7 +147,7 @@ const double *prob_) // corresponding probabilities
     if (! LocalMaxStatUtil::isLogarithmic (dimension_, score_, prob_))
     {
         //IoUtil::abort ("LocalMaxStat::copy : ! isLogarithmic");
-                throw Sls::error("The regime is not logarithmic\n",3);
+                throw Sls_P::error("The regime is not logarithmic\n",3);
     }
 
     size_t i = 0;

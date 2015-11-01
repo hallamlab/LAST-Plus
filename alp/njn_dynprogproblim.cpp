@@ -38,7 +38,7 @@ Contents:
 #include "njn_memutil.hpp"
 
 
-using namespace Njn;
+using namespace Njn_P;
 
 
 void DynProgProbLim::setLimits ( 

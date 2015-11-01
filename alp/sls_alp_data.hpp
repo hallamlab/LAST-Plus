@@ -70,7 +70,7 @@ Contents: Contains input data
 
 const double mb_bytes=1048576.0;
 
-namespace Sls {
+namespace Sls_P {
 
 
 	struct struct_for_randomization
@@ -385,7 +385,7 @@ namespace Sls {
 
 		inline double ran2()//generates the next random value
 		{
-			return Njn::Uniform::variate <double> (0,1);
+			return Njn_P::Uniform::variate <double> (0,1);
 		}
 
 		static void read_smatr(
@@ -535,7 +535,7 @@ namespace Sls {
 
 		while(v2-v1>1)
 		{
-			long int v3=(long int)(Sls::alp_data::round(double(v2+v1)/2.0));
+			long int v3=(long int)(Sls_P::alp_data::round(double(v2+v1)/2.0));
 			if(sum_distr_[v3-1]==value_)
 			{
 				v1=v3-1;

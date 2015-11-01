@@ -60,7 +60,7 @@ Contents: Frameshift alignment algorithms utilities
 #include "njn_random.hpp"
 #include "njn_uniform.hpp"
 
-namespace Sls 
+namespace Sls_P 
 {
 
 	class FSA_utils: public sls_basic//contains general functions
@@ -273,14 +273,14 @@ namespace Sls
 
 		inline static double ran2()//generates the next random value
 		{
-			return Njn::Uniform::variate <double> (0,1);
+			return Njn_P::Uniform::variate <double> (0,1);
 			//double rand_C=(double)((double)rand()/(double)RAND_MAX);
 			//return rand_C;	
 		}
 
 		inline static void srand2(long int seed_)//initializes the seed
 		{
-			Njn::Random::seed(seed_);
+			Njn_P::Random::seed(seed_);
 			//srand(seed_);
 		}
 
@@ -353,7 +353,7 @@ namespace Sls
 
 				long int i;
 				matr_=new T *[dim1_];
-				Sls::FSA_utils::assert_mem(matr_);
+				Sls_P::FSA_utils::assert_mem(matr_);
 
 				for(i=0;i<dim1_;i++)
 				{
@@ -363,7 +363,7 @@ namespace Sls
 				for(i=0;i<dim1_;i++)
 				{
 					matr_[i]=new T [dim2_];
-					Sls::FSA_utils::assert_mem(matr_[i]);
+					Sls_P::FSA_utils::assert_mem(matr_[i]);
 				};
 
 			}
@@ -436,7 +436,7 @@ namespace Sls
 
 			while(v2-v1>1)
 			{
-				long int v3=(long int)(Sls::FSA_utils::round(double(v2+v1)/2.0));
+				long int v3=(long int)(Sls_P::FSA_utils::round(double(v2+v1)/2.0));
 				if(sum_distr_[v3-1]==value_)
 				{
 					v1=v3-1;

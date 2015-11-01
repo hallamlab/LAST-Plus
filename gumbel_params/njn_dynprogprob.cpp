@@ -45,7 +45,7 @@ Contents:
 
 USING_NCBI_SCOPE;
 USING_SCOPE(blast);
-USING_SCOPE(Njn);
+USING_SCOPE(Njn_P);
 
 
 const size_t DynProgProb::ARRAY_CAPACITY = 256;

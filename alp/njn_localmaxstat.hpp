@@ -43,7 +43,7 @@ Contents: Random walk parameters
 
 
 
-namespace Njn {
+namespace Njn_P {
 
 
     class LocalMaxStat { 

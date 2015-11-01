@@ -49,7 +49,7 @@ Contents: Matrix routines
 BEGIN_NCBI_SCOPE
 BEGIN_SCOPE(blast)
 
-BEGIN_SCOPE(Njn)
+BEGIN_SCOPE(Njn_P)
 
     
     template <typename T>
@@ -123,28 +123,28 @@ BEGIN_SCOPE(MatrixIO)
         Format clearFormat (); // resets the format type to and returns default
 
 END_SCOPE(MatrixIO)
-END_SCOPE(Njn)
+END_SCOPE(Njn_P)
 
 template <typename T> 
-bool operator== (const Njn::Matrix <T> &matrix_, const Njn::Matrix <T> &matrix0_);
+bool operator== (const Njn_P::Matrix <T> &matrix_, const Njn_P::Matrix <T> &matrix0_);
 
 template <typename S, typename T> 
-void copy (Njn::Matrix <S> *matrix_, const Njn::Matrix <T> &matrix0_);
+void copy (Njn_P::Matrix <S> *matrix_, const Njn_P::Matrix <T> &matrix0_);
 
 template <typename T> 
-std::ostream &operator<< (std::ostream &ostr_, const Njn::Matrix <T> &matrix_);
+std::ostream &operator<< (std::ostream &ostr_, const Njn_P::Matrix <T> &matrix_);
 
 template <typename T> 
-std::istream &operator>> (std::istream &istr_, Njn::Matrix <T> &matrix_);
+std::istream &operator>> (std::istream &istr_, Njn_P::Matrix <T> &matrix_);
 
-inline std::ostream &operator << (std::ostream &ostr_, Njn::MatrixIO::Format format_);
-inline std::istream &operator >> (std::istream &istr_, Njn::MatrixIO::Format format_);
+inline std::ostream &operator << (std::ostream &ostr_, Njn_P::MatrixIO::Format format_);
+inline std::istream &operator >> (std::istream &istr_, Njn_P::MatrixIO::Format format_);
 
 //
 // There are no more declarations beyond this point.
 //
 
-BEGIN_SCOPE(Njn)
+BEGIN_SCOPE(Njn_P)
 
     template <typename T> 
     Matrix <T> *Matrix <T>::matrix (size_t k_, size_t m_, size_t n_, T a_) 
@@ -281,8 +281,8 @@ BEGIN_SCOPE(Njn)
     {
         assert (ostr_);
 
-        USING_SCOPE(Njn);
-        USING_SCOPE(Njn::IoUtil);
+        USING_SCOPE(Njn_P);
+        USING_SCOPE(Njn_P::IoUtil);
 
         size_t i = 0;
         size_t j = 0;
@@ -356,8 +356,8 @@ BEGIN_SCOPE(Njn)
     {
         assert (istr_);
 
-        USING_SCOPE(Njn);
-        USING_SCOPE(Njn::IoUtil);
+        USING_SCOPE(Njn_P);
+        USING_SCOPE(Njn_P::IoUtil);
 
         size_t i = 0;
         size_t j = 0;
@@ -383,16 +383,16 @@ BEGIN_SCOPE(Njn)
 
                 while (sstream >> value) v.push_back (value);
 
-                if (! sstream.eof ()) IoUtil::abort ("Njn::Matrix::in : bad value for the MACHINE");
+                if (! sstream.eof ()) IoUtil::abort ("Njn_P::Matrix::in : bad value for the MACHINE");
 
                 n = v.size ();
-                if (n == 0) IoUtil::abort ("Njn::Matrix::in : bad n for the MACHINE");
+                if (n == 0) IoUtil::abort ("Njn_P::Matrix::in : bad n for the MACHINE");
 
                 while (istr_ >> value) v.push_back (value);
-                if (! sstream.eof ()) IoUtil::abort ("Njn::Matrix::in : bad value for the MACHINE");
+                if (! sstream.eof ()) IoUtil::abort ("Njn_P::Matrix::in : bad value for the MACHINE");
 
                 m = v.size () / n;
-                if (m * n != v.size ()) IoUtil::abort ("Njn::Matrix::in : rows for the MACHINE have different lengths.");
+                if (m * n != v.size ()) IoUtil::abort ("Njn_P::Matrix::in : rows for the MACHINE have different lengths.");
 
                 if (m != this->getM () || n != this->getN ()) {
 
@@ -418,14 +418,14 @@ BEGIN_SCOPE(Njn)
                 sstream.clear ();
                 sstream << s;
                 sstream >> m;
-                if (sstream.fail ()) IoUtil::abort ("Njn::Matrix::in : bad m");
+                if (sstream.fail ()) IoUtil::abort ("Njn_P::Matrix::in : bad m");
 
                 IoUtil::getLine (istr_, s);
                 sstream.str ("");
                 sstream.clear ();
                 sstream << s;
                 sstream >> n;
-                if (sstream.fail ()) IoUtil::abort ("Njn::Matrix::in : bad n");
+                if (sstream.fail ()) IoUtil::abort ("Njn_P::Matrix::in : bad n");
 
                 if (m != this->getM () || n != this->getN ()) {
 
@@ -450,7 +450,7 @@ BEGIN_SCOPE(Njn)
                             sistream << i;
                             ostringstream sjstream;
                             sjstream << j;
-                            IoUtil::abort ("Njn::Matrix::in : bad d_matrix_p [" + sistream.str () + "][" + sjstream.str () + "]");
+                            IoUtil::abort ("Njn_P::Matrix::in : bad d_matrix_p [" + sistream.str () + "][" + sjstream.str () + "]");
                         }
                     }
                 }
@@ -468,16 +468,16 @@ BEGIN_SCOPE(Njn)
             {
                 v.push_back (value);
             }
-            if (! sstream.eof ()) IoUtil::abort ("Njn::Matrix::in : bad value for the MatrixIO::SYMMETRIC");
+            if (! sstream.eof ()) IoUtil::abort ("Njn_P::Matrix::in : bad value for the MatrixIO::SYMMETRIC");
 
             m = n = v.size ();
-            if (n == 0) IoUtil::abort ("Njn::Matrix::in : bad n for the MatrixIO::SYMMETRIC");
+            if (n == 0) IoUtil::abort ("Njn_P::Matrix::in : bad n for the MatrixIO::SYMMETRIC");
 
             while (istr_ >> value) v.push_back (value);
-            if (! istr_.eof ()) IoUtil::abort ("Njn::Matrix::in : bad value for the MatrixIO::SYMMETRIC");
+            if (! istr_.eof ()) IoUtil::abort ("Njn_P::Matrix::in : bad value for the MatrixIO::SYMMETRIC");
 
 
-            if (m * (m + 1) / 2 != v.size ()) IoUtil::abort ("Njn::Matrix::in : rows for the MatrixIO::SYMMETRIC have incorrect lengths.");
+            if (m * (m + 1) / 2 != v.size ()) IoUtil::abort ("Njn_P::Matrix::in : rows for the MatrixIO::SYMMETRIC have incorrect lengths.");
 
             if (m != this->getM () || n != this->getN ()) {
 
@@ -606,10 +606,10 @@ BEGIN_SCOPE(Njn)
         d_n = 0;
     }
 
-END_SCOPE(Njn)
+END_SCOPE(Njn_P)
 
 template <typename S, typename T> 
-void copy (Njn::Matrix <S> *matrix_, const Njn::Matrix <T> &matrix0_)
+void copy (Njn_P::Matrix <S> *matrix_, const Njn_P::Matrix <T> &matrix0_)
 {
     matrix_->copy (matrix0_.getM (), matrix0_.getN ());
     
@@ -622,7 +622,7 @@ void copy (Njn::Matrix <S> *matrix_, const Njn::Matrix <T> &matrix0_)
 }
 
 template <typename T> 
-bool operator== (const Njn::Matrix <T> &matrix_, const Njn::Matrix <T> &matrix0_)
+bool operator== (const Njn_P::Matrix <T> &matrix_, const Njn_P::Matrix <T> &matrix0_)
 {
     if (matrix_.getM () != matrix0_.getM ()) return false;
     if (matrix_.getN () != matrix0_.getN ()) return false;
@@ -636,22 +636,22 @@ bool operator== (const Njn::Matrix <T> &matrix_, const Njn::Matrix <T> &matrix0_
 }
 
 template <typename T> 
-std::ostream &operator<< (std::ostream &ostr_, const Njn::Matrix <T> &matrix_)
+std::ostream &operator<< (std::ostream &ostr_, const Njn_P::Matrix <T> &matrix_)
 {return matrix_.out (ostr_);}
 
 template <typename T> 
-std::istream &operator>> (std::istream &istr_, Njn::Matrix <T> &matrix_)
+std::istream &operator>> (std::istream &istr_, Njn_P::Matrix <T> &matrix_)
 {return matrix_.in (istr_);}
 
-std::ostream &operator << (std::ostream &ostr_, Njn::MatrixIO::Format format_)
+std::ostream &operator << (std::ostream &ostr_, Njn_P::MatrixIO::Format format_)
 {
-   Njn::MatrixIO::setFormat (format_);
+   Njn_P::MatrixIO::setFormat (format_);
    return ostr_;
 }
 
-std::istream &operator >> (std::istream &istr_, Njn::MatrixIO::Format format_)
+std::istream &operator >> (std::istream &istr_, Njn_P::MatrixIO::Format format_)
 {
-   Njn::MatrixIO::setFormat (format_);
+   Njn_P::MatrixIO::setFormat (format_);
    return istr_;
 }
 

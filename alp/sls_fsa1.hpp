@@ -48,7 +48,7 @@ Contents: Frameshift alignment algorithms
 
 const double mb_bytes=1048576.0;
 
-namespace Sls 
+namespace Sls_P 
 {
 	const long int inf=LONG_MAX/10;
 
@@ -289,7 +289,7 @@ namespace Sls
 		double *RR1_,//background probability for the sequence #1
 		double *RR2_,//background probability for the sequence #2
 		long int number_of_states_,//number of states
-		double **transition_probabilities_,//transition probabilities between states; matrix d_number_of_states x d_number_of_states
+		double **transition_prob_Pabilities_,//transition probabilities between states; matrix d_number_of_states x d_number_of_states
 		std::pair<long int, long int> *states_description_,//description of the states; the index is a state number
 		double ***states_distr_);//distributions of the states; the first index is a state number
 								//the second and the third indexes correspond to an array of dimensions d_A_letters^state_description_type.first x d_B_letters^state_description_type.second
@@ -369,9 +369,9 @@ namespace Sls
 		double *d_RR2;//background probability for the sequence #2
 
 		long int d_number_of_states;//number of states
-		double **d_transition_probabilities;//transition probabilities between states; matrix d_number_of_states x d_number_of_states
+		double **d_transition_prob_Pabilities;//transition probabilities between states; matrix d_number_of_states x d_number_of_states
 
-		double **d_transition_probabilities_sum;//sum-distributions calculated from d_transition_probabilities[s]
+		double **d_transition_prob_Pabilities_sum;//sum-distributions calculated from d_transition_prob_Pabilities[s]
 
 		std::pair<long int, long int> *d_states_description;//description of the states; the index is a state number
 		//.first: number of letters generated for the sequence #1
@@ -398,7 +398,7 @@ namespace Sls
 
 		double **d_states_sum_distr;//sum-distributions calculated from d_states_distr
 		long int *d_states_sum_distr_elements_for_all_states;//an array of with numbers 0,1,2,...
-		//can be used for d_states_sum_distr[s] or d_transition_probabilities_sum
+		//can be used for d_states_sum_distr[s] or d_transition_prob_Pabilities_sum
 
 		std::pair<long int*, long int*> *d_tmp_letters;//an auxiliary array of length d_number_of_states; 
 												//element #s contains arrays of dimensions <d_states_description[s].first,d_states_description[s].second>
@@ -1138,9 +1138,9 @@ namespace Sls
 		long int &number_of_realizations_set_);//total number of realizations per set
 
 		static void combine_parameters_from_forward_and_reversed_calculations_generalized(
-		Sls::FALP_set_of_parameters &par_,//parameters from forward calculation
-		Sls::FALP_set_of_parameters &par_reversed_,//parameters from reversed calculation
-		Sls::FALP_set_of_parameters &par_result_);//the result
+		Sls_P::FALP_set_of_parameters &par_,//parameters from forward calculation
+		Sls_P::FALP_set_of_parameters &par_reversed_,//parameters from reversed calculation
+		Sls_P::FALP_set_of_parameters &par_result_);//the result
 
 
 		void input_data_for_the_constructor(
@@ -1208,13 +1208,13 @@ namespace Sls
 		double mult_for_is_lambda_,//multiplier for lambda in the IS
 
 		//the result
-		Sls::FALP_set_of_parameters &par_result_,//the resulted parameters
-		Sls::par_test1_type *par_test1_=NULL);//for tests
+		Sls_P::FALP_set_of_parameters &par_result_,//the resulted parameters
+		Sls_P::par_test1_type *par_test1_=NULL);//for tests
 
 
 
 
-		static void FSA_IS_transition_probabilities_calculation(
+		static void FSA_IS_transition_prob_Pabilities_calculation(
 		bool &FSA_flag,
 		double ***&states_distr,
 
@@ -1285,7 +1285,7 @@ namespace Sls
 			double ungapped_lambda_,
 			long int limit2_,
 			long int number_of_sets_,//number of sets for error calculation
-			Sls::FALP_set_of_parameters &par_,
+			Sls_P::FALP_set_of_parameters &par_,
 			bool screen_output_flag_,
 
 			bool futher_expanding_=false,
@@ -1327,7 +1327,7 @@ namespace Sls
 			double ungapped_lambda_,
 			long int limit2_,
 			long int number_of_sets_,//number of sets for error calculation
-			Sls::FALP_set_of_parameters &par_,
+			Sls_P::FALP_set_of_parameters &par_,
 			bool &inside_simulation_flag_,
 			bool screen_output_flag_,
 			bool screen_output_k_flag_,

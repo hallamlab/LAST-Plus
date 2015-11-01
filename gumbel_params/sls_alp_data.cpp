@@ -41,7 +41,7 @@ Contents: Input data for the ascending ladder points simulation
 
 USING_NCBI_SCOPE;
 USING_SCOPE(blast);
-USING_SCOPE(Sls);
+USING_SCOPE(Sls_P);
 
 //!!
 alp_data::alp_data(//constructor

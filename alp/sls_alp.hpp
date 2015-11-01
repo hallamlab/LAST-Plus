@@ -48,7 +48,7 @@ Contents: Ascending ladder points simulation
 #include "sls_alp_regression.hpp"
 
 
-namespace Sls {
+namespace Sls_P {
 
 
 	class state//struct to save a state of calculation

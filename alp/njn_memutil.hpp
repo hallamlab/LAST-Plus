@@ -39,7 +39,7 @@ Contents:
 #include "njn_ioutil.hpp"
 
 
-namespace Njn {
+namespace Njn_P {
 	namespace MemUtil {
 
         inline void *memNew (size_t size);

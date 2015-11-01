@@ -38,7 +38,7 @@ Contents:
 #include "njn_dynprogprob.hpp"
 #include "njn_memutil.hpp"
 
-using namespace Njn;
+using namespace Njn_P;
 
 
 const size_t DynProgProb::ARRAY_CAPACITY = 256;

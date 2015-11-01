@@ -36,7 +36,7 @@ Contents: Calculation of Gumbel parameters
 
 #include "sls_fsa1_parameters.hpp"
 
-using namespace Sls;
+using namespace Sls_P;
 using namespace std;
 
 //parameters calculation
@@ -1712,7 +1712,7 @@ string pvalout_file_name_)//P-values file name
 }
 
 void fsa_par::Output_Params(
-Sls::FALP_set_of_parameters &gumbel_params_,
+Sls_P::FALP_set_of_parameters &gumbel_params_,
 string gumbelparout_file_name_)
 {
 	ofstream f;
@@ -1777,7 +1777,7 @@ string gumbelparout_file_name_)
 }
 
 void fsa_par::Read_Params(
-Sls::FALP_set_of_parameters &gumbel_params_,
+Sls_P::FALP_set_of_parameters &gumbel_params_,
 string gumbelparin_file_name_)
 {
 	ifstream f;

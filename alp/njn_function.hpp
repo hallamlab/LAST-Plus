@@ -38,7 +38,7 @@ Contents:
 #include "njn_doubletype.hpp"
 
 
-namespace Njn {
+namespace Njn_P {
 	namespace Function {
 
 

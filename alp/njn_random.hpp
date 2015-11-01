@@ -37,7 +37,7 @@ Contents: Random no. seeder and generator
 ******************************************************************************/
 
 
-namespace Njn {
+namespace Njn_P {
 
    namespace Random {
 

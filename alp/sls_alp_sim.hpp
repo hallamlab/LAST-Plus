@@ -49,7 +49,7 @@ Contents: Simulation of Gumbel parameters
 #include "sls_alp.hpp"
 #include "sls_alp_regression.hpp"
 
-namespace Sls {
+namespace Sls_P {
 
 	struct struct_for_lambda_calculation
 	{

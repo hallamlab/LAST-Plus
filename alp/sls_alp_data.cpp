@@ -35,7 +35,7 @@ Contents: Input data for the ascending ladder points simulation
 
 #include "sls_alp_data.hpp"
 
-using namespace Sls;
+using namespace Sls_P;
 using namespace std;
 
 void alp_data::input_data_for_the_constructor(
@@ -255,7 +255,7 @@ bool insertions_after_deletions_)//if true, then insertions after deletions are 
 
 		//srand(d_random_seed);
 
-		Njn::Random::seed(d_random_seed);
+		Njn_P::Random::seed(d_random_seed);
 
 		d_number_of_AA_smatr=d_number_of_AA;
 

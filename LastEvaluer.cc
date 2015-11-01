@@ -18,7 +18,7 @@ namespace cbrc {
     const char *matrixName;
     int gapOpen;
     int gapEpen;
-    Sls::AlignmentEvaluerParameters parameters;
+    Sls_P::AlignmentEvaluerParameters parameters;
   };
 
   struct EvalueParametersByScore {
@@ -26,7 +26,7 @@ namespace cbrc {
     int mismatchCost;
     int gapOpen;
     int gapEpen;
-    Sls::AlignmentEvaluerParameters parameters;
+    Sls_P::AlignmentEvaluerParameters parameters;
   };
 
   struct FrameshiftEvalueParameters {
@@ -34,7 +34,7 @@ namespace cbrc {
     int gapOpen;
     int gapEpen;
     int frameshiftCost;
-    Sls::AlignmentEvaluerParameters parameters;
+    Sls_P::AlignmentEvaluerParameters parameters;
   };
 
   const EvalueParametersByName proteinParameters[] = {
@@ -356,10 +356,10 @@ namespace cbrc {
 
   int LastEvaluer::minScore(double evalue, double area) const {
     if (evaluer.isGood()) {
-      const Sls::ALP_set_of_parameters &p = evaluer.parameters();
+      const Sls_P::ALP_set_of_parameters &p = evaluer.parameters();
       return theMinScore(p.lambda, p.K, evalue, area);
     } else if (frameshiftEvaluer.isGood()) {
-      const Sls::FALP_set_of_parameters &p = frameshiftEvaluer.parameters();
+      const Sls_P::FALP_set_of_parameters &p = frameshiftEvaluer.parameters();
       return theMinScore(p.lambda, p.K, evalue, area);
     } else {
       return -1;
@@ -368,10 +368,10 @@ namespace cbrc {
 
   void LastEvaluer::writeCommented(std::ostream& out) const {
     if (evaluer.isGood()) {
-      const Sls::ALP_set_of_parameters &p = evaluer.parameters();
+      const Sls_P::ALP_set_of_parameters &p = evaluer.parameters();
       out << "# lambda=" << p.lambda << " K=" << p.K << "\n";
     } else if (frameshiftEvaluer.isGood()) {
-      const Sls::FALP_set_of_parameters &p = frameshiftEvaluer.parameters();
+      const Sls_P::FALP_set_of_parameters &p = frameshiftEvaluer.parameters();
       out << "# lambda=" << p.lambda << " K=" << p.K << "\n";
     }
   }
@@ -379,7 +379,7 @@ namespace cbrc {
   void LastEvaluer::writeParameters(std::ostream &out) const {
     std::streamsize prec = out.precision(17);
     if (evaluer.isGood()) {
-      const Sls::ALP_set_of_parameters &p = evaluer.parameters();
+      const Sls_P::ALP_set_of_parameters &p = evaluer.parameters();
       out << p.lambda << ", " << p.K << ",\n"
         << p.a_I << ", " << p.b_I << ",\n"
         << p.a_J << ", " << p.b_J << ",\n"
@@ -387,7 +387,7 @@ namespace cbrc {
         << p.alpha_J << ", " << p.beta_J << ",\n"
         << p.sigma << ", " << p.tau << "\n";
     } else if (frameshiftEvaluer.isGood()) {
-      const Sls::FALP_set_of_parameters &p = frameshiftEvaluer.parameters();
+      const Sls_P::FALP_set_of_parameters &p = frameshiftEvaluer.parameters();
       out << p.lambda << ", " << p.K << ",\n"
         << p.a_I << ", " << p.b_I << ",\n"
         << p.a_J << ", " << p.b_J << ",\n"

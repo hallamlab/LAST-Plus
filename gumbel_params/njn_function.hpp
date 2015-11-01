@@ -47,7 +47,7 @@ Contents:
 BEGIN_NCBI_SCOPE
 BEGIN_SCOPE(blast)
 
-BEGIN_SCOPE(Njn)
+BEGIN_SCOPE(Njn_P)
 BEGIN_SCOPE(Function)
 
       template <typename T> inline T bitsToNats (T x_);
@@ -80,14 +80,14 @@ BEGIN_SCOPE(Function)
       template <typename T> inline bool isProb (T x_); // the closest value to x_ in the interval [0.0, 1.0]
 
 //END_SCOPE(Function)
-//END_SCOPE(Njn)
+//END_SCOPE(Njn_P)
 
 
 //
 // There are no more declarations beyond this point.
 //
 
-//BEGIN_SCOPE(Njn)
+//BEGIN_SCOPE(Njn_P)
 //BEGIN_SCOPE(Function)
 
       template <typename T> T bitsToNats (T x_) {return x_ * DoubleType::LN_2;}
@@ -125,7 +125,7 @@ BEGIN_SCOPE(Function)
       template <typename T> bool isProb (T x_) {return 0.0 <= x_ && x_ <= 1.0;} // the closest value to x_ in the interval [0.0, 1.0]
 
 END_SCOPE(Function)
-END_SCOPE(Njn)
+END_SCOPE(Njn_P)
 
 END_SCOPE(blast)
 END_NCBI_SCOPE

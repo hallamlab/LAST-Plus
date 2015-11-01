@@ -43,7 +43,7 @@ Contents:
 #include "njn_ioutil.hpp"
 
 
-namespace Njn {
+namespace Njn_P {
 	namespace Root {
 
 
@@ -171,7 +171,7 @@ namespace Njn {
 // There are no more declarations beyond this point.
 //
 
-namespace Njn {
+namespace Njn_P {
 	namespace Root {
 
 namespace {

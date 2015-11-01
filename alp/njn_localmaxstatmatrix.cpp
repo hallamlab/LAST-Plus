@@ -38,7 +38,7 @@ Contents:
 #include "njn_memutil.hpp"
 
 
-using namespace Njn;
+using namespace Njn_P;
 
 void LocalMaxStatMatrix::init (size_t dimMatrix_, size_t dimMatrix2_)
 {

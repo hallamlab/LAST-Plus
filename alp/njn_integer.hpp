@@ -38,7 +38,7 @@ Contents:
 
 #include "njn_ioutil.hpp"
 
-namespace Njn {
+namespace Njn_P {
 	namespace Integer {
 
 
@@ -67,7 +67,7 @@ namespace Njn {
 
             if (j == 0) 
             {
-                Njn::IoUtil::abort ("Nks_Mod : j == 0");   
+                Njn_P::IoUtil::abort ("Nks_Mod : j == 0");   
             }
 
             if (i < 0) 
@@ -133,7 +133,7 @@ namespace Njn {
             {
                 if (n < 0) 
                 {
-                    Njn::IoUtil::abort ("Int::integerPower <class Real, class Int> : negative exponent of zero");
+                    Njn_P::IoUtil::abort ("Int::integerPower <class Real, class Int> : negative exponent of zero");
                 } 
                 else if (n == 0) 
                 {

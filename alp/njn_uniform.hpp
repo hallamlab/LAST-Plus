@@ -43,7 +43,7 @@ Contents:
 #include <assert.h>
 
 
-namespace Njn {
+namespace Njn_P {
 
    namespace Uniform { // uniform distribution 
 
@@ -65,7 +65,7 @@ namespace Njn {
 		 if (b_ < a_) std::swap (a_, b_); // a_ < b_/*sls deleted <T>*/
 
          long random = 0;
-         while ((random = Njn::Random::number ()) == 0x7fffffff);
+         while ((random = Njn_P::Random::number ()) == 0x7fffffff);
 
          return a_ + static_cast <T> ((b_ - a_) * static_cast <double> (Random::number ()) / static_cast <double> (0x7fffffff)); 
       }

@@ -45,7 +45,7 @@ Contents: Matrix routines
 BEGIN_NCBI_SCOPE
 BEGIN_SCOPE(blast)
 
-BEGIN_SCOPE(Njn)
+BEGIN_SCOPE(Njn_P)
 
    template <typename T> 
    class Vector {
@@ -87,22 +87,22 @@ BEGIN_SCOPE(Njn)
 
    };
 
-END_SCOPE(Njn)
+END_SCOPE(Njn_P)
 
 template <typename T> 
-bool operator== (const Njn::Vector <T> &vector_, const Njn::Vector <T> &vector0_);
+bool operator== (const Njn_P::Vector <T> &vector_, const Njn_P::Vector <T> &vector0_);
 
 template <typename T> 
-std::ostream &operator<< (std::ostream &ostr_, const Njn::Vector <T> &vector_);
+std::ostream &operator<< (std::ostream &ostr_, const Njn_P::Vector <T> &vector_);
 
 template <typename T> 
-std::istream &operator>> (std::istream &istr_, Njn::Vector <T> &vector_);
+std::istream &operator>> (std::istream &istr_, Njn_P::Vector <T> &vector_);
 
 //
 // There are no more declarations beyond this point.
 //
 
-BEGIN_SCOPE(Njn)
+BEGIN_SCOPE(Njn_P)
 
    template <typename T> 
    Vector <T>::Vector () 
@@ -194,7 +194,7 @@ BEGIN_SCOPE(Njn)
    {
       assert (ostr_);
       
-      USING_SCOPE(Njn);
+      USING_SCOPE(Njn_P);
       USING_SCOPE(IoUtil);
 
       size_t i = 0;
@@ -241,7 +241,7 @@ BEGIN_SCOPE(Njn)
       std::vector <T> v;
       T value;
 
-      USING_SCOPE(Njn);
+      USING_SCOPE(Njn_P);
       USING_SCOPE(IoUtil);
 
       string s;
@@ -271,7 +271,7 @@ BEGIN_SCOPE(Njn)
          sstream.str ("");
          sstream << s;
          sstream >> m;
-         if (sstream.fail ()) IoUtil::abort ("Njn::Vector::in : bad m");
+         if (sstream.fail ()) IoUtil::abort ("Njn_P::Vector::in : bad m");
 
          if (m != getM ()) {
 
@@ -289,7 +289,7 @@ BEGIN_SCOPE(Njn)
             if (sstream.fail ()) {
                ostringstream sstream;
                sstream << i;
-               IoUtil::abort ("Njn::Vector::in : bad d_vector_p [" + sstream.str () + "]");
+               IoUtil::abort ("Njn_P::Vector::in : bad d_vector_p [" + sstream.str () + "]");
             }
          }
 
@@ -335,10 +335,10 @@ BEGIN_SCOPE(Njn)
       d_m = 0;
    }
 
-END_SCOPE(Njn)
+END_SCOPE(Njn_P)
 
 template <typename T> 
-bool operator== (const Njn::Vector <T> &vector_, const Njn::Vector <T> &vector0_)
+bool operator== (const Njn_P::Vector <T> &vector_, const Njn_P::Vector <T> &vector0_)
 {
    if (vector_.getM () != vector0_.getM ()) return false;
    for (size_t i = 0; i < vector_.getM (); i++) {
@@ -349,11 +349,11 @@ bool operator== (const Njn::Vector <T> &vector_, const Njn::Vector <T> &vector0_
 }
 
 template <typename T> 
-std::ostream &operator<< (std::ostream &ostr_, const Njn::Vector <T> &vector_)
+std::ostream &operator<< (std::ostream &ostr_, const Njn_P::Vector <T> &vector_)
 {return vector_.out (ostr_);}
 
 template <typename T> 
-std::istream &operator>> (std::istream &istr_, Njn::Vector <T> &vector_)
+std::istream &operator>> (std::istream &istr_, Njn_P::Vector <T> &vector_)
 {return vector_.in (istr_);}
 
 

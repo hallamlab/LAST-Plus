@@ -43,7 +43,7 @@ Contents:
 #include <string.h>
 #include <cstdlib>
 
-namespace Njn {
+namespace Njn_P {
 	namespace IoUtil {
 
 
@@ -88,14 +88,14 @@ namespace Njn {
 		}
 	}
 
-inline std::ostream &operator << (std::ostream &ostr_, Njn::IoUtil::Format format_);
-inline std::istream &operator >> (std::istream &istr_, Njn::IoUtil::Format format_);
+inline std::ostream &operator << (std::ostream &ostr_, Njn_P::IoUtil::Format format_);
+inline std::istream &operator >> (std::istream &istr_, Njn_P::IoUtil::Format format_);
 
 //
 // There are no more declarations beyond this point.
 //
 
-namespace Njn {
+namespace Njn_P {
 	namespace IoUtil {
 
         void abort (const char *s_)
@@ -129,15 +129,15 @@ namespace Njn {
 	}
 
 
-std::ostream &operator << (std::ostream &ostr_, Njn::IoUtil::Format format_)
+std::ostream &operator << (std::ostream &ostr_, Njn_P::IoUtil::Format format_)
 {
-    Njn::IoUtil::setFormat (format_);
+    Njn_P::IoUtil::setFormat (format_);
     return ostr_;
 }
 
-std::istream &operator >> (std::istream &istr_, Njn::IoUtil::Format format_)
+std::istream &operator >> (std::istream &istr_, Njn_P::IoUtil::Format format_)
 {
-    Njn::IoUtil::setFormat (format_);
+    Njn_P::IoUtil::setFormat (format_);
     return istr_;
 }
 

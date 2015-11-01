@@ -28,14 +28,14 @@ class GeneticCode;
 
 class LastEvaluer {
 private:
-  Sls::AlignmentEvaluer evaluer;
-  Sls::FrameshiftAlignmentEvaluer frameshiftEvaluer;
+  Sls_P::AlignmentEvaluer evaluer;
+  Sls_P::FrameshiftAlignmentEvaluer frameshiftEvaluer;
   double databaseLength;
   double numOfStrands;
 public:
   // This routine tries to initialize the object for a given set of
   // alignment parameters.  It may fail, i.e. set the object to the
-  // "bad" state and throw an Sls::error.
+  // "bad" state and throw an Sls_P::error.
   // These arguments are only used to lookup pre-calculated cases:
   // matrixName, matchScore, mismatchCost, isStandardGeneticCode.
   // DNA-versus-protein alignment is indicated by: frameshiftCost > 0.

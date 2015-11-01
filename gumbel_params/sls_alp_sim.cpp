@@ -40,7 +40,7 @@ Contents: Calculation of Gumbel parameters
 
 USING_NCBI_SCOPE;
 USING_SCOPE(blast);
-USING_SCOPE(Sls);
+USING_SCOPE(Sls_P);
 
 //!! data object is used to construct the evaluer
 alp_sim::alp_sim(//constructor

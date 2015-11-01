@@ -39,7 +39,7 @@ Contents:
 
 USING_NCBI_SCOPE;
 USING_SCOPE(blast);
-USING_SCOPE(Sls);
+USING_SCOPE(Sls_P);
 
 alp::alp(//constructor
   alp_data *alp_data_

@@ -45,7 +45,7 @@ Contents: Regression methods
 #include <float.h>
 #include <algorithm>
 
-namespace Sls { 
+namespace Sls_P { 
 
 	typedef double function_type(double x_,void* func_number_);
 

@@ -43,7 +43,7 @@ Contents:
 BEGIN_NCBI_SCOPE
 BEGIN_SCOPE(blast)
 
-BEGIN_SCOPE(Njn)
+BEGIN_SCOPE(Njn_P)
 BEGIN_SCOPE(MemUtil)
 
         inline void *memNew (size_t size);
@@ -122,7 +122,7 @@ BEGIN_SCOPE(MemUtil)
         }
 
 END_SCOPE(MemUtil)
-END_SCOPE(Njn)
+END_SCOPE(Njn_P)
 
 END_SCOPE(blast)
 END_NCBI_SCOPE

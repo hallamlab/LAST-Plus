@@ -37,7 +37,7 @@ Contents:
 ******************************************************************************/
 
 
-namespace Njn {
+namespace Njn_P {
 	namespace DoubleType {
 
       // Constants

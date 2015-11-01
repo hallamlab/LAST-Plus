@@ -42,7 +42,7 @@ Contents: Calculation of Gumbel parameters
 
 
 
-namespace Sls { 
+namespace Sls_P { 
 
 	struct struct_for_lambda_calculation
 	{
@@ -185,15 +185,15 @@ namespace Sls {
 		double *&exp_array_);
 
 		static void Read_Params(
-		Sls::FALP_set_of_parameters &gumbel_params_,
+		Sls_P::FALP_set_of_parameters &gumbel_params_,
 		std::string gumbelparin_file_name_);
 
 		static void Output_Params(
-		Sls::FALP_set_of_parameters &gumbel_params_,
+		Sls_P::FALP_set_of_parameters &gumbel_params_,
 		std::string gumbelparout_file_name_);
 
 		friend std::ostream &operator<<(std::ostream &s_,
-		const Sls::FALP_set_of_parameters &gumbel_params_);
+		const Sls_P::FALP_set_of_parameters &gumbel_params_);
 
 		friend std::istream &operator>>(std::istream &s_,
 		FALP_set_of_parameters &gumbel_params_);

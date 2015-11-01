@@ -40,7 +40,7 @@ Contents: Random walk parameters
 #include "njn_localmaxstat.hpp"
 
 
-namespace Njn {
+namespace Njn_P {
 
 
 

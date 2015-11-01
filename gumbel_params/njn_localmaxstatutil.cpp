@@ -54,7 +54,7 @@ Contents:
 
 USING_NCBI_SCOPE;
 USING_SCOPE(blast);
-USING_SCOPE(Njn);
+USING_SCOPE(Njn_P);
 
 void LocalMaxStatUtil::flatten ( // allocates memory for linear probabilities and scores
 size_t dimension_, // dimension of equilProb_
@@ -423,7 +423,7 @@ bool *terminated_) // ? Was the dynamic programming computation terminated prema
 
     double time0 = 0.0;
     double time1 = 0.0;
-        if (time_ > 0.0) Sls::alp_data::get_current_time (time0);
+        if (time_ > 0.0) Sls_P::alp_data::get_current_time (time0);
 
     DynProgProbLim dynProgProb (n_step, dimension_, prob_, score_ [0] - 1, Y_MAX);
 
@@ -466,7 +466,7 @@ bool *terminated_) // ? Was the dynamic programming computation terminated prema
 
         if (time_ > 0.0)
         {
-                        Sls::alp_data::get_current_time (time1);
+                        Sls_P::alp_data::get_current_time (time1);
             if (time1 - time0 > time_) 
             {
                 *terminated_ = true;

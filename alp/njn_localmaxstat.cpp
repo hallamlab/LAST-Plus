@@ -41,7 +41,7 @@ Contents:
 #include "njn_integer.hpp"
 #include "njn_localmaxstatutil.hpp"
 
-using namespace Njn;
+using namespace Njn_P;
 
 double LocalMaxStat::s_time = 0.0;
 
@@ -140,7 +140,7 @@ const double *prob_) // corresponding probabilities
     if (! LocalMaxStatUtil::isLogarithmic (dimension_, score_, prob_))
     {
         //IoUtil::abort ("LocalMaxStat::copy : ! isLogarithmic");
-		throw Sls::error("Error - you have exceeded the calculation time or memory limit.\nThe error might indicate that the regime is linear or too close to linear to permit efficient computation.\nPossible solutions include changing the randomization seed, or increasing the allowed calculation time and the memory limit.\n",3);
+		throw Sls_P::error("Error - you have exceeded the calculation time or memory limit.\nThe error might indicate that the regime is linear or too close to linear to permit efficient computation.\nPossible solutions include changing the randomization seed, or increasing the allowed calculation time and the memory limit.\n",3);
     }
 
     size_t i = 0;

@@ -42,7 +42,7 @@ Contents:
 
 
 using namespace std;
-using namespace Njn;
+using namespace Njn_P;
 using namespace IoUtil;
 
 

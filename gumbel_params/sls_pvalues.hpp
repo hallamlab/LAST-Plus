@@ -56,7 +56,7 @@ double getArea();
 BEGIN_NCBI_SCOPE
 BEGIN_SCOPE(blast)
 
-BEGIN_SCOPE(Sls)
+BEGIN_SCOPE(Sls_P)
 
         struct set_of_parameters
         {
@@ -269,7 +269,7 @@ BEGIN_SCOPE(Sls)
 
 
         };
-END_SCOPE(Sls)
+END_SCOPE(Sls_P)
 
 END_SCOPE(blast)
 END_NCBI_SCOPE

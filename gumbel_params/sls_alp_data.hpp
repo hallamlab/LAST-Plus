@@ -69,7 +69,7 @@ BEGIN_SCOPE(blast)
 
 const double mb_bytes=1048576.0;
 
-BEGIN_SCOPE(Sls)
+BEGIN_SCOPE(Sls_P)
 
         static Int4 small_long=(Int4)((double)kMin_I4/2.0);
         static double dbl_max_log=log(DBL_MAX);
@@ -859,7 +859,7 @@ private:
         }
 
 
-END_SCOPE(Sls)
+END_SCOPE(Sls_P)
 
 END_SCOPE(blast)
 END_NCBI_SCOPE

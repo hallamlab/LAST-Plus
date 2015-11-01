@@ -43,7 +43,7 @@ Contents:
 BEGIN_NCBI_SCOPE
 BEGIN_SCOPE(blast)
 
-BEGIN_SCOPE(Njn)
+BEGIN_SCOPE(Njn_P)
 
     class        DynProgProbProto {
 
@@ -82,7 +82,7 @@ BEGIN_SCOPE(Njn)
         virtual inline Int4 getValueUpper () const = 0; // one beyond present upper Int4 value in the array
     };
 
-END_SCOPE(Njn)
+END_SCOPE(Njn_P)
 
 END_SCOPE(blast)
 END_NCBI_SCOPE

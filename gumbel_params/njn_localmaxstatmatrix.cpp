@@ -43,7 +43,7 @@ Contents:
 
 USING_NCBI_SCOPE;
 USING_SCOPE(blast);
-USING_SCOPE(Njn);
+USING_SCOPE(Njn_P);
 
 void LocalMaxStatMatrix::init (size_t dimMatrix_, size_t dimMatrix2_)
 {

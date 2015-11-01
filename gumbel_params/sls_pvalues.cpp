@@ -50,7 +50,7 @@ double getArea(){
 
 USING_NCBI_SCOPE;
 USING_SCOPE(blast);
-USING_SCOPE(Sls);
+USING_SCOPE(Sls_P);
 
 const bool read_Sbs_par_flag=true;
 

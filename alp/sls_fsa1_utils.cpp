@@ -35,7 +35,7 @@ Contents: Frameshift alignment algorithms
 
 #include "sls_fsa1_utils.hpp"
 
-using namespace Sls;
+using namespace Sls_P;
 using namespace std;
 
 static long int length_max=1000;

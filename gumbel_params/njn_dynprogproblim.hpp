@@ -44,7 +44,7 @@ Contents:
 BEGIN_NCBI_SCOPE
 BEGIN_SCOPE(blast)
 
-BEGIN_SCOPE(Njn)
+BEGIN_SCOPE(Njn_P)
 
 
     class DynProgProbLim : public DynProgProb {
@@ -163,7 +163,7 @@ BEGIN_SCOPE(Njn)
         using DynProgProb::getArrayPos; // offset for array position containing value_
    };
 
-END_SCOPE(Njn)
+END_SCOPE(Njn_P)
 
 END_SCOPE(blast)
 END_NCBI_SCOPE

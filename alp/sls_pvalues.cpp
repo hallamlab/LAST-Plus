@@ -40,7 +40,7 @@ Contents: Calculation of P-values using precalculated Gumbel parameters
 #include "sls_normal_distr_array.hpp"
 
 
-using namespace Sls;
+using namespace Sls_P;
 using namespace std;
 
 const double nat_cut_off_in_max=2.0;//nat cut-off in max used in FSC
@@ -980,7 +980,7 @@ bool read_Sbs_par_flag)
 
 //input/output Gumbel parameters
 
-namespace Sls {
+namespace Sls_P {
 
 std::ostream &operator<<(std::ostream &s_,
 const ALP_set_of_parameters &gumbel_params_)

@@ -41,7 +41,7 @@ Contents: Normal distribution array for P-values calculation
 BEGIN_NCBI_SCOPE
 BEGIN_SCOPE(blast)
 
-BEGIN_SCOPE(Sls)
+BEGIN_SCOPE(Sls_P)
 
 #define NORMAL_DISTR_ARRAY_DIM 1000
 static double normal_distr_array_for_P_values_calculation[NORMAL_DISTR_ARRAY_DIM+1]={
@@ -149,7 +149,7 @@ static double normal_distr_array_for_P_values_calculation[NORMAL_DISTR_ARRAY_DIM
 };
 
 
-END_SCOPE(Sls)
+END_SCOPE(Sls_P)
 
 END_SCOPE(blast)
 END_NCBI_SCOPE

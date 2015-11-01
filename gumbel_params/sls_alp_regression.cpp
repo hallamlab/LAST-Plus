@@ -39,7 +39,7 @@ Contents: Regression methods
 
 USING_NCBI_SCOPE;
 USING_SCOPE(blast);
-USING_SCOPE(Sls);
+USING_SCOPE(Sls_P);
 
 
 //-------------------------Solution of arbitrary equations----------------------------

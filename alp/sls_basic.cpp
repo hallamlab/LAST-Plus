@@ -35,7 +35,7 @@ Contents: Some basic functions and types
 
 #include "sls_basic.hpp"
 
-using namespace Sls;
+using namespace Sls_P;
 
 double sls_basic::round(//returns nearest integer to x_
 const double &x_)

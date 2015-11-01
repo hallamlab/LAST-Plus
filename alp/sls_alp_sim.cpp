@@ -36,7 +36,7 @@ Contents: Calculation of Gumbel parameters
 
 #include "sls_alp_sim.hpp"
 
-using namespace Sls;
+using namespace Sls_P;
 using namespace std;
 
 static bool calculate_C_S_constant_flag=true;

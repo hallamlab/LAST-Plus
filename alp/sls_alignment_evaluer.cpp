@@ -46,7 +46,7 @@ Contents: library functions of main routines
 using namespace std;
 
 
-namespace Sls {
+namespace Sls_P {
 
 // Write the parameters:
 std::ostream &operator<<(std::ostream &s_,
@@ -172,7 +172,7 @@ double max_time_)//maximum allowed calculation time in seconds
 		
 
 		double CurrentTime1;
-		Sls::alp_data::get_current_time(CurrentTime1);
+		Sls_P::alp_data::get_current_time(CurrentTime1);
 
 		//check correctness of the input parameters for gapless alignment
 		string function_name="void AlignmentEvaluer::initGapless";
@@ -195,7 +195,7 @@ double max_time_)//maximum allowed calculation time in seconds
 
 		d_params.d_params_flag=false;
 
-		Njn::LocalMaxStatMatrix local_max_stat_matrix(alphabetSize_,
+		Njn_P::LocalMaxStatMatrix local_max_stat_matrix(alphabetSize_,
 							  substitutionScoreMatrix_,
 							  letterFreqs1_normalized,
 							  letterFreqs2_normalized,
@@ -334,7 +334,7 @@ double max_time_)//maximum allowed calculation time in seconds
 		delete[]letterFreqs2_normalized;
 
 		double CurrentTime2;
-		Sls::alp_data::get_current_time(CurrentTime2);
+		Sls_P::alp_data::get_current_time(CurrentTime2);
 		d_params.m_CalcTime=CurrentTime2-CurrentTime1;
 
 	}
@@ -373,7 +373,7 @@ long randomSeed_)//randomizaton seed
 	{
 
 		double CurrentTime1;
-		Sls::alp_data::get_current_time(CurrentTime1);
+		Sls_P::alp_data::get_current_time(CurrentTime1);
 
 		//check correctness of the input parameters for gapless alignment
 		string function_name="void AlignmentEvaluer::initGapped";
@@ -433,7 +433,7 @@ long randomSeed_)//randomizaton seed
 
 
 		
-		Njn::LocalMaxStatMatrix local_max_stat_matrix(alphabetSize_,
+		Njn_P::LocalMaxStatMatrix local_max_stat_matrix(alphabetSize_,
 							  substitutionScoreMatrix_,
 							  letterFreqs1_normalized,
 							  letterFreqs2_normalized,
@@ -458,7 +458,7 @@ long randomSeed_)//randomizaton seed
 
 
 		double CurrentTimeGaplessPreliminary;
-		Sls::alp_data::get_current_time(CurrentTimeGaplessPreliminary);
+		Sls_P::alp_data::get_current_time(CurrentTimeGaplessPreliminary);
 		double GaplessPreliminaryTime=CurrentTimeGaplessPreliminary-CurrentTime1;
 
 		//the choice for the importance sampling
@@ -495,7 +495,7 @@ long randomSeed_)//randomizaton seed
 			};
 		};
 
-		Sls::alp_data data_obj(//constructor
+		Sls_P::alp_data data_obj(//constructor
 		randomSeed_,//randomization number
 		randomization_parameters,//if not NULL, sets d_rand_flag to true and initializes d_rand_all
 
@@ -522,9 +522,9 @@ long randomSeed_)//randomizaton seed
 
 
 
-		data_obj.d_max_time=Sls::alp_data::Tmax((1.0-GaplessTimePortion)*data_obj.d_max_time,data_obj.d_max_time-GaplessPreliminaryTime);
+		data_obj.d_max_time=Sls_P::alp_data::Tmax((1.0-GaplessTimePortion)*data_obj.d_max_time,data_obj.d_max_time-GaplessPreliminaryTime);
 
-		Sls::alp_sim sim_obj(&data_obj);
+		Sls_P::alp_sim sim_obj(&data_obj);
 
 		if(max_time_>0)
 		{
@@ -623,7 +623,7 @@ long randomSeed_)//randomizaton seed
 		pvalues::compute_intercepts(d_params);
 
 		double CurrentTime2;
-		Sls::alp_data::get_current_time(CurrentTime2);
+		Sls_P::alp_data::get_current_time(CurrentTime2);
 		d_params.m_CalcTime=CurrentTime2-CurrentTime1;
 		delete randomization_parameters;randomization_parameters=NULL;
 
@@ -654,7 +654,7 @@ const AlignmentEvaluerParameters &parameters_)
 	try
 	{
 		double CurrentTime1;
-		Sls::alp_data::get_current_time(CurrentTime1);
+		Sls_P::alp_data::get_current_time(CurrentTime1);
 
 		d_params.d_params_flag=false;
 
@@ -817,7 +817,7 @@ const AlignmentEvaluerParameters &parameters_)
 		pvalues::compute_tmp_values(d_params);
 
 		double CurrentTime2;
-		Sls::alp_data::get_current_time(CurrentTime2);
+		Sls_P::alp_data::get_current_time(CurrentTime2);
 		d_params.m_CalcTime=CurrentTime2-CurrentTime1;
 
 		if(!pvalues::assert_Gumbel_parameters(
@@ -841,7 +841,7 @@ const AlignmentEvaluerParametersWithErrors &parameters_)
 	try
 	{
 		double CurrentTime1;
-		Sls::alp_data::get_current_time(CurrentTime1);
+		Sls_P::alp_data::get_current_time(CurrentTime1);
 
 		d_params.d_params_flag=false;
 
@@ -962,7 +962,7 @@ const AlignmentEvaluerParametersWithErrors &parameters_)
 		pvalues::compute_tmp_values(d_params);
 
 		double CurrentTime2;
-		Sls::alp_data::get_current_time(CurrentTime2);
+		Sls_P::alp_data::get_current_time(CurrentTime2);
 		d_params.m_CalcTime=CurrentTime2-CurrentTime1;
 
 		if(!pvalues::assert_Gumbel_parameters(
@@ -994,7 +994,7 @@ double seqlen2_) const//length of sequence #2
 		throw error("Unexpected error - the Gumbel parameters are not defined properly in \"double AlignmentEvaluer::area\"\n",1);
 	};
 
-	static Sls::pvalues pvalues_obj;
+	static Sls_P::pvalues pvalues_obj;
 
 	double P;
 	double E;
@@ -1045,7 +1045,7 @@ double &evalueErr_) const//E-value error
 		throw error("Unexpected error - the Gumbel parameters are not defined properly in \"double AlignmentEvaluer::calc\"\n",1);
 	};
 
-	static Sls::pvalues pvalues_obj;
+	static Sls_P::pvalues pvalues_obj;
 
 	pvalues_obj.calculate_P_values(
 		score_, seqlen2_, seqlen1_,
@@ -1073,7 +1073,7 @@ double &evalue_) const//resulted E-value
 		throw error("Unexpected error - d_params is not defined in \"double AlignmentEvaluer::calc\"\n",1);
 	};
 
-	static Sls::pvalues pvalues_obj;
+	static Sls_P::pvalues pvalues_obj;
 
 
 	bool area_is_1_flag=false;

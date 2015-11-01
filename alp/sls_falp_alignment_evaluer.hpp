@@ -39,7 +39,7 @@ Contents: library functions of main routines
 #include <string>
 #include "sls_fsa1_pvalues.hpp"
 
-namespace Sls {
+namespace Sls_P {
 
 	class FrameshiftAlignmentEvaluer {
 

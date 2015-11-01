@@ -43,7 +43,7 @@ Contents:
 BEGIN_NCBI_SCOPE
 BEGIN_SCOPE(blast)
 
-BEGIN_SCOPE(Njn)
+BEGIN_SCOPE(Njn_P)
 BEGIN_SCOPE(Integer)
 
 
@@ -72,7 +72,7 @@ BEGIN_SCOPE(Integer)
 
             if (j == 0) 
             {
-                Njn::IoUtil::abort ("Nks_Mod : j == 0");   
+                Njn_P::IoUtil::abort ("Nks_Mod : j == 0");   
             }
 
             if (i < 0) 
@@ -138,7 +138,7 @@ BEGIN_SCOPE(Integer)
             {
                 if (n < 0) 
                 {
-                    Njn::IoUtil::abort ("Int::integerPower <class Real, class Int> : negative exponent of zero");
+                    Njn_P::IoUtil::abort ("Int::integerPower <class Real, class Int> : negative exponent of zero");
                 } 
                 else if (n == 0) 
                 {
@@ -227,7 +227,7 @@ BEGIN_SCOPE(Integer)
         }
 
 END_SCOPE(Integer)
-END_SCOPE(Njn)
+END_SCOPE(Njn_P)
 
 END_SCOPE(blast)
 END_NCBI_SCOPE

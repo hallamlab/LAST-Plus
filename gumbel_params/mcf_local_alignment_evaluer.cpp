@@ -33,11 +33,11 @@ void LocalAlignmentEvaluer::initGapless(
     const double maxSeconds = 1e99;
     const double error = 1e-6;
 
-    ncbi::blast::Njn::LocalMaxStatMatrix x(query_probabilities.size(), scoreMatrix,
+    ncbi::blast::Njn_P::LocalMaxStatMatrix x(query_probabilities.size(), scoreMatrix,
                                            &query_probabilities[0], &reference_probabilities[0],
                                            reference_probabilities.size(), maxSeconds);
 
-    if (x.getTerminated()) throw ncbi::blast::Sls::error("terminated", 1);
+    if (x.getTerminated()) throw ncbi::blast::Sls_P::error("terminated", 1);
 
     params.lambda       = x.getLambda();
     params.lambda_error = error;
@@ -77,8 +77,8 @@ void LocalAlignmentEvaluer::initGapless(
     makeVector(params.m_AISbs, params.a_I, error);
     makeVector(params.m_AJSbs, params.a_J, error);
   }
-  catch (const ncbi::blast::Sls::error& e) {
-    std::cerr << "Sls::error: " << e.st << "\n";  // for debugging
+  catch (const ncbi::blast::Sls_P::error& e) {
+    std::cerr << "Sls_P::error: " << e.st << "\n";  // for debugging
     setBad();
   }
 }
@@ -101,14 +101,14 @@ void LocalAlignmentEvaluer::initGapped(const std::vector<double>& query_probabil
     const double maxMegabytes = 200;
     const int randomSeed = 1;  // ?
 
-    ncbi::blast::Sls::alp_data data(gapExistCost, gapExtendCost,
+    ncbi::blast::Sls_P::alp_data data(gapExistCost, gapExtendCost,
                                     lambdaTolerance, kTolerance,
                                     scoreMatrix, query_probabilities.size(),
                                     query_probabilities, reference_probabilities,
                                     maxSeconds, maxMegabytes, randomSeed);
 
     //!! data object is constructed and sent for transformation
-    ncbi::blast::Sls::alp_sim sim(&data);
+    ncbi::blast::Sls_P::alp_sim sim(&data);
 
     params.lambda       = sim.m_Lambda;
     params.lambda_error = sim.m_LambdaError;
@@ -143,8 +143,8 @@ void LocalAlignmentEvaluer::initGapped(const std::vector<double>& query_probabil
     params.m_AISbs = sim.m_AISbs;
     params.m_AJSbs = sim.m_AJSbs;
   }
-  catch (const ncbi::blast::Sls::error& e) {
-    std::cerr << "Sls::error: " << e.st << "\n";  // for debugging
+  catch (const ncbi::blast::Sls_P::error& e) {
+    std::cerr << "Sls_P::error: " << e.st << "\n";  // for debugging
     setBad();
   }
 }
@@ -163,7 +163,7 @@ double LocalAlignmentEvaluer::evalue(int score,
 
   std::vector<double> out;
   std::vector<double> err;
-  static ncbi::blast::Sls::pvalues x;
+  static ncbi::blast::Sls_P::pvalues x;
   x.calculate_P_values(score, score, averageLength1, averageLength2,
                        params, out, err);
   double evalue = out[0];

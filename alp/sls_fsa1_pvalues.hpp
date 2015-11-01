@@ -44,7 +44,7 @@ Contents: P-values calculation routines
 #include <cstdlib>
 
 
-namespace Sls {
+namespace Sls_P {
 
 	struct FALP_set_of_parameters
 	{

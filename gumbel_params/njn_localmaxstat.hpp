@@ -46,7 +46,7 @@ Contents: Random walk parameters
 BEGIN_NCBI_SCOPE
 BEGIN_SCOPE(blast)
 
-BEGIN_SCOPE(Njn)
+BEGIN_SCOPE(Njn_P)
 
 
     class LocalMaxStat { 
@@ -197,7 +197,7 @@ BEGIN_SCOPE(Njn)
 
     };
 
-END_SCOPE(Njn)
+END_SCOPE(Njn_P)
 
 END_SCOPE(blast)
 END_NCBI_SCOPE

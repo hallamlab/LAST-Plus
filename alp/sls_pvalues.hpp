@@ -46,7 +46,7 @@ Contents: P-values calculation routines
 #include <cmath>
 #include <iostream>
 
-namespace Sls {
+namespace Sls_P {
 
 	struct ALP_set_of_parameters
 	{

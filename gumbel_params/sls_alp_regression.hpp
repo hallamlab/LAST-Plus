@@ -55,7 +55,7 @@ BEGIN_NCBI_SCOPE
 BEGIN_SCOPE(blast)
 
 
-BEGIN_SCOPE(Sls)
+BEGIN_SCOPE(Sls_P)
 
         typedef double function_type(double x_,void* func_number_);
 
@@ -204,7 +204,7 @@ BEGIN_SCOPE(Sls)
 
         };
 
-END_SCOPE(Sls)
+END_SCOPE(Sls_P)
 
 END_SCOPE(blast)
 END_NCBI_SCOPE

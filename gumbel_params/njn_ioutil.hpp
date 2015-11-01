@@ -42,7 +42,7 @@ Contents:
 BEGIN_NCBI_SCOPE
 BEGIN_SCOPE(blast)
 
-BEGIN_SCOPE(Njn)
+BEGIN_SCOPE(Njn_P)
 BEGIN_SCOPE(IoUtil)
 
         char getTerminator (); // gets the terminator character; default '!'
@@ -84,16 +84,16 @@ BEGIN_SCOPE(IoUtil)
         double &x_);
 
 END_SCOPE(IoUtil)
-END_SCOPE(Njn)
+END_SCOPE(Njn_P)
 
-inline std::ostream &operator << (std::ostream &ostr_, Njn::IoUtil::Format format_);
-inline std::istream &operator >> (std::istream &istr_, Njn::IoUtil::Format format_);
+inline std::ostream &operator << (std::ostream &ostr_, Njn_P::IoUtil::Format format_);
+inline std::istream &operator >> (std::istream &istr_, Njn_P::IoUtil::Format format_);
 
 //
 // There are no more declarations beyond this point.
 //
 
-BEGIN_SCOPE(Njn)
+BEGIN_SCOPE(Njn_P)
 BEGIN_SCOPE(IoUtil)
 
         void abort (const char *s_)
@@ -124,18 +124,18 @@ BEGIN_SCOPE(IoUtil)
         }
 
 END_SCOPE(IoUtil)
-END_SCOPE(Njn)
+END_SCOPE(Njn_P)
 
 
-std::ostream &operator << (std::ostream &ostr_, Njn::IoUtil::Format format_)
+std::ostream &operator << (std::ostream &ostr_, Njn_P::IoUtil::Format format_)
 {
-    Njn::IoUtil::setFormat (format_);
+    Njn_P::IoUtil::setFormat (format_);
     return ostr_;
 }
 
-std::istream &operator >> (std::istream &istr_, Njn::IoUtil::Format format_)
+std::istream &operator >> (std::istream &istr_, Njn_P::IoUtil::Format format_)
 {
-    Njn::IoUtil::setFormat (format_);
+    Njn_P::IoUtil::setFormat (format_);
     return istr_;
 }
 

@@ -16,7 +16,7 @@ namespace Mcf {
 
 class LocalAlignmentEvaluer {
  public:
-  typedef ncbi::blast::Sls::set_of_parameters GumbelParameters;
+  typedef ncbi::blast::Sls_P::set_of_parameters GumbelParameters;
 
   LocalAlignmentEvaluer() {  setBad(); }
 

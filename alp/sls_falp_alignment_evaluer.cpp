@@ -46,7 +46,7 @@ Contents: library functions of main routines
 using namespace std;
 
 
-namespace Sls {
+namespace Sls_P {
 
 // Write the parameters:
 std::ostream &operator<<(std::ostream &s_,
@@ -192,7 +192,7 @@ double max_time_)//maximum allowed calculation time in seconds
 
 
 		double CurrentTime1;
-		Sls::FSA_utils::get_current_time(CurrentTime1);
+		Sls_P::FSA_utils::get_current_time(CurrentTime1);
 
 		//check correctness of the input parameters for gapless alignment
 		string function_name="void FrameshiftAlignmentEvaluer::initGapless";
@@ -226,7 +226,7 @@ double max_time_)//maximum allowed calculation time in seconds
 			max_time_=60;
 		};
 		
-		Njn::LocalMaxStatMatrix local_max_stat_matrix(aaAlphabetSize_,
+		Njn_P::LocalMaxStatMatrix local_max_stat_matrix(aaAlphabetSize_,
 							  substitutionScoreMatrix_,
 							  RR1_AA,
 							  aaFreqs_normalized,
@@ -365,7 +365,7 @@ double max_time_)//maximum allowed calculation time in seconds
 		FALP_pvalues::compute_intercepts(d_params);
 
 		double CurrentTime2;
-		Sls::FSA_utils::get_current_time(CurrentTime2);
+		Sls_P::FSA_utils::get_current_time(CurrentTime2);
 		d_params.m_CalcTime=CurrentTime2-CurrentTime1;
 
 		delete[]RR1_AA;RR1_AA=NULL;
@@ -428,7 +428,7 @@ long int number_of_subsets_for_errors_calculation_)//a number of subsets used in
 	{
 
 		double CurrentTime1;
-		Sls::FSA_utils::get_current_time(CurrentTime1);
+		Sls_P::FSA_utils::get_current_time(CurrentTime1);
 
 		//check the input parameters
 		string function_name="void FrameshiftAlignmentEvaluer::initFrameshift";
@@ -573,7 +573,7 @@ long int number_of_subsets_for_errors_calculation_)//a number of subsets used in
 
 
 		double CurrentTime2;
-		Sls::FSA_utils::get_current_time(CurrentTime2);
+		Sls_P::FSA_utils::get_current_time(CurrentTime2);
 		d_params.m_CalcTime=CurrentTime2-CurrentTime1;
 
 		if(!FALP_pvalues::assert_Gumbel_parameters(
@@ -601,7 +601,7 @@ const AlignmentEvaluerParameters &parameters_)
 	try
 	{
 		double CurrentTime1;
-		Sls::FSA_utils::get_current_time(CurrentTime1);
+		Sls_P::FSA_utils::get_current_time(CurrentTime1);
 
 		d_params.d_params_flag=false;
 
@@ -773,7 +773,7 @@ const AlignmentEvaluerParameters &parameters_)
 		};
 
 		double CurrentTime2;
-		Sls::FSA_utils::get_current_time(CurrentTime2);
+		Sls_P::FSA_utils::get_current_time(CurrentTime2);
 		d_params.m_CalcTime=CurrentTime2-CurrentTime1;
 
 	}
@@ -791,7 +791,7 @@ const AlignmentEvaluerParametersWithErrors &parameters_)
 	try
 	{
 		double CurrentTime1;
-		Sls::FSA_utils::get_current_time(CurrentTime1);
+		Sls_P::FSA_utils::get_current_time(CurrentTime1);
 
 		d_params.d_params_flag=false;
 
@@ -930,7 +930,7 @@ const AlignmentEvaluerParametersWithErrors &parameters_)
 		};
 
 		double CurrentTime2;
-		Sls::FSA_utils::get_current_time(CurrentTime2);
+		Sls_P::FSA_utils::get_current_time(CurrentTime2);
 		d_params.m_CalcTime=CurrentTime2-CurrentTime1;
 
 	}
@@ -957,7 +957,7 @@ double seqlen2_) const//length of sequence #2
 		throw error("Unexpected error - the Gumbel parameters are not defined properly in \"double FrameshiftAlignmentEvaluer::area\"\n",1);
 	};
 
-	static Sls::FALP_pvalues pvalues_obj;
+	static Sls_P::FALP_pvalues pvalues_obj;
 
 	double P;
 	double E;
@@ -1010,7 +1010,7 @@ double &evalueErr_) const//E-value error
 		throw error("Unexpected error - the Gumbel parameters are not defined properly in \"double FrameshiftAlignmentEvaluer::calc\"\n",1);
 	};
 
-	static Sls::FALP_pvalues pvalues_obj;
+	static Sls_P::FALP_pvalues pvalues_obj;
 
 	pvalues_obj.calculate_P_values(
 		score_, seqlen1_, seqlen2_,
@@ -1038,7 +1038,7 @@ double &evalue_) const//resulted E-value
 		throw error("Unexpected error - d_params is not defined in \"double FrameshiftAlignmentEvaluer::calc\"\n",1);
 	};
 
-	static Sls::FALP_pvalues pvalues_obj;
+	static Sls_P::FALP_pvalues pvalues_obj;
 
 	bool area_is_1_flag=false;
 

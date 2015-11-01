@@ -39,7 +39,7 @@ Contents:
 #include "njn_dynprogprobproto.hpp"
 #include <climits>
 
-namespace Njn {
+namespace Njn_P {
 
     class DynProgProb : public DynProgProbProto {
 

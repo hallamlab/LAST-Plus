@@ -65,6 +65,7 @@ public:
   bool isGood() const
   { return evaluer.isGood() || frameshiftEvaluer.isGood(); }
 
+//!! The three we need
   // Don't call this in the "bad" state:
   double evaluePerArea(double score) const {
     return evaluer.isGood() ?

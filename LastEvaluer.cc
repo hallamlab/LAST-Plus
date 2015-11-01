@@ -10,7 +10,7 @@
 #define COUNTOF(a) (sizeof (a) / sizeof *(a))
 
 namespace cbrc {
-
+/*
   // These lookup tables are not necessary: they are intended to make
   // startup faster for typical parameters.
 
@@ -28,6 +28,7 @@ namespace cbrc {
     int gapEpen;
     Sls_P::AlignmentEvaluerParameters parameters;
   };
+*/
 
   struct FrameshiftEvalueParameters {
     const char *matrixName;
@@ -36,7 +37,7 @@ namespace cbrc {
     int frameshiftCost;
     Sls_P::AlignmentEvaluerParameters parameters;
   };
-
+/*
   const EvalueParametersByName proteinParameters[] = {
     {"BL62", 11, 1, {0.27553858462416075, 0.052108666891553253,
                       1.5606171794974455, -19.732860493752256,
@@ -126,6 +127,7 @@ namespace cbrc {
                      0.044639007347921783, -0.44696673676441229,
                      0.044598546568475124, -0.44453908999761271}},
   };
+*/
 
   const FrameshiftEvalueParameters frameshiftEvalueParameters[] = {
     {"BL62", 11, 1, 15, {0.31457181182385774, 0.077024909125411836,
@@ -169,6 +171,7 @@ namespace cbrc {
     return std::strcmp(x, y) == 0;
   }
 
+/*
   static bool isHit(const EvalueParametersByName &p,
       const char *n, int a, int b) {
     return isEqual(p.matrixName, n) && p.gapOpen == a && p.gapEpen == b;
@@ -179,6 +182,7 @@ namespace cbrc {
     return p.matchScore == r && p.mismatchCost == q &&
       p.gapOpen == a && p.gapEpen == b;
   }
+*/
 
   static bool isHit(const FrameshiftEvalueParameters &p,
       const char *n, int a, int b, int f) {
@@ -186,6 +190,7 @@ namespace cbrc {
       p.gapOpen == a && p.gapEpen == b && p.frameshiftCost == f;
   }
 
+/*
   static bool isProtein(const char *alphabet) {
     return isEqual(alphabet, "ACDEFGHIKLMNPQRSTVWY");
   }
@@ -240,6 +245,7 @@ namespace cbrc {
       codonTable[i] = std::find(usedLettersBeg,
           usedLettersEnd, codonTable[i]) - usedLettersBeg;
   }
+*/
 
   //!! This checks if we are dealing with AA-AA or DNA-AA and creates the evaluer accordingly.
   void LastEvaluer::init(const char *matrixName,
@@ -266,6 +272,7 @@ namespace cbrc {
     size_t alphabetSize = std::strlen(alphabet);
 
 //!! Here's where the evaluer is being initialized
+/*
     if (frameshiftCost > 0) {  // DNA-versus-protein alignment with frameshifts:
       if (isGapped && insOpen == delOpen && insEpen == delEpen) {
         if (isProtein(alphabet) && isStandardGeneticCode) {
@@ -276,6 +283,24 @@ namespace cbrc {
           }
         }
       }
+*/
+
+    //if (frameshiftCost > 0) {  // DNA-versus-protein alignment with frameshifts:
+      //if (isGapped && insOpen == delOpen && insEpen == delEpen) {
+        //if (isProtein(alphabet) && isStandardGeneticCode) {
+
+
+          for (size_t i = 0; i < COUNTOF(frameshiftEvalueParameters); ++i) {
+            const FrameshiftEvalueParameters &p = frameshiftEvalueParameters[i];
+            if (isHit(p, matrixName, delOpen, delEpen, frameshiftCost)){
+              return frameshiftEvaluer.initParameters(p.parameters);
+            }
+          }
+        //}
+      //}
+
+/*
+  We may need to make this work...
 
       long codonTable[64];
       makeCodonTable(codonTable, geneticCode);
@@ -304,6 +329,11 @@ namespace cbrc {
         frameshiftEvaluer.initGapless(4, matrixSize, codonTable,
             &matrix[0], &ntFreqs[0], &aaFreqs[0]);
       }
+    } 
+*/
+
+
+/*
     } else {  // ordinary alignment:
       if (isGapped && insOpen == delOpen && insEpen == delEpen) {
         if (isProtein(alphabet)) {
@@ -346,8 +376,11 @@ namespace cbrc {
             letterFreqs2, letterFreqs1);
       }
     }
+*/
   }
 
+
+/*
   static int theMinScore(double lambda, double k, double evalue, double area) {
     // do log of evalue separately, to reduce the risk of overflow:
     double s = (std::log(k * area) - std::log(evalue)) / lambda;
@@ -397,5 +430,6 @@ namespace cbrc {
     }
     out.precision(prec);
   }
+*/
 
 }

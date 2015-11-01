@@ -30,6 +30,7 @@ gumbel_params/sls_alp_data.o gumbel_params/sls_alp_regression.o		\
 gumbel_params/sls_alp_sim.o gumbel_params/sls_pvalues.o\
 utils.o  \
 externalsort.o linereader.o utilities.o heapsort.o tempfiles.o \
+LastEvaluer.o \
 alp/sls_alignment_evaluer.o \
 alp/sls_pvalues.o \
 alp/sls_alp_sim.o\
@@ -213,9 +214,10 @@ lambda_calculator.o: lambda_calculator.cc nrutil.hh \
 
 
 
-
-
-
+LastEvaluer.o: LastEvaluer.cc LastEvaluer.hh ScoreMatrixRow.hh \
+ alp/sls_alignment_evaluer.hpp alp/sls_pvalues.hpp alp/sls_basic.hpp \
+ alp/sls_falp_alignment_evaluer.hpp alp/sls_fsa1_pvalues.hpp \
+ GeneticCode.hh
 
 
 

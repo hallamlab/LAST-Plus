@@ -15,7 +15,6 @@
 #include "gumbel_params/sls_pvalues.hpp"
 #include "semaphores.hh"
 
-
 // make C++ tolerable:
 #define CI(type) std::vector<type>::const_iterator
 
@@ -71,25 +70,27 @@ static void writeSignedDifference( size_t x, size_t y, std::ostream& os ){
 
 void Alignment::write(
            double scoreCutoff, double evalueCutoff,
-           const MultiSequence& seq1, const MultiSequence& seq2,
-		       char strand, bool isTranslated, const Alphabet& alph, int format, 
-           std::vector<std::string> *outputVector, const AlignmentExtras& extras ) const{
+           const MultiSequence& reference, const MultiSequence& query,
+		       char strand, bool isTranslated, const Alphabet& alph, 
+           int format, std::vector<std::string> *outputVector, 
+           LastEvaluer evaluer,
+           const AlignmentExtras& extras ) const{
 
   assert( !blocks.empty() );
 
   if( format == 0 ) 
-       writeTab( seq1, seq2, strand, isTranslated, extras, outputVector );
+       writeTab( reference, query, strand, isTranslated, extras, outputVector );
   else if( format == 2 )  {
-       writeBlastOutput(scoreCutoff, evalueCutoff, seq1, seq2, strand, isTranslated, alph, extras, outputVector);
+       writeBlastOutput(scoreCutoff, evalueCutoff, reference, query, strand, isTranslated, alph, extras, outputVector);
   }
   else 
-       writeMaf( seq1, seq2, strand, isTranslated, alph, extras );
+       writeMaf( reference, query, strand, isTranslated, alph, extras );
 
 }
 
 //!!
 void Alignment::writeBlastOutput(
-              double scoreCutoff, double evalueCutoff, const MultiSequence& seq1, const MultiSequence& seq2,
+              double scoreCutoff, double evalueCutoff, const MultiSequence& reference, const MultiSequence& query,
               char strand, bool isTranslated, const Alphabet& alph, 
 			        const AlignmentExtras& extras, std::vector<std::string> *outputVector) const{
 
@@ -100,24 +101,24 @@ void Alignment::writeBlastOutput(
 
   size_t alnBeg1 = beg1();
   size_t alnEnd1 = end1();
-  size_t w1 = seq1.whichSequence(alnBeg1);
-  size_t seqStart1 = seq1.seqBeg(w1);
+  size_t w1 = reference.whichSequence(alnBeg1);
+  size_t seqStart1 = reference.seqBeg(w1);
 
-  size_t size2 = seq2.finishedSize();
+  size_t size2 = query.finishedSize();
   size_t frameSize2 = isTranslated ? (size2 / 3) : 0;
   size_t alnBeg2 = aaToDna( beg2(), frameSize2 );
   size_t alnEnd2 = aaToDna( end2(), frameSize2 );
-  size_t w2 = seq2.whichSequence( strand == '+' ? alnBeg2 : size2 - alnBeg2 );
-  size_t seqStart2 = strand == '+' ? seq2.seqBeg(w2) : size2 - seq2.seqEnd(w2);
+  size_t w2 = query.whichSequence( strand == '+' ? alnBeg2 : size2 - alnBeg2 );
+  size_t seqStart2 = strand == '+' ? query.seqBeg(w2) : size2 - query.seqEnd(w2);
 
-  const std::string n1 = seq1.seqName(w1);
-  const std::string n2 = seq2.seqName(w2);
+  const std::string n1 = reference.seqName(w1);
+  const std::string n2 = query.seqName(w2);
   size_t b1 = alnBeg1 - seqStart1;
   size_t b2 = alnBeg2 - seqStart2;
   size_t r1 = alnEnd1 - alnBeg1;
   size_t r2 = alnEnd2 - alnBeg2;
-  size_t s1 = seq1.seqLen(w1);
-  size_t s2 = seq2.seqLen(w2);
+  size_t s1 = reference.seqLen(w1);
+  size_t s2 = query.seqLen(w2);
 
   const int nw = std::max( n1.size(), n2.size() );
   const int bw = std::max( numDigits(b1), numDigits(b2) );
@@ -146,7 +147,7 @@ void Alignment::writeBlastOutput(
   dest = sprintChar( dest, '+' );
   dest = sprintSize( dest, s1, sw );
   
-  writeTopSeq( seq1.seqReader(), alph, frameSize2, dest );
+  writeTopSeq( reference.seqReader(), alph, frameSize2, dest );
   std::string userString = getSequence(line, lineLen);
   
   gaps += countGaps(userString);
@@ -158,11 +159,11 @@ void Alignment::writeBlastOutput(
   dest = sprintChar( dest, strand );
   dest = sprintSize( dest, s2, sw );
 
-  writeBotSeq( seq2.seqReader(), alph, frameSize2, dest );
-  std::string seq2String = getSequence(line, lineLen);
+  writeBotSeq( query.seqReader(), alph, frameSize2, dest );
+  std::string queryString = getSequence(line, lineLen);
 
-  gaps += countGaps(seq2String);
-  size_t identityCount = countIdentities(userString, seq2String);
+  gaps += countGaps(queryString);
+  size_t identityCount = countIdentities(userString, queryString);
   identities = 100*identityCount/userString.length();
 
   if (gaps+identityCount > alignLength){
@@ -180,7 +181,7 @@ void Alignment::writeBlastOutput(
   // If we are dealing with DNA query and Amino Acid reference use the first.
   // If we are dealing with Amino acid to Amino Acid go with the second. 
   if(isTranslated){
-    size_t s2 = seq2.seqLen(w2);
+    size_t s2 = query.seqLen(w2);
     double area = evaluer.area( score, s2 );
     double epa = evaluer.evaluePerArea( score );
     bitscore = evaluer.bitScore( score );
@@ -201,11 +202,10 @@ void Alignment::writeBlastOutput(
     bit_evalue = area*pow(2,-bitscore);
 
 
-
   if(bitscore >= scoreCutoff && bit_evalue <= evalueCutoff){
   
-    outputStream << seq2.seqName(w2) << tab
-       << seq1.seqName(w1) << tab
+    outputStream << query.seqName(w2) << tab
+       << reference.seqName(w1) << tab
        << identities << tab
        << alignLength << tab
        << mismatches << tab
@@ -222,12 +222,12 @@ void Alignment::writeBlastOutput(
   }
 }
 
-size_t Alignment::countIdentities(std::string& seq1String, std::string& seq2String) const{
-    assert(seq1String.length() == seq2String.length());
+size_t Alignment::countIdentities(std::string& referenceString, std::string& queryString) const{
+    assert(referenceString.length() == queryString.length());
 
     size_t count = 0;
-    for (size_t i=0;i<seq1String.length();i++){
-        if(seq1String[i] == seq2String[i]) count++;
+    for (size_t i=0;i<referenceString.length();i++){
+        if(referenceString[i] == queryString[i]) count++;
     }
     return count;
 }
@@ -254,7 +254,7 @@ size_t Alignment::countGaps(std::string& sequence) const {
     return std::count(sequence.begin(), sequence.end(), '-'); 
 }
 
-void Alignment::writeTab( const MultiSequence& seq1, const MultiSequence& seq2,
+void Alignment::writeTab( const MultiSequence& reference, const MultiSequence& query,
 			  char strand, bool isTranslated, const AlignmentExtras& extras, std::vector<std::string>
                           *outputVector ) const{
 
@@ -262,29 +262,29 @@ void Alignment::writeTab( const MultiSequence& seq1, const MultiSequence& seq2,
 
   size_t alnBeg1 = beg1();
   size_t alnEnd1 = end1();
-  size_t w1 = seq1.whichSequence(alnBeg1);
-  size_t seqStart1 = seq1.seqBeg(w1);
+  size_t w1 = reference.whichSequence(alnBeg1);
+  size_t seqStart1 = reference.seqBeg(w1);
 
-  size_t size2 = seq2.finishedSize();
+  size_t size2 = query.finishedSize();
   size_t frameSize2 = isTranslated ? (size2 / 3) : 0;
   size_t alnBeg2 = aaToDna( beg2(), frameSize2 );
   size_t alnEnd2 = aaToDna( end2(), frameSize2 );
-  size_t w2 = seq2.whichSequence( strand == '+' ? alnBeg2 : size2 - alnBeg2 );
-  size_t seqStart2 = strand == '+' ? seq2.seqBeg(w2) : size2 - seq2.seqEnd(w2);
+  size_t w2 = query.whichSequence( strand == '+' ? alnBeg2 : size2 - alnBeg2 );
+  size_t seqStart2 = strand == '+' ? query.seqBeg(w2) : size2 - query.seqEnd(w2);
 
   outputStream << score << '\t';
 
-  outputStream << seq1.seqName(w1) << '\t'
+  outputStream << reference.seqName(w1) << '\t'
      << alnBeg1 - seqStart1 << '\t'
      << alnEnd1 - alnBeg1 << '\t'
      << '+' << '\t'
-     << seq1.seqLen(w1) << '\t';
+     << reference.seqLen(w1) << '\t';
 
-  outputStream << seq2.seqName(w2) << '\t'
+  outputStream << query.seqName(w2) << '\t'
      << alnBeg2 - seqStart2 << '\t'
      << alnEnd2 - alnBeg2 << '\t'
      << strand << '\t'
-     << seq2.seqLen(w2) << '\t';
+     << query.seqLen(w2) << '\t';
 
   for( CI(SegmentPair) i = blocks.begin(); i < blocks.end(); ++i ){
     if( i > blocks.begin() ){  // between each pair of aligned blocks:
@@ -309,7 +309,7 @@ void Alignment::writeTab( const MultiSequence& seq1, const MultiSequence& seq2,
   outputVector->push_back( outputStream.str() );
 }
 
-void Alignment::writeMaf( const MultiSequence& seq1, const MultiSequence& seq2,
+void Alignment::writeMaf( const MultiSequence& reference, const MultiSequence& query,
 			  char strand, bool isTranslated, const Alphabet& alph, const AlignmentExtras& extras ) const{
 
   std::stringstream outputStream;
@@ -320,24 +320,24 @@ void Alignment::writeMaf( const MultiSequence& seq1, const MultiSequence& seq2,
 
   size_t alnBeg1 = beg1();
   size_t alnEnd1 = end1();
-  size_t w1 = seq1.whichSequence(alnBeg1);
-  size_t seqStart1 = seq1.seqBeg(w1);
+  size_t w1 = reference.whichSequence(alnBeg1);
+  size_t seqStart1 = reference.seqBeg(w1);
 
-  size_t size2 = seq2.finishedSize();
+  size_t size2 = query.finishedSize();
   size_t frameSize2 = isTranslated ? (size2 / 3) : 0;
   size_t alnBeg2 = aaToDna( beg2(), frameSize2 );
   size_t alnEnd2 = aaToDna( end2(), frameSize2 );
-  size_t w2 = seq2.whichSequence( strand == '+' ? alnBeg2 : size2 - alnBeg2 );
-  size_t seqStart2 = strand == '+' ? seq2.seqBeg(w2) : size2 - seq2.seqEnd(w2);
+  size_t w2 = query.whichSequence( strand == '+' ? alnBeg2 : size2 - alnBeg2 );
+  size_t seqStart2 = strand == '+' ? query.seqBeg(w2) : size2 - query.seqEnd(w2);
 
-  const std::string n1 = seq1.seqName(w1);
-  const std::string n2 = seq2.seqName(w2);
+  const std::string n1 = reference.seqName(w1);
+  const std::string n2 = query.seqName(w2);
   size_t b1 = alnBeg1 - seqStart1;
   size_t b2 = alnBeg2 - seqStart2;
   size_t r1 = alnEnd1 - alnBeg1;
   size_t r2 = alnEnd2 - alnBeg2;
-  size_t s1 = seq1.seqLen(w1);
-  size_t s2 = seq2.seqLen(w2);
+  size_t s1 = reference.seqLen(w1);
+  size_t s2 = query.seqLen(w2);
 
   const int nw = std::max( n1.size(), n2.size() );
   const int bw = std::max( numDigits(b1), numDigits(b2) );
@@ -363,15 +363,15 @@ void Alignment::writeMaf( const MultiSequence& seq1, const MultiSequence& seq2,
   dest = sprintChar( dest, '+' );
   dest = sprintSize( dest, s1, sw );
   
-  writeTopSeq( seq1.seqReader(), alph, frameSize2, dest );
+  writeTopSeq( reference.seqReader(), alph, frameSize2, dest );
 
   //!!os.write( line, lineLen );
   
-  if( seq1.qualsPerLetter() > 0 ){
+  if( reference.qualsPerLetter() > 0 ){
     dest = sprintChar( line, 'q' );
     dest += nw + 1;
     dest = sprintLeft( dest, "", bw + 1 + rw + 3 + sw );
-    writeTopQual( seq1.qualityReader(), seq1.qualsPerLetter(), dest );
+    writeTopQual( reference.qualityReader(), reference.qualsPerLetter(), dest );
     
     //os.write( line, lineLen );
   }
@@ -382,15 +382,15 @@ void Alignment::writeMaf( const MultiSequence& seq1, const MultiSequence& seq2,
   dest = sprintSize( dest, r2, rw );
   dest = sprintChar( dest, strand );
   dest = sprintSize( dest, s2, sw );
-  writeBotSeq( seq2.seqReader(), alph, frameSize2, dest );
+  writeBotSeq( query.seqReader(), alph, frameSize2, dest );
 
   //!!os.write( line, lineLen );
 
-  if( seq2.qualsPerLetter() > 0 ){
+  if( query.qualsPerLetter() > 0 ){
     dest = sprintChar( line, 'q' );
     dest += nw + 1;
     dest = sprintLeft( dest, "", bw + 1 + rw + 3 + sw );
-    writeBotQual( seq2.qualityReader(), seq2.qualsPerLetter(), dest );
+    writeBotQual( query.qualityReader(), query.qualsPerLetter(), dest );
 
     //!!os.write( line, lineLen );
   }

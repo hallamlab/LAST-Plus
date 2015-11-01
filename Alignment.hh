@@ -14,6 +14,8 @@
 #include <iosfwd>
 #include <iostream>
 
+#include "LastEvaluer.hh"
+
 namespace cbrc{
 
   typedef unsigned char uchar;
@@ -77,6 +79,7 @@ namespace cbrc{
         const MultiSequence& reference, const MultiSequence& query,
         char strand, bool isTranslated, const Alphabet& alph,
         int format, std::vector<std::string> *outputVector,
+        LastEvaluer evaluer, 
         const AlignmentExtras& extras = AlignmentExtras() ) const;
 
     // data:

@@ -407,8 +407,10 @@ void threadData::alignGapless(SegmentPairPot &gaplessAlns, char strand) {
         if (args->outputType == 1) {  // we just want gapless alignments
           Alignment aln(identifier);
           aln.fromSegmentPair(sp);
-          aln.write(args->scoreCutoff, args->evalueCutoff, *text, *query, strand, args->isTranslated(), *alph, args->outputFormat,
-              outputVector);
+          aln.write(args->scoreCutoff, args->evalueCutoff, *text, *query, strand, 
+                    args->isTranslated(), *alph, args->outputFormat,
+                    outputVector,
+                    evaluer);
         }
         else {
           gaplessAlns.add(sp);  // add the gapless alignment to the pot
@@ -522,7 +524,9 @@ void threadData::alignFinish(const AlignmentPot &gappedAlns, char strand) {
   for (size_t i = 0; i < gappedAlns.size(); ++i) {
     const Alignment &aln = gappedAlns.items[i];
     if (args->outputType < 4) {
-      aln.write(args->scoreCutoff, args->evalueCutoff, *text, *query, strand, args->isTranslated(), *alph, args->outputFormat, outputVector);
+      aln.write(args->scoreCutoff, args->evalueCutoff, *text, *query, strand, 
+                args->isTranslated(), *alph, args->outputFormat, outputVector,
+                evaluer);
     }else{  // calculate match probabilities:
       Alignment probAln(identifier);
       AlignmentExtras extras;
@@ -533,8 +537,10 @@ void threadData::alignFinish(const AlignmentPot &gappedAlns, char strand) {
           args->frameshiftCost, frameSize, dis.p, dis.t,
           dis.i, dis.j, *alph, extras,
           args->gamma, args->outputType);
-      probAln.write(args->scoreCutoff, args->evalueCutoff, *text, *query, strand, args->isTranslated(),
-          *alph, args->outputFormat, outputVector, extras);
+      probAln.write(args->scoreCutoff, args->evalueCutoff, *text, *query, strand, 
+                    args->isTranslated(), *alph, args->outputFormat, outputVector, 
+                    evaluer,
+                    extras);
     }
   }
 }
@@ -1012,6 +1018,20 @@ void lastal(int argc, char **argv) {
   char defaultInputName[] = "-";
   char *defaultInput[] = {defaultInputName, 0};
   char **inputBegin = argv + args->inputStart;
+
+  if(args->isTranslated()){
+  /*
+   evaluer.init( canonicalMatrixName, args.matchScore, args.mismatchCost,
+                  alph.letters.c_str(), scoreMatrix.caseSensitive,
+                  p1, p2, isGapped,
+                  gapCosts.delExist, gapCosts.delExtend,
+                  gapCosts.insExist, gapCosts.insExtend,
+                  args.frameshiftCost, geneticCode, isStandardGeneticCode );
+    evaluer.setSearchSpace( refLetters, args.numOfStrands() );
+      */
+  }else{
+    initializeEvalueCalulator(args->lastdbName + ".prj", scoreMatrix, *inputBegin);
+  }
 
   initializeEvalueCalulator(args->lastdbName + ".prj", scoreMatrix, *inputBegin);
 

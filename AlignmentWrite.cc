@@ -173,14 +173,36 @@ void Alignment::writeBlastOutput(
 
   evalue = evalueForSequences(score,s1, s2);
 
-  double lambda = getLambda();
-  double k = getK();
-  double area = getArea();
+  double bitscore = 0;
+  double bit_evalue = 0;
+  
+/*
+  // If we are dealing with DNA query and Amino Acid reference use the first.
+  // If we are dealing with Amino acid to Amino Acid go with the second. 
+  if(isTranslated){
+    size_t s2 = seq2.seqLen(w2);
+    double area = evaluer.area( score, s2 );
+    double epa = evaluer.evaluePerArea( score );
+    bitscore = evaluer.bitScore( score );
+    bit_evalue = epa*area;
+  }else{
+    double lambda = getLambda();
+    double k = getK();
+    double area = getArea();
+    bitscore = (lambda*score-log(k))/log(2);
+    bit_evalue = area*pow(2,-bitscore);
+  }
+*/
 
-  double bitscore = (lambda*score-log(k))/log(2);
-  double evalue2 = area*pow(2,-bitscore);
+    double lambda = getLambda();
+    double k = getK();
+    double area = getArea();
+    bitscore = (lambda*score-log(k))/log(2);
+    bit_evalue = area*pow(2,-bitscore);
 
-  if(bitscore >= scoreCutoff && evalue2 <= evalueCutoff){
+
+
+  if(bitscore >= scoreCutoff && bit_evalue <= evalueCutoff){
   
     outputStream << seq2.seqName(w2) << tab
        << seq1.seqName(w1) << tab
@@ -192,7 +214,7 @@ void Alignment::writeBlastOutput(
        << (alnEnd2 -seqStart2) << tab
        << (alnBeg1 - seqStart1) << tab
        << (alnEnd1 -seqStart1) << tab
-       << evalue2 << tab
+       << bit_evalue << tab
        << bitscore;
        outputStream << "\n";
 

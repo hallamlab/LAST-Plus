@@ -14,7 +14,6 @@ bool __isDubiousDna( const Alphabet& alph, const MultiSequence& multi ){
     if( c > alph.size || c == alph.encode[ (uchar)'N' ] ) ++dnaCount;
   }
 
-  std::cout << dnaCount;
   if( dnaCount < static_cast<unsigned>(0.90*multi.seqLen(0)) ) return true;  // more than 10% unexpected letters
   else return false;
 }

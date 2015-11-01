@@ -27,16 +27,16 @@ class LocalAlignmentEvaluer {
   bool isBad() const;
 
   // These routines might fail, putting us in the bad/undefined state.
-  // letterProbs1 correspond to matrix rows (1st index), and
-  // letterProbs2 correspond to matrix columns (2nd index).  The
+  // query_probabilities correspond to matrix rows (1st index), and
+  // reference_probabilities correspond to matrix columns (2nd index).  The
   // letterProbs had better be normalized.
 
-  void initGapless(const std::vector<double>& letterProbs1,
-                   const std::vector<double>& letterProbs2,
+  void initGapless(const std::vector<double>& query_probabilities,
+                   const std::vector<double>& reference_probabilities,
                    const int *const *scoreMatrix);
 
-  void initGapped(const std::vector<double>& letterProbs1,
-                  const std::vector<double>& letterProbs2,
+  void initGapped(const std::vector<double>& query_probabilities,
+                  const std::vector<double>& reference_probabilities,
                   const int *const *scoreMatrix,
                   int gapExistCost, int gapExtendCost);
 

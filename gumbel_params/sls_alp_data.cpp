@@ -43,7 +43,7 @@ USING_NCBI_SCOPE;
 USING_SCOPE(blast);
 USING_SCOPE(Sls);
 
-
+//!!
 alp_data::alp_data(//constructor
                    Int4 open_,
                    Int4 epen_,

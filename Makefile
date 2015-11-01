@@ -29,7 +29,10 @@ gumbel_params/random_gen.o gumbel_params/sls_alp.o			\
 gumbel_params/sls_alp_data.o gumbel_params/sls_alp_regression.o		\
 gumbel_params/sls_alp_sim.o gumbel_params/sls_pvalues.o\
 utils.o  \
-externalsort.o linereader.o utilities.o heapsort.o tempfiles.o
+externalsort.o linereader.o utilities.o heapsort.o tempfiles.o 
+#alp/sls_basic.o alp/sls_falp_alignment_evaluer.o alp/sls_fsa1.o alp/sls_fsa1_parameters.o alp/sls_fsa1_pvalues.o alp/sls_fsa1_utils.o
+#alp/sls_basic.o #alp/sls_falp_alignment_evaluer.o #alp/sls_fsa1.o #alp/sls_fsa1_parameters.o 
+#alp/sls_fsa1_pvalues.o #alp/sls_fsa1_utils.o #alp/njn_random.o 
 
 SPOBJ = Alphabet.o MultiSequence.o fileMap.o split/cbrc_linalg.o	\
 split/last-split.o split/cbrc_split_aligner.o split/last-split-main.o	\
@@ -171,6 +174,33 @@ externalsort.o: externalsort.cc externalsort.hh
 linereader.o: linereader.cc linereader.hh
 heapsort.o: heapsort.cc heapsort.hh
 utilities.o: utilities.cc utilities.hh
+
+alp/sls_basic.o: alp/sls_basic.cpp alp/sls_basic.hpp
+alp/sls_falp_alignment_evaluer.o: alp/sls_falp_alignment_evaluer.cpp \
+ alp/sls_falp_alignment_evaluer.hpp alp/sls_fsa1_pvalues.hpp \
+ alp/sls_basic.hpp alp/sls_fsa1_parameters.hpp alp/sls_fsa1_utils.hpp \
+ alp/njn_random.hpp alp/njn_uniform.hpp alp/sls_alp_regression.hpp \
+ alp/njn_localmaxstatmatrix.hpp alp/njn_localmaxstat.hpp \
+ alp/njn_localmaxstatutil.hpp alp/njn_matrix.hpp alp/njn_approx.hpp \
+ alp/njn_doubletype.hpp alp/njn_ioutil.hpp alp/njn_vector.hpp \
+ alp/sls_fsa1.hpp
+alp/sls_fsa1.o: alp/sls_fsa1.cpp alp/sls_fsa1.hpp alp/sls_alp_regression.hpp \
+ alp/sls_basic.hpp alp/sls_fsa1_utils.hpp alp/njn_random.hpp \
+ alp/njn_uniform.hpp alp/sls_fsa1_parameters.hpp alp/sls_fsa1_pvalues.hpp \
+ alp/njn_localmaxstatmatrix.hpp alp/njn_localmaxstat.hpp \
+ alp/njn_localmaxstatutil.hpp alp/njn_matrix.hpp alp/njn_approx.hpp \
+ alp/njn_doubletype.hpp alp/njn_ioutil.hpp alp/njn_vector.hpp
+alp/sls_fsa1_parameters.o: alp/sls_fsa1_parameters.cpp \
+ alp/sls_fsa1_parameters.hpp alp/sls_fsa1_utils.hpp alp/sls_basic.hpp \
+ alp/njn_random.hpp alp/njn_uniform.hpp alp/sls_alp_regression.hpp \
+ alp/sls_fsa1_pvalues.hpp
+alp/sls_fsa1_pvalues.o: alp/sls_fsa1_pvalues.cpp alp/sls_fsa1_pvalues.hpp \
+ alp/sls_basic.hpp alp/sls_fsa1_utils.hpp alp/njn_random.hpp \
+ alp/njn_uniform.hpp alp/sls_normal_distr_array.hpp
+alp/sls_fsa1_utils.o: alp/sls_fsa1_utils.cpp alp/sls_fsa1_utils.hpp \
+ alp/sls_basic.hpp alp/njn_random.hpp alp/njn_uniform.hpp
+alp/njn_random.o: alp/njn_random.cpp alp/njn_random.hpp
+
 
 lastal.o: lastal.cc LastalArguments.hh SequenceFormat.hh \
  QualityPssmMaker.hh ScoreMatrixRow.hh OneQualityScoreMatrix.hh \

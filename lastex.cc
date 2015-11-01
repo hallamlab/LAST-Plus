@@ -44,7 +44,6 @@ bool isBad( const SequenceStatistics& s ){
   }
 
   for( unsigned i = 0; i < s.letterProbs.size(); ++i ){
-    std::cout << s.letterProbs[i] << std::endl;
     if( s.letterProbs[i] > 0 ) return false;
   }
 
@@ -141,7 +140,7 @@ void makeEvaluer(){
                         &matrixPointers[0],
                         args.gapExistCost, args.gapExtendCost );
    }
-
+  //!! Initial problem entry point
   if( evaluer.isBad() )
     ERR( "can't evaluate scores for these score parameters and letter frequencies" );
 }

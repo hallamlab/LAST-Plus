@@ -121,8 +121,6 @@ int GappedXdropAligner::align3(const uchar *reference,
                                int maxMatchScore) {
   bool isAffine = gapUnalignedCost >= gapExistenceCost + 2 * gapExtensionCost;
 
-  std::cout << "HELLO WORLD" << std::endl;
-
   std::size_t maxSeq1begs[] = { 9, 9, 0, 9, 9, 9, 9 };
   std::size_t minSeq1ends[] = { 0, 0, 1, 0, 0, 0, 0 };
 
@@ -143,8 +141,6 @@ int GappedXdropAligner::align3(const uchar *reference,
 
     const uchar *chosen_query_frame =
         whichFrame(antidiagonal, query_frame0, query_frame1, query_frame2);
-
-    std::cout << antidiagonal % 3 << std::endl;
 
     std::size_t chosen_query_framepos = (antidiagonal - 7) / 3 - reference_beg;
 
@@ -249,7 +245,6 @@ int GappedXdropAligner::align3(const uchar *reference,
 
     updateFiniteEdges3(maxSeq1begs, minSeq1ends, x0base, x0 + 1, numCells);
   }
-  std::cout << "GOODBYE WORLD" << std::endl;
   return bestScore;
 }
 

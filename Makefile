@@ -29,10 +29,27 @@ gumbel_params/random_gen.o gumbel_params/sls_alp.o			\
 gumbel_params/sls_alp_data.o gumbel_params/sls_alp_regression.o		\
 gumbel_params/sls_alp_sim.o gumbel_params/sls_pvalues.o\
 utils.o  \
-externalsort.o linereader.o utilities.o heapsort.o tempfiles.o 
-#alp/sls_basic.o alp/sls_falp_alignment_evaluer.o alp/sls_fsa1.o alp/sls_fsa1_parameters.o alp/sls_fsa1_pvalues.o alp/sls_fsa1_utils.o
-#alp/sls_basic.o #alp/sls_falp_alignment_evaluer.o #alp/sls_fsa1.o #alp/sls_fsa1_parameters.o 
-#alp/sls_fsa1_pvalues.o #alp/sls_fsa1_utils.o #alp/njn_random.o 
+externalsort.o linereader.o utilities.o heapsort.o tempfiles.o \
+alp/sls_alignment_evaluer.o \
+alp/sls_pvalues.o \
+alp/sls_alp_sim.o\
+alp/sls_alp_regression.o \
+alp/sls_alp_data.o alp/sls_alp.o   \
+alp/sls_basic.o \
+alp/njn_localmaxstatmatrix.o \
+alp/njn_localmaxstat.o \
+alp/njn_localmaxstatutil.o \
+alp/njn_dynprogprob.o      \
+alp/njn_dynprogprobproto.o \
+alp/njn_dynprogproblim.o alp/njn_ioutil.o  \
+alp/njn_random.o \
+alp/sls_falp_alignment_evaluer.o     \
+alp/sls_fsa1_pvalues.o \
+alp/sls_fsa1_utils.o \
+alp/sls_fsa1.o    \
+alp/sls_fsa1_parameters.o
+
+
 
 SPOBJ = Alphabet.o MultiSequence.o fileMap.o split/cbrc_linalg.o	\
 split/last-split.o split/cbrc_split_aligner.o split/last-split-main.o	\
@@ -125,34 +142,24 @@ GappedXdropAlignerPssm.o: GappedXdropAlignerPssm.cc GappedXdropAligner.hh \
 GeneralizedAffineGapCosts.o: GeneralizedAffineGapCosts.cc \
  GeneralizedAffineGapCosts.hh
 GeneticCode.o: GeneticCode.cc GeneticCode.hh Alphabet.hh
-
 LambdaCalculator.o: LambdaCalculator.cc LambdaCalculator.hh \
  lambda_calculator.hh lambda_calculator.cc
-
 LastalArguments.o: LastalArguments.cc LastalArguments.hh \
  SequenceFormat.hh stringify.hh
 LastdbArguments.o: LastdbArguments.cc LastdbArguments.hh \
  SequenceFormat.hh stringify.hh
-
 LastexArguments.o: LastexArguments.cc LastexArguments.hh stringify.hh
-
 MultiSequence.o: MultiSequence.cc MultiSequence.hh ScoreMatrixRow.hh \
  VectorOrMmap.hh Mmap.hh fileMap.hh stringify.hh io.hh
-
 MultiSequenceQual.o: MultiSequenceQual.cc MultiSequence.hh \
  ScoreMatrixRow.hh VectorOrMmap.hh Mmap.hh fileMap.hh stringify.hh
-
 OneQualityScoreMatrix.o: OneQualityScoreMatrix.cc \
  OneQualityScoreMatrix.hh ScoreMatrixRow.hh qualityScoreUtil.hh \
  stringify.hh
-
 QualityPssmMaker.o: QualityPssmMaker.cc QualityPssmMaker.hh \
  ScoreMatrixRow.hh qualityScoreUtil.hh stringify.hh
-
 ScoreMatrix.o: ScoreMatrix.cc ScoreMatrix.hh io.hh
-
 SegmentPair.o: SegmentPair.cc SegmentPair.hh
-
 SegmentPairPot.o: SegmentPairPot.cc SegmentPairPot.hh SegmentPair.hh
 SubsetSuffixArray.o: SubsetSuffixArray.cc SubsetSuffixArray.hh \
  CyclicSubsetSeed.hh VectorOrMmap.hh Mmap.hh fileMap.hh stringify.hh \
@@ -174,7 +181,88 @@ externalsort.o: externalsort.cc externalsort.hh
 linereader.o: linereader.cc linereader.hh
 heapsort.o: heapsort.cc heapsort.hh
 utilities.o: utilities.cc utilities.hh
+utils.o: utils.hh utils.cc Alphabet.cc Alphabet.hh MultiSequence.hh MultiSequence.cc io.hh io.cc
 
+
+
+lastal.o: lastal.cc LastalArguments.hh SequenceFormat.hh \
+ QualityPssmMaker.hh ScoreMatrixRow.hh OneQualityScoreMatrix.hh \
+ TwoQualityScoreMatrix.hh qualityScoreUtil.hh stringify.hh \
+ LambdaCalculator.hh GeneticCode.hh SubsetSuffixArray.hh \
+ CyclicSubsetSeed.hh VectorOrMmap.hh Mmap.hh fileMap.hh Centroid.hh \
+ GappedXdropAligner.hh GeneralizedAffineGapCosts.hh SegmentPair.hh \
+ AlignmentPot.hh Alignment.hh SegmentPairPot.hh ScoreMatrix.hh \
+ Alphabet.hh MultiSequence.hh DiagonalTable.hh gaplessXdrop.hh \
+ gaplessPssmXdrop.hh gaplessTwoQualityXdrop.hh io.hh version.hh \
+ lastal.hh externalsort.hh linereader.hh
+
+lastdb.o: lastdb.cc LastdbArguments.hh SequenceFormat.hh \
+ SubsetSuffixArray.hh CyclicSubsetSeed.hh VectorOrMmap.hh Mmap.hh \
+ fileMap.hh stringify.hh Alphabet.hh MultiSequence.hh ScoreMatrixRow.hh \
+ io.hh qualityScoreUtil.hh version.hh
+
+lastex.o: lastex.cc LastexArguments.hh ScoreMatrix.hh Alphabet.hh io.hh \
+ gumbel_params/mcf_local_alignment_evaluer.hpp \
+ gumbel_params/sls_pvalues.hpp gumbel_params/sls_normal_distr_array.hpp \
+ version.hh  
+
+lambda_calculator.o: lambda_calculator.cc nrutil.hh \
+ nrutil.cc ludcmp.cc lubksb.cc  lambda_calculator.hh
+
+
+
+
+
+
+
+
+
+
+
+alp/njn_dynprogprob.o: alp/njn_dynprogprob.cpp alp/njn_dynprogprob.hpp \
+ alp/njn_dynprogprobproto.hpp alp/njn_memutil.hpp alp/njn_ioutil.hpp
+alp/njn_dynprogproblim.o: alp/njn_dynprogproblim.cpp \
+ alp/njn_dynprogproblim.hpp alp/njn_dynprogprob.hpp \
+ alp/njn_dynprogprobproto.hpp alp/njn_memutil.hpp alp/njn_ioutil.hpp
+alp/njn_dynprogprobproto.o: alp/njn_dynprogprobproto.cpp \
+ alp/njn_dynprogprobproto.hpp
+alp/njn_ioutil.o: alp/njn_ioutil.cpp alp/njn_ioutil.hpp
+alp/njn_localmaxstat.o: alp/njn_localmaxstat.cpp alp/sls_basic.hpp \
+ alp/njn_localmaxstat.hpp alp/njn_memutil.hpp alp/njn_ioutil.hpp \
+ alp/njn_dynprogproblim.hpp alp/njn_dynprogprob.hpp \
+ alp/njn_dynprogprobproto.hpp alp/njn_function.hpp alp/njn_doubletype.hpp \
+ alp/njn_integer.hpp alp/njn_localmaxstatutil.hpp alp/njn_matrix.hpp \
+ alp/njn_approx.hpp alp/njn_vector.hpp
+alp/njn_localmaxstatmatrix.o: alp/njn_localmaxstatmatrix.cpp \
+ alp/njn_localmaxstatmatrix.hpp alp/njn_localmaxstat.hpp \
+ alp/njn_localmaxstatutil.hpp alp/njn_matrix.hpp alp/njn_approx.hpp \
+ alp/njn_doubletype.hpp alp/njn_ioutil.hpp alp/njn_vector.hpp \
+ alp/njn_memutil.hpp
+alp/njn_localmaxstatutil.o: alp/njn_localmaxstatutil.cpp \
+ alp/njn_localmaxstatutil.hpp alp/njn_matrix.hpp alp/njn_approx.hpp \
+ alp/njn_doubletype.hpp alp/njn_ioutil.hpp alp/njn_vector.hpp \
+ alp/njn_dynprogproblim.hpp alp/njn_dynprogprob.hpp \
+ alp/njn_dynprogprobproto.hpp alp/njn_integer.hpp alp/njn_memutil.hpp \
+ alp/njn_root.hpp alp/njn_function.hpp alp/sls_basic.hpp
+alp/njn_random.o: alp/njn_random.cpp alp/njn_random.hpp
+alp/sls_alignment_evaluer.o: alp/sls_alignment_evaluer.cpp \
+ alp/sls_alignment_evaluer.hpp alp/sls_pvalues.hpp alp/sls_basic.hpp \
+ alp/sls_alp.hpp alp/sls_alp_data.hpp alp/sls_alp_regression.hpp \
+ alp/njn_random.hpp alp/njn_uniform.hpp alp/sls_alp_sim.hpp \
+ alp/njn_localmaxstatmatrix.hpp alp/njn_localmaxstat.hpp \
+ alp/njn_localmaxstatutil.hpp alp/njn_matrix.hpp alp/njn_approx.hpp \
+ alp/njn_doubletype.hpp alp/njn_ioutil.hpp alp/njn_vector.hpp
+alp/sls_alp.o: alp/sls_alp.cpp alp/sls_alp.hpp alp/sls_alp_data.hpp \
+ alp/sls_basic.hpp alp/sls_alp_regression.hpp alp/njn_random.hpp \
+ alp/njn_uniform.hpp
+alp/sls_alp_data.o: alp/sls_alp_data.cpp alp/sls_alp_data.hpp \
+ alp/sls_basic.hpp alp/sls_alp_regression.hpp alp/njn_random.hpp \
+ alp/njn_uniform.hpp
+alp/sls_alp_regression.o: alp/sls_alp_regression.cpp \
+ alp/sls_alp_regression.hpp alp/sls_basic.hpp
+alp/sls_alp_sim.o: alp/sls_alp_sim.cpp alp/sls_alp_sim.hpp \
+ alp/sls_alp_data.hpp alp/sls_basic.hpp alp/sls_alp_regression.hpp \
+ alp/njn_random.hpp alp/njn_uniform.hpp alp/sls_alp.hpp
 alp/sls_basic.o: alp/sls_basic.cpp alp/sls_basic.hpp
 alp/sls_falp_alignment_evaluer.o: alp/sls_falp_alignment_evaluer.cpp \
  alp/sls_falp_alignment_evaluer.hpp alp/sls_fsa1_pvalues.hpp \
@@ -199,34 +287,17 @@ alp/sls_fsa1_pvalues.o: alp/sls_fsa1_pvalues.cpp alp/sls_fsa1_pvalues.hpp \
  alp/njn_uniform.hpp alp/sls_normal_distr_array.hpp
 alp/sls_fsa1_utils.o: alp/sls_fsa1_utils.cpp alp/sls_fsa1_utils.hpp \
  alp/sls_basic.hpp alp/njn_random.hpp alp/njn_uniform.hpp
-alp/njn_random.o: alp/njn_random.cpp alp/njn_random.hpp
+alp/sls_pvalues.o: alp/sls_pvalues.cpp alp/sls_pvalues.hpp alp/sls_basic.hpp \
+ alp/sls_alp_data.hpp alp/sls_alp_regression.hpp alp/njn_random.hpp \
+ alp/njn_uniform.hpp alp/sls_normal_distr_array.hpp
 
 
-lastal.o: lastal.cc LastalArguments.hh SequenceFormat.hh \
- QualityPssmMaker.hh ScoreMatrixRow.hh OneQualityScoreMatrix.hh \
- TwoQualityScoreMatrix.hh qualityScoreUtil.hh stringify.hh \
- LambdaCalculator.hh GeneticCode.hh SubsetSuffixArray.hh \
- CyclicSubsetSeed.hh VectorOrMmap.hh Mmap.hh fileMap.hh Centroid.hh \
- GappedXdropAligner.hh GeneralizedAffineGapCosts.hh SegmentPair.hh \
- AlignmentPot.hh Alignment.hh SegmentPairPot.hh ScoreMatrix.hh \
- Alphabet.hh MultiSequence.hh DiagonalTable.hh gaplessXdrop.hh \
- gaplessPssmXdrop.hh gaplessTwoQualityXdrop.hh io.hh version.hh \
- lastal.hh externalsort.hh linereader.hh
 
-lastdb.o: lastdb.cc LastdbArguments.hh SequenceFormat.hh \
- SubsetSuffixArray.hh CyclicSubsetSeed.hh VectorOrMmap.hh Mmap.hh \
- fileMap.hh stringify.hh Alphabet.hh MultiSequence.hh ScoreMatrixRow.hh \
- io.hh qualityScoreUtil.hh version.hh
 
-lastex.o: lastex.cc LastexArguments.hh ScoreMatrix.hh Alphabet.hh io.hh \
- gumbel_params/mcf_local_alignment_evaluer.hpp \
- gumbel_params/sls_pvalues.hpp gumbel_params/sls_normal_distr_array.hpp \
- version.hh  
 
-utils.o: utils.hh utils.cc Alphabet.cc Alphabet.hh MultiSequence.hh MultiSequence.cc io.hh io.cc
 
-lambda_calculator.o: lambda_calculator.cc nrutil.hh \
- nrutil.cc ludcmp.cc lubksb.cc  lambda_calculator.hh
+
+
 
 gumbel_params/mcf_local_alignment_evaluer.o: \
  gumbel_params/mcf_local_alignment_evaluer.cpp \

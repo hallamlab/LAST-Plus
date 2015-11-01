@@ -403,7 +403,7 @@ void threadData::alignGapless(SegmentPairPot &gaplessAlns, char strand) {
         indexT qBeg = i - (j - tBeg);
         if (!dis.isOptimalGapless(tBeg, tEnd, qBeg)) continue;
         SegmentPair sp(tBeg, qBeg, tEnd - tBeg, score);
-
+        
         if (args->outputType == 1) {  // we just want gapless alignments
           Alignment aln(identifier);
           aln.fromSegmentPair(sp);
@@ -521,6 +521,8 @@ void threadData::alignFinish(const AlignmentPot &gappedAlns, char strand) {
 
   LOG("finishing...");
 
+  //!! For some reason we have 0 gapped alignments.
+  std::cout << "gappedAlns.size(): " << gappedAlns.size() << std::endl;
   for (size_t i = 0; i < gappedAlns.size(); ++i) {
     const Alignment &aln = gappedAlns.items[i];
     if (args->outputType < 4) {

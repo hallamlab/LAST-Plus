@@ -78,16 +78,15 @@ void Alignment::write(
 
   assert( !blocks.empty() );
 
-  if( format == 0 ) 
+  if( format == 0 ) {
        writeTab( reference, query, strand, isTranslated, extras, outputVector );
-  else if( format == 2 )  {
+  } else if( format == 2 )  {
        writeBlastOutput(scoreCutoff, evalueCutoff, reference, query, strand, 
        isTranslated, alph, extras, outputVector,
        evaluer);
-  }
-  else 
+  } else {
        writeMaf( reference, query, strand, isTranslated, alph, extras );
-
+  }
 }
 
 //!!
@@ -130,7 +129,6 @@ void Alignment::writeBlastOutput(
 
   const char* tab = "\t";
 
-  double evalue = 0;
   size_t identities = 0;
   size_t mismatches = 0;
   size_t gaps = 0;
@@ -175,7 +173,7 @@ void Alignment::writeBlastOutput(
     mismatches = alignLength - gaps - identityCount;
   }
 
-  evalue = evalueForSequences(score,s1, s2);
+  //double evalue = evalueForSequences(score,s1, s2);
 
   double bitscore = 0;
   double bit_evalue = 0;
@@ -189,6 +187,7 @@ void Alignment::writeBlastOutput(
     bitscore = evaluer.bitScore( score );
     bit_evalue = epa*area;
   }else{
+    double evalue = evalueForSequences(score,s1, s2);
     double lambda = getLambda();
     double k = getK();
     double area = getArea();

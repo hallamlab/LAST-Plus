@@ -45,11 +45,19 @@
 #include "externalsort.hh"
 #include "utilities.hh"
 #include "LastEvaluer.hh"
+#include <sstream>
 
 #define ERR(x) throw std::runtime_error(x)
-#define LOG(x) if( args->verbosity > 0 ) std::cerr << "lastal: " << x << '\n'
+//#define LOG(x) if( args->verbosity > 0 ) std::cerr << "lastal: " << x << '\n'
 
-#define INPUT_SIZE 25000
+#define LOG(x) \
+  if( args->verbosity > 0 ){ \
+    std::stringstream stream; \
+    stream << "lastal: " << x << "\n"; \
+    std::cerr << stream.str(); \
+  }
+
+#define INPUT_SIZE 10000
 
 using namespace cbrc;
 

@@ -422,9 +422,9 @@ void threadData::alignGapless(SegmentPairPot &gaplessAlns, char strand) {
       }
     }
   }
-  LOG("initial matches=" << matchCount);
-  LOG("gapless extensions=" << gaplessExtensionCount);
-  LOG("gapless alignments=" << gaplessAlignmentCount);
+  LOG(identifier << " initial matches=" << matchCount);
+  LOG(identifier << " gapless extensions=" << gaplessExtensionCount);
+  LOG(identifier << " gapless alignments=" << gaplessAlignmentCount);
 }
 
 void threadData::alignGapped(AlignmentPot &gappedAlns, SegmentPairPot &gaplessAlns, Phase::Enum phase) {
@@ -457,7 +457,7 @@ void threadData::alignGapped(AlignmentPot &gappedAlns, SegmentPairPot &gaplessAl
   gaplessAlns.cull(args->cullingLimitForGaplessAlignments);
   gaplessAlns.sort();  // sort by score descending, and remove duplicates
 
-  LOG("redone gapless alignments=" << gaplessAlns.size());
+  LOG(identifier << " redone gapless alignments=" << gaplessAlns.size());
 
   for (size_t i = 0; i < gaplessAlns.size(); ++i) {
     SegmentPair &sp = gaplessAlns.get(i);
@@ -497,8 +497,8 @@ void threadData::alignGapped(AlignmentPot &gappedAlns, SegmentPairPot &gaplessAl
     ++gappedAlignmentCount;
   }
 
-  LOG("gapped extensions=" << gappedExtensionCount);
-  LOG("gapped alignments=" << gappedAlignmentCount);
+  LOG(identifier << " gapped extensions=" << gappedExtensionCount);
+  LOG(identifier << " gapped alignments=" << gappedAlignmentCount);
 }
 
 void threadData::alignFinish(const AlignmentPot &gappedAlns, char strand) {
@@ -509,7 +509,7 @@ void threadData::alignFinish(const AlignmentPot &gappedAlns, char strand) {
 
   if (args->outputType > 3) {
     if (dis.p) {
-      LOG("exponentiating PSSM...");
+      LOG(identifier << " exponentiating PSSM...");
       centroid->setPssm(dis.p, query->finishedSize(), args->temperature,
           *oneQualityExpMatrix, dis.query, dis.j);
     }
@@ -519,7 +519,7 @@ void threadData::alignFinish(const AlignmentPot &gappedAlns, char strand) {
     centroid->setOutputType(args->outputType);
   }
 
-  LOG("finishing...");
+  LOG(identifier << " finishing...");
 
   for (size_t i = 0; i < gappedAlns.size(); ++i) {
     const Alignment &aln = gappedAlns.items[i];
@@ -548,7 +548,7 @@ void threadData::alignFinish(const AlignmentPot &gappedAlns, char strand) {
 void threadData::makeQualityPssm(bool isApplyMasking) {
   if (!isQuality(args->inputFormat) || isQuality(referenceFormat)) return;
 
-  LOG("making PSSM...");
+  LOG(identifier << " making PSSM...");
   query->resizePssm();
 
   const uchar *seqBeg = query->seqReader();
@@ -576,7 +576,7 @@ void threadData::scan(char strand) {
   bool isApplyMasking = (args->maskLowercase > 0);
   makeQualityPssm(isApplyMasking);
 
-  LOG("scanning...");
+  LOG(identifier << " scanning...");
 
   SegmentPairPot gaplessAlns;
   alignGapless(gaplessAlns, strand);
@@ -596,7 +596,7 @@ void threadData::scan(char strand) {
 
   if (args->outputType > 2) {  // we want non-redundant alignments
     gappedAlns.eraseSuboptimal();
-    LOG("nonredundant gapped alignments=" << gappedAlns.size());
+    LOG(identifier << " nonredundant gapped alignments=" << gappedAlns.size());
   }
 
   gappedAlns.sort();  // sort by score
@@ -606,7 +606,7 @@ void threadData::scan(char strand) {
 void threadData::translateAndScan(char strand) {
 
   if (args->isTranslated()) {
-    LOG("translating...");
+    LOG(identifier << " translating...");
     std::vector<uchar> translation(query->finishedSize());
     geneticCode->translate(query->seqReader(),
         query->seqReader() + query->finishedSize(), &translation[0]);
@@ -660,7 +660,7 @@ void threadData::reverseComplementPssm() {
 }
 
 void threadData::reverseComplementQuery() {
-  LOG("reverse complementing...");
+  LOG(identifier << " reverse complementing...");
   queryAlph->rc(query->seqWriter(), query->seqWriter() + query->finishedSize());
   if (isQuality(args->inputFormat)) {
     std::reverse(query->qualityWriter(),
@@ -692,7 +692,7 @@ void threadData::scanAllVolumes(){
   // writeCounts(out);
   //}
 
-  LOG("query batch done!");
+  LOG(identifier << " query batch done!");
 }
 
 void writeHeader(std::ostream &out) {
@@ -1048,16 +1048,19 @@ void lastal(int argc, char **argv) {
     suffixArrays[x].closeFiles();
   }
 
+  LOG("Beginning sorting operation")
   //now sort the LAST output on the disk
-  //disk_sort_file(std::string("/tmp"), args->outFile, std::string(args->outFile) + std::string("sort"),
-   //   maxRefSequences, orf_extractor_from_blast);
   disk_sort_file(std::string("/tmp"), args->outFile, std::string(args->outFile) + std::string("sort"),
       10, orf_extractor_from_blast);
+  LOG("Completed sorting operation")
 
   // parse the top k hits from the file
   if (args->topHits < 1000 ){
+    LOG("Parsing top k hits")
     topHits(args->outFile, args->topHits);
+    LOG("Completed parsing top k hits")
   }
+  LOG("Completed alignment operations, exiting")
 }
 
 
@@ -1067,11 +1070,15 @@ int main(int argc, char **argv) {
     lastal(argc, argv);
     return EXIT_SUCCESS;
   } catch (const std::bad_alloc &e) { 
-    std::cerr << "lastal: memory exception\n";
-    std::cout << e.what() << std::endl;
+    std::stringstream stream;
+    stream << "lastal: memory exception\n";
+    stream << e.what() << "\n";
+    std::cerr << stream.str();
     return EXIT_FAILURE;
   } catch (const std::exception &e) {
-    std::cerr << "lastal: " << e.what() << '\n';
+    std::stringstream stream;
+    stream << "lastal: " << e.what() << '\n';
+    std::cerr << stream.str(); 
     return EXIT_FAILURE;
   } catch (int i) {
     return i;

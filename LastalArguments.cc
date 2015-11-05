@@ -121,8 +121,8 @@ Miscellaneous options (default settings):\n\
 -P: Optional number of threads (" + stringify(threadNum) + ")\n\
 -K: Optional number of top hits wanted (" + stringify(topHits) + ")\n\
 \n\
-Report bugs to: last-align (ATmark) googlegroups (dot) com\n\
-LAST home page: http://last.cbrc.jp/\n\
+Report bugs to:  github.com/hallamlab/LAST-Plus/issues\n
+LAST+ home page: github.com/hallamlab\n\
 ";
 
   optind = 1;  // allows us to scan arguments more than once(???)

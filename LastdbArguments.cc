@@ -62,7 +62,7 @@ Advanced Options (default settings):\n\
 -v: be verbose: write messages about what lastdb is doing\n\
 -V: print out version information\n\
 \n\
-Report bugs to:  github.com/hallamlab/LAST-Plus/issues\n
+Report bugs to:  github.com/hallamlab/LAST-Plus/issues\n\
 LAST+ home page: github.com/hallamlab/LAST-Plus/\n\
 ";
 

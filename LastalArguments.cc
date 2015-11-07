@@ -121,7 +121,7 @@ Miscellaneous options (default settings):\n\
 -P: Optional number of threads (" + stringify(threadNum) + ")\n\
 -K: Optional number of top hits wanted (" + stringify(topHits) + ")\n\
 \n\
-Report bugs to:  github.com/hallamlab/LAST-Plus/issues\n
+Report bugs to:  github.com/hallamlab/LAST-Plus/issues\n\
 LAST+ home page: github.com/hallamlab\n\
 ";
 

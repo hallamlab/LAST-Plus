@@ -70,8 +70,8 @@ Options (default settings):\n\
 
   std::string help = usage + "\n\
 \n\
-Report bugs to: github.com/hallamlab/LAST-Plus/issues\n
-LAST home page: github.com/hallamlab/LAST-Plus\n
+Report bugs to: github.com/hallamlab/LAST-Plus/issues\n\
+LAST home page: github.com/hallamlab/LAST-Plus\n\
 ";
 
   optind = 1;  // allows us to scan arguments more than once(???)

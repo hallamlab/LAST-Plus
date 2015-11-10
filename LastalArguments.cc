@@ -61,12 +61,26 @@ LastalArguments::LastalArguments() :
 
 
 void LastalArguments::fromArgs( int argc, char** argv, bool optionsOnly ){
-  std::string usage =
-      "Usage: lastal [options] -o outputFile lastdb-name fasta-sequence-file(s)";
 
-  std::string help = usage + "\n\
+  std::string usage = "\
 Find local sequence alignments.\n\
 \n\
+Usage Examples:\n\
+Protein - Protein (blastp): lastal+ [options] -o outputFile amino-acid-lastdb-name amino-acid-fasta-sequence-file(s)\n\
+DNA - Protein     (blastx): lastal+ [options] -F -o outputFile amino-acid-lastdb-name DNA-fasta-sequence-file(s)\n\
+DNA - DNA         (blastn): lastal+ [options] -o outputFile DNA-lastdb-name DNA-fasta-sequence-file(s)\n\
+Suggested Usage           : lastal+ -P number_of_cores -o outputFile lastdb-name fasta-sequence-file(s)";
+  std::string help = usage + "\n\
+\n\
+LAST+ Functionality:\n\
+-V: Version information\n\
+-S: Optional bit-Score cutoff value (" + stringify(scoreCutoff) + ")\n\
+-E: Optional e-value cutoff value (" + stringify(evalueCutoff) + ")\n\
+-P: Optional number of threads (" + stringify(threadNum) + ")\n\
+-K: Optional number of top hits wanted (" + stringify(topHits) + ")\n\
+-o: output file\n\
+\n\
+Inherited LAST Functionality:\n\
 Score options (default settings):\n\
 -r: match score   (DNA: 1, 0<Q<5:  6)\n\
 -q: mismatch cost (DNA: 1, 0<Q<5: 18)\n\
@@ -86,7 +100,6 @@ Score options (default settings):\n\
 Cosmetic options (default settings):\n\
 -h: show all options and their default settings\n\
 -v: be verbose: write messages about what lastal is doing\n\
--o: output file\n\
 -f: output format: 0=tabular, 1=maf 2=BLAST-like ("
     + stringify(outputFormat) + ")\n\
 \n\
@@ -115,11 +128,6 @@ Miscellaneous options (default settings):\n\
 -Q: input format: 0=fasta, 1=fastq-sanger, 2=fastq-solexa, 3=fastq-illumina,\n\
                   4=prb, 5=PSSM ("
     + stringify(inputFormat) + ")\n\
--V: Version information\n\
--S: Optional bit-Score cutoff value (" + stringify(scoreCutoff) + ")\n\
--E: Optional e-value cutoff value (" + stringify(evalueCutoff) + ")\n\
--P: Optional number of threads (" + stringify(threadNum) + ")\n\
--K: Optional number of top hits wanted (" + stringify(topHits) + ")\n\
 \n\
 Report bugs to:  github.com/hallamlab/LAST-Plus/issues\n\
 LAST+ home page: github.com/hallamlab\n\

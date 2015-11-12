@@ -136,7 +136,7 @@ LAST+ home page: github.com/hallamlab\n\
   optind = 1;  // allows us to scan arguments more than once(???)
   int c;
   const char optionString[] =
-      "ho:u:s:f:r:q:p:a:b:A:B:c:F:x:y:z:d:e:Q:T:m:l:n:C:k:i:w:t:g:G:vVj:S:E:P:K:";
+      "ho:u:s:f:r:q:p:a:b:A:B:c:Fx:y:z:d:e:Q:T:m:l:n:C:k:i:w:t:g:G:vVj:S:E:P:K:";
   while( (c = getopt(argc, argv, optionString)) != -1 ){
     switch(c){
     case 'h':
@@ -190,8 +190,9 @@ LAST+ home page: github.com/hallamlab\n\
       if( gapPairCost <= 0 ) badopt( c, optarg );
       break;
     case 'F':
-      unstringify( frameshiftCost, optarg );
-      if( frameshiftCost <= 0 ) badopt( c, optarg );
+      //unstringify( frameshiftCost, optarg );
+      //if( frameshiftCost <= 0 ) badopt( c, optarg );
+      frameshiftCost = 15;
       break;
     case 'x':
       unstringify( maxDropGapped, optarg );

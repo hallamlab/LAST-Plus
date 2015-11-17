@@ -97,3 +97,25 @@ void topHits(std::string filename, int maxHits){
   }
   std::rename(tmp.c_str(), filename.c_str());
 }
+
+void topHitsVector(const std::vector<std::string> &outputVector, std::vector<std::string> &parsed, int maxHits){
+  int count=0;
+  int location;
+  std::string prevorfid = "";
+  std::string currorfid;
+
+  for(int i=0; i<outputVector.size(); i++){
+    std::string current = outputVector[i];
+    location = current.find_first_of("\t");
+    currorfid = current.substr(0,location);
+
+    if(!(currorfid.compare(prevorfid) == 0 || prevorfid.size()==0 ) )
+      count=0;
+
+    if(count <  maxHits) 
+      parsed.push_back(current);
+
+    count++;
+    prevorfid = currorfid;
+  }
+}

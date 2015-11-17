@@ -952,6 +952,23 @@ void readerFunction( std::istream& in ){
   }
 }
 
+bool compare_blast(std::string &first, std::string &second){
+    string orfid1 = orf_extractor_from_blast(first);
+    string orfid2 = orf_extractor_from_blast(second);
+    double evalue1 = evalue_extractor_from_blast(first);
+    double evalue2 = evalue_extractor_from_blast(second);
+    
+  if (orfid1 < orfid2){ 
+    return true;
+  }
+
+  if (orfid1 == orfid2) {
+    return evalue1 < evalue2;
+  }
+
+  return false;
+}
+
 void *threadFunction(void *__threadData){
 
   struct threadData *data = (struct threadData *) __threadData;
@@ -973,6 +990,17 @@ void *threadFunction(void *__threadData){
     data->scanAllVolumes();
 
     data->query->reinitForAppending();
+
+    //!!
+    // sort the outputVector, need a comparison function specially built 
+    // so we dont need to make a copy to fasta records.
+    sort(data->outputVector->begin(), data->outputVector->end(), compare_blast);
+    if (args->topHits < 1000 ){
+      std::vector<std::string> *parsed = new std::vector<std::string>(); 
+      topHitsVector(*(data->outputVector), *parsed, args->topHits);
+      delete data->outputVector;
+      data->outputVector = parsed;
+    }
 
     SEM_WAIT(inputOutputQueueSema);
     idInputQueue.push(data->identifier);

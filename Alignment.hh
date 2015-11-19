@@ -125,7 +125,8 @@ namespace cbrc{
         LastEvaluer evaluer) const;
 
     void writeMaf( const MultiSequence& reference, const MultiSequence& query,
-        char strand, bool isTranslated, const Alphabet& alph, const AlignmentExtras& extras ) const;
+        char strand, bool isTranslated, const Alphabet& alph, const AlignmentExtras& extras,
+        std::vector<std::string> *outputVector ) const;
 
     size_t numColumns( size_t frameSize ) const;
 

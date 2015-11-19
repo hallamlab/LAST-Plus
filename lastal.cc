@@ -403,14 +403,14 @@ void threadData::alignGapless(SegmentPairPot &gaplessAlns, char strand) {
         indexT qBeg = i - (j - tBeg);
         if (!dis.isOptimalGapless(tBeg, tEnd, qBeg)) continue;
         SegmentPair sp(tBeg, qBeg, tEnd - tBeg, score);
-        
+
         if (args->outputType == 1) {  // we just want gapless alignments
           Alignment aln(identifier);
           aln.fromSegmentPair(sp);
           aln.write(args->scoreCutoff, args->evalueCutoff, *text, *query, strand, 
-                    args->isTranslated(), *alph, args->outputFormat,
-                    outputVector,
-                    evaluer);
+              args->isTranslated(), *alph, args->outputFormat,
+              outputVector,
+              evaluer);
         }
         else {
           gaplessAlns.add(sp);  // add the gapless alignment to the pot
@@ -525,8 +525,8 @@ void threadData::alignFinish(const AlignmentPot &gappedAlns, char strand) {
     const Alignment &aln = gappedAlns.items[i];
     if (args->outputType < 4) {
       aln.write(args->scoreCutoff, args->evalueCutoff, *text, *query, strand, 
-                args->isTranslated(), *alph, args->outputFormat, outputVector,
-                evaluer);
+          args->isTranslated(), *alph, args->outputFormat, outputVector,
+          evaluer);
     }else{  // calculate match probabilities:
       Alignment probAln(identifier);
       AlignmentExtras extras;
@@ -538,9 +538,9 @@ void threadData::alignFinish(const AlignmentPot &gappedAlns, char strand) {
           dis.i, dis.j, *alph, extras,
           args->gamma, args->outputType);
       probAln.write(args->scoreCutoff, args->evalueCutoff, *text, *query, strand, 
-                    args->isTranslated(), *alph, args->outputFormat, outputVector, 
-                    evaluer,
-                    extras);
+          args->isTranslated(), *alph, args->outputFormat, outputVector, 
+          evaluer,
+          extras);
     }
   }
 }
@@ -953,11 +953,11 @@ void readerFunction( std::istream& in ){
 }
 
 bool compare_blast(std::string &first, std::string &second){
-    string orfid1 = orf_extractor_from_blast(first);
-    string orfid2 = orf_extractor_from_blast(second);
-    double evalue1 = evalue_extractor_from_blast(first);
-    double evalue2 = evalue_extractor_from_blast(second);
-    
+  string orfid1 = orf_extractor_from_blast(first);
+  string orfid2 = orf_extractor_from_blast(second);
+  double evalue1 = evalue_extractor_from_blast(first);
+  double evalue2 = evalue_extractor_from_blast(second);
+
   if (orfid1 < orfid2){ 
     return true;
   }
@@ -1076,17 +1076,19 @@ void lastal(int argc, char **argv) {
     suffixArrays[x].closeFiles();
   }
 
-  LOG("Beginning sorting operation")
-  //now sort the LAST output on the disk
-  disk_sort_file(std::string("/tmp"), args->outFile, std::string(args->outFile) + std::string("sort"),
-      10, orf_extractor_from_blast);
-  LOG("Completed sorting operation")
+  if(args->outputFormat == 2){
+    LOG("Beginning sorting operation")
+      //now sort the LAST output on the disk
+      disk_sort_file(std::string("/tmp"), args->outFile, std::string(args->outFile) + std::string("sort"),
+          10, orf_extractor_from_blast);
+    LOG("Completed sorting operation")
 
-  // parse the top k hits from the file
-  if (args->topHits < 1000 ){
-    LOG("Parsing top k hits")
-    topHits(args->outFile, args->topHits);
-    LOG("Completed parsing top k hits")
+      // parse the top k hits from the file
+      if (args->topHits < 1000 ){
+        LOG("Parsing top k hits")
+          topHits(args->outFile, args->topHits);
+        LOG("Completed parsing top k hits")
+      }
   }
   LOG("Completed alignment operations, exiting")
 }

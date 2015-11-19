@@ -85,7 +85,7 @@ void Alignment::write(
        isTranslated, alph, extras, outputVector,
        evaluer);
   } else {
-       writeMaf( reference, query, strand, isTranslated, alph, extras );
+       writeMaf( reference, query, strand, isTranslated, alph, extras ,outputVector);
   }
 }
 
@@ -311,9 +311,8 @@ void Alignment::writeTab( const MultiSequence& reference, const MultiSequence& q
 }
 
 void Alignment::writeMaf( const MultiSequence& reference, const MultiSequence& query,
-			  char strand, bool isTranslated, const Alphabet& alph, const AlignmentExtras& extras ) const{
-
-  std::stringstream outputStream;
+			  char strand, bool isTranslated, const Alphabet& alph, const AlignmentExtras& extras,
+        std::vector<std::string> *outputVector ) const{
 
   double fullScore = extras.fullScore;
   const std::vector<uchar>& columnAmbiguityCodes = extras.columnAmbiguityCodes;
@@ -352,10 +351,14 @@ void Alignment::writeMaf( const MultiSequence& reference, const MultiSequence& q
   line[ lineLen - 1 ] = '\n';
   char* dest;
 
+  std::stringstream outputStream;
+  std::string output;
+
   outputStream << "a";
   outputStream << " score=" << score;
   if( fullScore > 0 ) outputStream << " fullScore=" << fullScore;
   outputStream << '\n';
+  output += outputStream.str();
 
   dest = sprintChar( line, 's' );
   dest = sprintLeft( dest, n1.c_str(), nw );
@@ -366,7 +369,10 @@ void Alignment::writeMaf( const MultiSequence& reference, const MultiSequence& q
   
   writeTopSeq( reference.seqReader(), alph, frameSize2, dest );
 
-  //!!os.write( line, lineLen );
+  std::string tmp(line);
+  tmp.erase(std::remove(tmp.begin(), tmp.end(), '\n'), tmp.end());
+  tmp.erase(std::remove(tmp.begin(), tmp.end(), 7), tmp.end());
+  output += tmp + "\n";
   
   if( reference.qualsPerLetter() > 0 ){
     dest = sprintChar( line, 'q' );
@@ -385,7 +391,10 @@ void Alignment::writeMaf( const MultiSequence& reference, const MultiSequence& q
   dest = sprintSize( dest, s2, sw );
   writeBotSeq( query.seqReader(), alph, frameSize2, dest );
 
-  //!!os.write( line, lineLen );
+  std::string tmp2(line);
+  tmp2.erase(std::remove(tmp2.begin(), tmp2.end(), '\n'), tmp2.end());
+  tmp2.erase(std::remove(tmp2.begin(), tmp2.end(), 7), tmp2.end());
+  output += tmp2 + "\n\n";
 
   if( query.qualsPerLetter() > 0 ){
     dest = sprintChar( line, 'q' );
@@ -410,7 +419,7 @@ void Alignment::writeMaf( const MultiSequence& reference, const MultiSequence& q
     outputStream << '\n';
   }
 
-  outputStream << '\n';  // blank line afterwards
+  outputVector->push_back(output);
 }
 
 size_t Alignment::numColumns( size_t frameSize ) const{

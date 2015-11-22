@@ -20,7 +20,7 @@ std::string random_str(const int len);
 std::string extract_sequence_name(const std::string &name);
 
 void topHits(std::string filename, int maxHits);
-void topHitsVector(const std::vector<std::string> &outputVector, std::vector<std::string> &parsed, int maxHits);
+void topHitsVector(std::vector<std::string> &outputVector, int maxHits);
 
 string orf_extractor_from_blast(const string &line);
 

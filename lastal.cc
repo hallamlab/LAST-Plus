@@ -31,6 +31,8 @@ countT refSequences = 0;
 countT refLetters = 0;
 countT maxRefSequences = 0;
 
+TEMPFILES *listptr;
+
 void createStructures(std::string &matrixFile){
 
   alph = new Alphabet();
@@ -847,8 +849,14 @@ void *writerFunction(void *arguments){
   int id;
   bool state;
   std::vector< std::string >* current;
-  std::ofstream outFileStream;
-  std::ostream &out = openOut(args->outFile, outFileStream);
+  //std::ofstream outFileStream;
+  //std::ostream &out = openOut(args->outFile, outFileStream);
+
+  // Create a TEMPFILES class to deal with all of the filenames generated.
+  std::string randstr = generate_directory_name();
+  // listptr is a global structure so it can be dealt with after the writer thread collapses
+  listptr = new  TEMPFILES( "/tmp", randstr + "LASTtemp0");
+  listptr->clear();
 
   while (1) {
     SEM_WAIT(writerSema);
@@ -862,12 +870,16 @@ void *writerFunction(void *arguments){
 
     threadData *data = threadDatas[id];
 
+    // Filestreams in C++ do not need to be closed manually RAII will cover this
+    std::ofstream out(listptr->nextFileName().c_str());
+
     SEM_WAIT(ioSema);
     for (int j=0; j < current->size(); j++) {
-      out << current->at(j);
+      if(current->at(j) != ""){
+        out << current->at(j);
+      }
     }
     SEM_POST(ioSema);
-
     current->clear();
 
     SEM_WAIT(inputOutputQueueSema);
@@ -991,15 +1003,9 @@ void *threadFunction(void *__threadData){
 
     data->query->reinitForAppending();
 
-    //!!
-    // sort the outputVector, need a comparison function specially built 
-    // so we dont need to make a copy to fasta records.
     sort(data->outputVector->begin(), data->outputVector->end(), compare_blast);
     if (args->topHits < 1000 ){
-      std::vector<std::string> *parsed = new std::vector<std::string>(); 
-      topHitsVector(*(data->outputVector), *parsed, args->topHits);
-      delete data->outputVector;
-      data->outputVector = parsed;
+      topHitsVector(*(data->outputVector), args->topHits);
     }
 
     SEM_WAIT(inputOutputQueueSema);
@@ -1071,6 +1077,7 @@ void lastal(int argc, char **argv) {
     readerFunction(in);
   }
 
+/*
   text->closeFiles();
   for (size_t x = 0; x < numOfIndexes; x++) {
     suffixArrays[x].closeFiles();
@@ -1091,6 +1098,7 @@ void lastal(int argc, char **argv) {
       }
   }
   LOG("Completed alignment operations, exiting")
+*/
 }
 
 

@@ -8,7 +8,6 @@
 #include <assert.h>
 using namespace std;
 
-
 string TEMPFILES::nextFileName() {
   stack<unsigned int>  names;
   char buf[100];
@@ -21,7 +20,6 @@ string TEMPFILES::nextFileName() {
   r = i % B; 
   f = r;
   i = (i - r)/B;
-
 
   while( i > 0) {
     r = i % B; 
@@ -50,7 +48,6 @@ string TEMPFILES::nextFileName() {
 
   this->count++;
 
-
   return fullpath;  
 }
 
@@ -73,11 +70,11 @@ string TEMPFILES::toString(unsigned int i ) {
 }
 
 
-vector<string> TEMPFILES::getFileNames() {
+vector<string> TEMPFILES::getFileNames(){
   return this->filenames;
 }
 
-void TEMPFILES::clear() {
+void TEMPFILES::clear(){
   char path[500];
   string fullpath(this->tempdir + "/" + this->basedir);
   strcpy(path, fullpath.c_str());
@@ -86,37 +83,29 @@ void TEMPFILES::clear() {
   this->filenames.clear();
 }
 
-void TEMPFILES::remove_dir(char *path) {
+void TEMPFILES::remove_dir(char *path){
   struct dirent *entry = NULL;
   DIR *dir = NULL;
 
   dir = opendir(path);
 
   if( dir ==0) return;
-  while(entry = readdir(dir))
-  {   
+  while(entry = readdir(dir)){   
     DIR *sub_dir = NULL;
     FILE *file = NULL;
     char abs_path[200] = {0};
-    if( strcmp(entry->d_name, ".")  && strcmp(entry->d_name, ".."))
-    {   
+    if( strcmp(entry->d_name, ".")  && strcmp(entry->d_name, "..")){   
       sprintf(abs_path, "%s/%s", path, entry->d_name);
 
-      if(sub_dir = opendir(abs_path)) //if it is a directory
-      {   
+      if(sub_dir = opendir(abs_path)){//if it is a directory   
         closedir(sub_dir);
         remove_dir(abs_path);
-      }   
-      else 
-      {   
-        if(file = fopen(abs_path, "r"))
-        {   
+      }else{   
+        if(file = fopen(abs_path, "r")){   
           fclose(file);
           remove(abs_path);
-        }   
-        else {
+        }else{
           remove(abs_path);
-
         }
       }   
     }   

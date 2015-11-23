@@ -74,12 +74,12 @@ namespace cbrc{
         const TwoQualityScoreMatrix& sm2qual,
         const uchar* qual1, const uchar* qual2 );
 
-    void write( 
+    void write(
         double scoreCutoff, double evalueCutoff,
         const MultiSequence& reference, const MultiSequence& query,
         char strand, bool isTranslated, const Alphabet& alph,
         int format, std::vector<std::string> *outputVector,
-        LastEvaluer evaluer, 
+        LastEvaluer evaluer,
         const AlignmentExtras& extras = AlignmentExtras() ) const;
 
     // data:
@@ -116,9 +116,8 @@ namespace cbrc{
         char strand, bool isTranslated, const AlignmentExtras& extras, std::vector<std::string>
                    *outputVector ) const;
 
-
-    void writeBlastOutput( 
-        double scoreCutoff, double evalueCutoff, 
+    void writeBlastOutput(
+        double scoreCutoff, double evalueCutoff,
         const MultiSequence& reference, const MultiSequence& query,
         char strand, bool isTranslated, const Alphabet& alph,
         const AlignmentExtras& extras, std::vector<std::string> *outputVector,

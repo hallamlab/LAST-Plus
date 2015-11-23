@@ -71,8 +71,8 @@ static void writeSignedDifference( size_t x, size_t y, std::ostream& os ){
 void Alignment::write(
            double scoreCutoff, double evalueCutoff,
            const MultiSequence& reference, const MultiSequence& query,
-		       char strand, bool isTranslated, const Alphabet& alph, 
-           int format, std::vector<std::string> *outputVector, 
+		       char strand, bool isTranslated, const Alphabet& alph,
+           int format, std::vector<std::string> *outputVector,
            LastEvaluer evaluer,
            const AlignmentExtras& extras ) const{
 
@@ -81,7 +81,7 @@ void Alignment::write(
   if( format == 0 ) {
        writeTab( reference, query, strand, isTranslated, extras, outputVector );
   } else if( format == 2 )  {
-       writeBlastOutput(scoreCutoff, evalueCutoff, reference, query, strand, 
+       writeBlastOutput(scoreCutoff, evalueCutoff, reference, query, strand,
        isTranslated, alph, extras, outputVector,
        evaluer);
   } else {
@@ -92,12 +92,12 @@ void Alignment::write(
 //!!
 void Alignment::writeBlastOutput(
               double scoreCutoff, double evalueCutoff, const MultiSequence& reference, const MultiSequence& query,
-              char strand, bool isTranslated, const Alphabet& alph, 
+              char strand, bool isTranslated, const Alphabet& alph,
 			        const AlignmentExtras& extras, std::vector<std::string> *outputVector,
               LastEvaluer evaluer) const{
 
   std::stringstream outputStream;
-  outputStream.precision(3);
+  outputStream.precision(5);
 
   double fullScore = extras.fullScore;
 
@@ -147,12 +147,12 @@ void Alignment::writeBlastOutput(
   dest = sprintSize( dest, r1, rw );
   dest = sprintChar( dest, '+' );
   dest = sprintSize( dest, s1, sw );
-  
+
   writeTopSeq( reference.seqReader(), alph, frameSize2, dest );
   std::string userString = getSequence(line, lineLen);
-  
+
   gaps += countGaps(userString);
- 
+
   dest = sprintChar( line, 's' );
   dest = sprintLeft( dest, n2.c_str(), nw );
   dest = sprintSize( dest, b2, bw );
@@ -177,22 +177,24 @@ void Alignment::writeBlastOutput(
 
   double bitscore = 0;
   double bit_evalue = 0;
-  
+
   // If we are dealing with DNA query and Amino Acid reference use the first.
-  // If we are dealing with Amino acid to Amino Acid go with the second. 
+  // If we are dealing with Amino acid to Amino Acid go with the second.
   if(isTranslated){
     size_t s2 = query.seqLen(w2);
     double area = evaluer.area( score, s2 );
     double epa = evaluer.evaluePerArea( score );
     bitscore = evaluer.bitScore( score );
     bit_evalue = epa*area;
-  }else{
+    bitscore = round(bitscore);
+  } else {
     double evalue = evalueForSequences(score,s1, s2);
     double lambda = getLambda();
     double k = getK();
     double area = getArea();
     bitscore = (lambda*score-log(k))/log(2);
     bit_evalue = area*pow(2,-bitscore);
+    bitscore = round(bitscore);
   }
 
 /*
@@ -204,7 +206,7 @@ void Alignment::writeBlastOutput(
 */
 
   if(bitscore >= scoreCutoff && bit_evalue <= evalueCutoff){
-  
+
     outputStream << query.seqName(w2) << tab
        << reference.seqName(w1) << tab
        << identities << tab
@@ -252,7 +254,7 @@ std::string Alignment::getSequence(char*& line, size_t& length) const {
 }
 
 size_t Alignment::countGaps(std::string& sequence) const {
-    return std::count(sequence.begin(), sequence.end(), '-'); 
+    return std::count(sequence.begin(), sequence.end(), '-');
 }
 
 void Alignment::writeTab( const MultiSequence& reference, const MultiSequence& query,
@@ -363,17 +365,17 @@ void Alignment::writeMaf( const MultiSequence& reference, const MultiSequence& q
   dest = sprintSize( dest, r1, rw );
   dest = sprintChar( dest, '+' );
   dest = sprintSize( dest, s1, sw );
-  
+
   writeTopSeq( reference.seqReader(), alph, frameSize2, dest );
 
   //!!os.write( line, lineLen );
-  
-  if( reference.qualsPerLetter() > 0 ){
+
+  if( reference.qualsPerLetter() > 0 ) {
     dest = sprintChar( line, 'q' );
     dest += nw + 1;
     dest = sprintLeft( dest, "", bw + 1 + rw + 3 + sw );
     writeTopQual( reference.qualityReader(), reference.qualsPerLetter(), dest );
-    
+
     //os.write( line, lineLen );
   }
 

@@ -8,10 +8,10 @@ char *split_n_pick(const string  &strn,  char *buf, char d, unsigned int n) {
   char *s1 = buf;
   v=s1;
 
-  unsigned int i =0; 
+  unsigned int i =0;
 
   while(*s1 != '\0') {
-    if(*s1==d) { 
+    if(*s1==d) {
       *s1 = '\0';
       i++;
       if(i > n) return  v ;
@@ -52,7 +52,7 @@ string random_str(const int len) {
 
 string orf_extractor_from_blast(const string & line){
   char buf[10000];
-  string orfid  = split_n_pick(line, buf, '\t', 0); 
+  string orfid  = split_n_pick(line, buf, '\t', 0);
   return orfid;
 }
 
@@ -70,6 +70,21 @@ double evalue_extractor_from_blast(const string &line){
   return evalue;
 }
 
+double bit_score_extractor_from_blast(const string &line) {
+  char buf[10000];
+  string value  = split_n_pick(line, buf, '\t', 11);
+  double bitscore ;
+
+  try{
+    bitscore = atof(value.c_str());
+  }
+  catch(...) {
+    return 0;
+  }
+  return bitscore;
+}
+
+
 void topHits(std::string filename, int maxHits){
   int count=0;
   int location;
@@ -82,18 +97,37 @@ void topHits(std::string filename, int maxHits){
 
   prevorfid = "";
 
-  while(getline(input, current)){
+  while(getline(input, current)) {
     location = current.find_first_of("\t");
     currorfid = current.substr(0,location);
 
     if(!(currorfid.compare(prevorfid) == 0 || prevorfid.size()==0 ) )
       count=0;
 
-    if(count <  maxHits) 
-      output << current << "\n";
+    if(count <  maxHits) {
+      output << current << endl;
+    }
 
     count++;
     prevorfid = currorfid;
   }
   std::rename(tmp.c_str(), filename.c_str());
+}
+
+// Niels' debug functions
+void testFunction() {
+  cout << "Hello from testFunction()" << endl;
+}
+
+void printOutSequence(const unsigned char* field, const unsigned char decode[]) {
+  cout << "In printOutSequence" << endl;
+  const unsigned char* s = field;
+  int len = 0;
+  while(*s) {
+    len++;
+    cout << decode[*s];
+    s++;
+  }
+  cout << endl;
+  cout << len << endl;
 }

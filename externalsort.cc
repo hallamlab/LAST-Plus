@@ -7,7 +7,7 @@ string generate_directory_name(){
   string random_string;
   int err = -1;
   do{
-    random_string = random_str(30); 
+    random_string = random_str(30);
     string potential_directory = "/tmp" + random_string + "LASTtemp0";
     struct stat potential_directory_stat;
     err = stat(potential_directory.c_str(), &potential_directory_stat);
@@ -33,7 +33,13 @@ bool comp_lines(const LINE &lhs, const LINE &rhs) {
   if (lhs->orfid < rhs->orfid) return true;
 
   if (lhs->orfid == rhs->orfid) {
-    return lhs->evalue < rhs->evalue;
+    if (lhs->evalue < rhs->evalue) {
+      return true;
+    } else if (lhs->evalue == rhs->evalue) {
+      if (lhs->bitscore > rhs->bitscore) {
+        return true;
+      }
+    }
   }
   return false;
 }
@@ -45,7 +51,7 @@ void free_lines(vector<Line *> &v) {
 }
 
 /* Sort the input sequences and divide them into blocks; return the number of blocks created */
-int disk_sort_file(string outputdir, string tobe_sorted_file_name, string sorted_file_name, 
+int disk_sort_file(string outputdir, string tobe_sorted_file_name, string sorted_file_name,
     countT chunk_size, string(*key_extractor)(const string &)) {
 
   // Create iterator for input fasta file
@@ -72,10 +78,12 @@ int disk_sort_file(string outputdir, string tobe_sorted_file_name, string sorted
   while (std::getline(inputfile, line).good()) {
     string orfid = key_extractor(line);
     double evalue = evalue_extractor_from_blast(line);
+    double bitscore = bit_score_extractor_from_blast(line);
     lineptr = new Line;
     lineptr->setOrfId(orfid);
     lineptr->setLine(line);
     lineptr->setEvalue(evalue);
+    lineptr->setBitscore(bitscore);
     lines.push_back(lineptr);
 
     if (curr_size > chunk_size) {

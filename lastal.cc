@@ -103,7 +103,7 @@ void createStructures(std::string &matrixFile){
 void threadData::prepareThreadData(int identifier){
 
   if (args->outputType == 0) {  // we just want match counts
-    matchCounts = new std::vector< std::vector<countT> >();  
+    matchCounts = new std::vector< std::vector<countT> >();
   }
 
   outputVectorQueue = new std::queue< std::vector<std::string>*>();
@@ -255,9 +255,9 @@ void readOuterPrj(const std::string &fileName, unsigned &volumes,
     getline(iss, word, '=');
     if (word == "version") iss >> version;
     if (word == "alphabet") iss >> (*alph);
-    if (word == "numofsequences"){ 
+    if (word == "numofsequences") {
       iss >> refSequences;
-      if(refSequences > maxRefSequences){
+      if(refSequences > maxRefSequences) {
         tmp_maxRefSequences = refSequences;
       }
     }
@@ -293,9 +293,9 @@ void readInnerPrj(const std::string &fileName,
   while (getline(f, line)) {
     std::istringstream iss(line);
     getline(iss, word, '=');
-    if (word == "numofsequences"){ 
+    if (word == "numofsequences") {
       iss >> seqCount;
-      if(seqCount > maxRefSequences){
+      if(seqCount > maxRefSequences) {
         maxRefSequences = seqCount;
       }
     }
@@ -365,7 +365,6 @@ void threadData::alignGapless(SegmentPairPot &gaplessAlns, char strand) {
   countT matchCount = 0, gaplessExtensionCount = 0, gaplessAlignmentCount = 0;
 
   for (indexT i = 0; i < query->finishedSize(); i += args->queryStep) {
-
     for (unsigned x = 0; x < numOfIndexes; ++x) {
 
       const indexT *beg;
@@ -377,7 +376,6 @@ void threadData::alignGapless(SegmentPairPot &gaplessAlns, char strand) {
       // Tried: if we hit a delimiter when using contiguous seeds, then
       // increase "i" to the delimiter position.  This gave a speed-up
       // of only 3%, with 34-nt tags.
-
       indexT gaplessAlignmentsPerQueryPosition = 0;
 
       for ( /* no-op*/; beg < end; ++beg) { // loop over suffix-array matches
@@ -403,11 +401,11 @@ void threadData::alignGapless(SegmentPairPot &gaplessAlns, char strand) {
         indexT qBeg = i - (j - tBeg);
         if (!dis.isOptimalGapless(tBeg, tEnd, qBeg)) continue;
         SegmentPair sp(tBeg, qBeg, tEnd - tBeg, score);
-        
+
         if (args->outputType == 1) {  // we just want gapless alignments
           Alignment aln(identifier);
           aln.fromSegmentPair(sp);
-          aln.write(args->scoreCutoff, args->evalueCutoff, *text, *query, strand, 
+          aln.write(args->scoreCutoff, args->evalueCutoff, *text, *query, strand,
                     args->isTranslated(), *alph, args->outputFormat,
                     outputVector,
                     evaluer);
@@ -497,8 +495,6 @@ void threadData::alignGapped(AlignmentPot &gappedAlns, SegmentPairPot &gaplessAl
     ++gappedAlignmentCount;
   }
 
-  LOG(identifier << " gapped extensions=" << gappedExtensionCount);
-  LOG(identifier << " gapped alignments=" << gappedAlignmentCount);
 }
 
 void threadData::alignFinish(const AlignmentPot &gappedAlns, char strand) {
@@ -524,10 +520,10 @@ void threadData::alignFinish(const AlignmentPot &gappedAlns, char strand) {
   for (size_t i = 0; i < gappedAlns.size(); ++i) {
     const Alignment &aln = gappedAlns.items[i];
     if (args->outputType < 4) {
-      aln.write(args->scoreCutoff, args->evalueCutoff, *text, *query, strand, 
+      aln.write(args->scoreCutoff, args->evalueCutoff, *text, *query, strand,
                 args->isTranslated(), *alph, args->outputFormat, outputVector,
                 evaluer);
-    }else{  // calculate match probabilities:
+    } else {  // calculate match probabilities:
       Alignment probAln(identifier);
       AlignmentExtras extras;
       probAln.seed = aln.seed;
@@ -537,8 +533,8 @@ void threadData::alignFinish(const AlignmentPot &gappedAlns, char strand) {
           args->frameshiftCost, frameSize, dis.p, dis.t,
           dis.i, dis.j, *alph, extras,
           args->gamma, args->outputType);
-      probAln.write(args->scoreCutoff, args->evalueCutoff, *text, *query, strand, 
-                    args->isTranslated(), *alph, args->outputFormat, outputVector, 
+      probAln.write(args->scoreCutoff, args->evalueCutoff, *text, *query, strand,
+                    args->isTranslated(), *alph, args->outputFormat, outputVector,
                     evaluer,
                     extras);
     }
@@ -596,7 +592,6 @@ void threadData::scan(char strand) {
 
   if (args->outputType > 2) {  // we want non-redundant alignments
     gappedAlns.eraseSuboptimal();
-    LOG(identifier << " nonredundant gapped alignments=" << gappedAlns.size());
   }
 
   gappedAlns.sort();  // sort by score
@@ -888,7 +883,7 @@ void *writerFunction(void *arguments){
   }
 }
 
-void readerFunction( std::istream& in ){
+void readerFunction( std::istream& in ) {
 
   int id;
   MultiSequence *current;
@@ -897,7 +892,7 @@ void readerFunction( std::istream& in ){
     readIndex(args->lastdbName, refSequences);
   }
 
-  for (unsigned i = 0; i < volumes; ++i){
+  for (unsigned i = 0; i < volumes; ++i) {
 
     volume = i;
     LOG(i+1 << " out of " << volumes);
@@ -912,13 +907,12 @@ void readerFunction( std::istream& in ){
       readVolume(i);
       SEM_POST(ioSema);
 
-      for(int j=0; j<args->threadNum; j++){
+      for(int j=0; j < args->threadNum; j++){
         threadDatas[j]->round = i;
       }
     }
 
-    while(!in.eof() ){
-
+    while(!in.eof() ) {
       SEM_WAIT(readerSema);
       SEM_WAIT(inputOutputQueueSema);
       id = idInputQueue.front();
@@ -973,7 +967,6 @@ void *threadFunction(void *__threadData){
     data->scanAllVolumes();
 
     data->query->reinitForAppending();
-
     SEM_WAIT(inputOutputQueueSema);
     idInputQueue.push(data->identifier);
     inputQueue.push(data->query);
@@ -988,8 +981,6 @@ void *threadFunction(void *__threadData){
 }
 
 void lastal(int argc, char **argv) {
-
-
   lambdaCalculator = new LambdaCalculator();
   args = new LastalArguments();
 
@@ -1022,7 +1013,7 @@ void lastal(int argc, char **argv) {
   if(args->isTranslated()){
     evaluer.init_LASTP();
     evaluer.setSearchSpace( refLetters, args->numOfStrands() );
-  }else{
+  } else {
     initializeEvalueCalulator(args->lastdbName + ".prj", scoreMatrix, *inputBegin);
   }
 
@@ -1069,7 +1060,7 @@ int main(int argc, char **argv) {
   try {
     lastal(argc, argv);
     return EXIT_SUCCESS;
-  } catch (const std::bad_alloc &e) { 
+  } catch (const std::bad_alloc &e) {
     std::stringstream stream;
     stream << "lastal: memory exception\n";
     stream << e.what() << "\n";
@@ -1078,7 +1069,7 @@ int main(int argc, char **argv) {
   } catch (const std::exception &e) {
     std::stringstream stream;
     stream << "lastal: " << e.what() << '\n';
-    std::cerr << stream.str(); 
+    std::cerr << stream.str();
     return EXIT_FAILURE;
   } catch (int i) {
     return i;

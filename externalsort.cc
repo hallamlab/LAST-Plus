@@ -15,26 +15,12 @@ string generate_directory_name(){
   return random_string;
 }
 
-void place_output_where_designated_by_arguments(TEMPFILES *listptr, string tobe_sorted_file_name){
-	if(listptr->getFileNames().size() > 0){
-    // If the /tmp directory is on a different mount from the original output file
-    // we will have problems. So copy the sorted file over and remove the sorted file in the /tmp directory
-		if(rename(listptr->getFileNames()[0].c_str(), tobe_sorted_file_name.c_str()) == -1 ){
-      std::ifstream  src(listptr->getFileNames()[0].c_str());
-      std::ofstream  dst(tobe_sorted_file_name.c_str());
-      dst << src.rdbuf();
-      remove(listptr->getFileNames()[0].c_str());
-    }
-	}
-	listptr->clear();
-}
-
 bool comp_lines(const LINE &lhs, const LINE &rhs) {
   if (lhs->orfid < rhs->orfid) return true;
 
-  if (lhs->orfid == rhs->orfid) {
+  if (lhs->orfid == rhs->orfid) 
     return lhs->evalue < rhs->evalue;
-  }
+
   return false;
 }
 
@@ -44,103 +30,78 @@ void free_lines(vector<Line *> &v) {
     delete *it;
 }
 
-/* Sort the input sequences and divide them into blocks; return the number of blocks created */
-int disk_sort_file(string outputdir, string tobe_sorted_file_name, string sorted_file_name, 
-    countT chunk_size, string(*key_extractor)(const string &)) {
-
-  // Create iterator for input fasta file
-  std::ifstream inputfile;
-  inputfile.open(tobe_sorted_file_name.c_str(), std::ifstream::in);
-
-  countT curr_size = 0;
-  countT batch = 0;
-
-
-  // The current list of sequences to sort
-  vector<Line *> lines;
-  string line;
-  Line *lineptr;
-
-  string randstr = generate_directory_name();
-
-  TEMPFILES *listptr = new  TEMPFILES( "/tmp", randstr + "LASTtemp0");
-  listptr->clear();
-  TEMPFILES *newlistptr = new  TEMPFILES( "/tmp", randstr + "LASTtemp1");
-  newlistptr->clear();
-
-  // Split input fasta into chunks to sort individually
-  while (std::getline(inputfile, line).good()) {
-    string orfid = key_extractor(line);
-    double evalue = evalue_extractor_from_blast(line);
-    lineptr = new Line;
-    lineptr->setOrfId(orfid);
-    lineptr->setLine(line);
-    lineptr->setEvalue(evalue);
-    lines.push_back(lineptr);
-
-    if (curr_size > chunk_size) {
-      // Sort the vector of sequence ids/lengths
-      sort(lines.begin(), lines.end(), comp_lines);
-      // Write the sequences to a file
-      string fname =  listptr->nextFileName() ;
-
-      write_sorted_sequences(lines, fname);
-      free_lines(lines);
-      batch++;
-      // Clear the variables
-      curr_size = 0;
-      lines.clear();
-    }
-    curr_size++;
+void print_vector(const std::vector<std::string> &a){
+  for(int i=0; i<a.size(); i++){
+    std::cout << a[i] << std::endl;
   }
-
-  // Sort remaining sequences and write to last file
-  if (lines.size() > 0) {
-    sort(lines.begin(), lines.end(), comp_lines);
-    string fname = listptr->nextFileName() ;
-    write_sorted_sequences(lines, fname);
-    free_lines(lines);
-    lines.clear();
-  }
-  inputfile.close();
-  // Merge the sorted files and write into blocks
-  vector<string> filenames;
-
-  while( listptr->size() > 1 ) {
-
-    filenames = listptr->getFileNames();
-    unsigned int size = listptr->size();
-
-    for(unsigned int i = 0; i < size; i = i + MERGE_SIZE ) {
-      unsigned int adjsize = i + MERGE_SIZE > size ? size : i + MERGE_SIZE;
-      vector<string> mergelist ;
-
-      for(unsigned int j = i; j < adjsize;  j++ ) {
-        mergelist.push_back(filenames[j]);
-      }
-      if( mergelist.size() ==0 ) break;
-
-      string newfile_name =  newlistptr->nextFileName();
-
-      merge_sorted_files_create_blocks(mergelist, newfile_name, randstr);
-    }
-
-    listptr->clear();
-    TEMPFILES *temp = listptr;
-    listptr = newlistptr;
-    newlistptr = temp;
-  }
-
-	// Remove the individual sorted files
-	lines.clear();
-
-  place_output_where_designated_by_arguments(listptr, tobe_sorted_file_name);
-
-	return 1;
+  std::cout << std::endl;
 }
 
-/* Merge the individual sorted files while writing them to blocks; return the number of blocks created */
-int merge_sorted_files_create_blocks(vector<string> &filenames, string sorted_file_name, string randstr) {
+
+std::vector<std::string> merge_some_files(const std::vector<std::string> &mergelist, 
+                                          std::vector<TEMPFILES*> &directories){
+
+  // Recursively merge in batches of 200 until all the remaining files can be fit into one batch
+  std::size_t rounds = mergelist.size() / 200 + 1;
+
+  std::string randstr = generate_directory_name();
+  TEMPFILES *fileptr = new TEMPFILES( "/tmp", randstr + "LASTtemp0");
+  directories.push_back(fileptr);
+  //fileptr.clear();
+
+  for(int i=0; i<=rounds-1; i++){
+    std::vector<std::string>::const_iterator it = mergelist.begin() + i*200;
+    std::string next_name = fileptr->nextFileName();
+    if(i == rounds-1){
+      std::vector<std::string> batch(it, mergelist.end()); 
+      //print_vector(batch);
+      merge_sorted_files(batch, next_name);
+    }else{
+      std::vector<std::string> batch(it, mergelist.begin() + (i+1)*200);
+      //print_vector(batch);
+      merge_sorted_files(batch, next_name);
+    }
+  }
+  return fileptr->getFileNames();
+}
+
+/* Sort the input sequences and divide them into blocks */
+int disk_sort_file(string outputdir, 
+    string tobe_sorted_file_name, 
+    string sorted_file_name, 
+    countT chunk_size, 
+    string(*key_extractor)(const string &), 
+    const std::vector<std::string> &mergelist) {
+
+  std::size_t num_files = mergelist.size();
+  std::vector<std::string> files;
+  std::vector<TEMPFILES*> directories;
+
+/*
+  std::cout << "NUM FILES : " << mergelist.size() << std::endl;
+  std::cout << "NUM ROUNDS : " << mergelist.size()/200+1 << std::endl;
+*/
+
+  if(num_files > 200){
+    while(num_files > 200){
+      files = merge_some_files(mergelist, directories);
+      num_files = files.size();
+    }
+    merge_sorted_files( files, tobe_sorted_file_name );
+  }else{
+    merge_sorted_files( mergelist, tobe_sorted_file_name );
+  }
+  
+  for(int i=0; i<directories.size(); i++){
+    directories[i]->clear();
+    delete directories[i];
+  }
+
+  return 1;
+}
+
+int merge_sorted_files(const vector<string> &filenames, string sorted_file_name) {
+
   vector<istream_iterator<Line> > f_its;
   istream_iterator<Line> empty_it;
 
@@ -152,12 +113,23 @@ int merge_sorted_files_create_blocks(vector<string> &filenames, string sorted_fi
 
   for (i = 0; i < S; i++) {
     ifstream *f_str = new ifstream(filenames[i].c_str()); // Make sure to keep the file stream "alive" outside this loop
-    f_its.push_back(istream_iterator<Line>(*f_str));
-    ifstream_for_filenames.push_back(f_str);
+    if ( f_str->peek() != std::ifstream::traits_type::eof() ){
+      f_its.push_back(istream_iterator<Line>(*f_str));
+      ifstream_for_filenames.push_back(f_str);
+    } else {
+      delete f_str;
+    }
   }
 
   vector<pair<int, Line *> > values;
   pair<int, Line *> mod_line;
+  S = f_its.size();
+
+//!!
+/*
+  std::cout << "SIZE : " << S << std::endl;
+  std::cout << "sorted_file_name : " << sorted_file_name << std::endl;
+*/
 
   for (i = 0; i < S; i++) {
     if (f_its[i] != empty_it) {
@@ -170,18 +142,15 @@ int merge_sorted_files_create_blocks(vector<string> &filenames, string sorted_fi
     }
   }
 
-
   try{
     build_heap(S, values);
   }
   catch(...) {
     std::cout << "exception \n";
-
   }
 
   // Open the output file
   ofstream outputfile;
-
   outputfile.open((sorted_file_name).c_str());
   if (!outputfile.is_open()) {
     cout << "Failed to  open output  file " << sorted_file_name << " ... exiting.\n";
@@ -222,24 +191,20 @@ int merge_sorted_files_create_blocks(vector<string> &filenames, string sorted_fi
   // Close last block file
   outputfile.close();
 
-
   f_its.clear();
 
   delete[] curr_lines;
-
 
   for(vector<ifstream *>::iterator it = ifstream_for_filenames.begin(); it!= ifstream_for_filenames.end(); ++it){
     (*it)->close();
     delete *it;
   }
 
-
   /*
      for (i = 0; i < S; i++) {
      remove(filenames[i].c_str());
      }
-
-*/
+     */
   return 1;
 }
 

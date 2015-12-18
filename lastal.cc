@@ -856,7 +856,7 @@ void *writerFunction(void *arguments){
   std::string randstr = generate_directory_name();
   // listptr is a global structure so it can be dealt with after the writer thread collapses
   listptr = new  TEMPFILES( "/tmp", randstr + "LASTtemp0");
-  listptr->clear();
+  //listptr->clear();
 
   while (1) {
     SEM_WAIT(writerSema);
@@ -870,13 +870,14 @@ void *writerFunction(void *arguments){
 
     threadData *data = threadDatas[id];
 
-    // Filestreams in C++ do not need to be closed manually RAII will cover this
-    std::ofstream out(listptr->nextFileName().c_str());
-
     SEM_WAIT(ioSema);
-    for (int j=0; j < current->size(); j++) {
-      if(current->at(j) != ""){
-        out << current->at(j);
+    if(current->size() > 0){
+      // Filestreams in C++ do not need to be closed manually RAII will cover this
+      std::ofstream out(listptr->nextFileName().c_str());
+      for (int j=0; j < current->size(); j++) {
+        if(current->at(j) != ""){
+          out << current->at(j);
+        }
       }
     }
     SEM_POST(ioSema);
@@ -964,7 +965,7 @@ void readerFunction( std::istream& in ){
   }
 }
 
-bool compare_blast(std::string &first, std::string &second){
+bool compare_blast(const std::string &first, const std::string &second){
   string orfid1 = orf_extractor_from_blast(first);
   string orfid2 = orf_extractor_from_blast(second);
   double evalue1 = evalue_extractor_from_blast(first);
@@ -1077,7 +1078,6 @@ void lastal(int argc, char **argv) {
     readerFunction(in);
   }
 
-/*
   text->closeFiles();
   for (size_t x = 0; x < numOfIndexes; x++) {
     suffixArrays[x].closeFiles();
@@ -1086,8 +1086,9 @@ void lastal(int argc, char **argv) {
   if(args->outputFormat == 2){
     LOG("Beginning sorting operation")
       //now sort the LAST output on the disk
-      disk_sort_file(std::string("/tmp"), args->outFile, std::string(args->outFile) + std::string("sort"),
-          10, orf_extractor_from_blast);
+      disk_sort_file(std::string("/tmp"), args->outFile, 
+          std::string(args->outFile) + std::string("sort"),
+          10, orf_extractor_from_blast, listptr->getFileNames());
     LOG("Completed sorting operation")
 
       // parse the top k hits from the file
@@ -1098,7 +1099,10 @@ void lastal(int argc, char **argv) {
       }
   }
   LOG("Completed alignment operations, exiting")
-*/
+  
+//!! Deletion 
+  listptr->clear();
+  delete listptr;
 }
 
 

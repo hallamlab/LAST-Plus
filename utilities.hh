@@ -26,5 +26,10 @@ string orf_extractor_from_blast(const string &line);
 
 double evalue_extractor_from_blast(const string &line);
 
-#endif //_UTILITIES
+double bit_score_extractor_from_blast(const string &line);
 
+// Niels' debug functions
+void testFunction();
+void printOutSequence(const unsigned char* field, const unsigned char decode[]);
+
+#endif //_UTILITIES

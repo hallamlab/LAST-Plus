@@ -20,6 +20,7 @@ class Line {
     std::string orfid;      // name of the Line
     std::string line;  // sequence of 'A', 'C', 'G', and 'T' characters
 		double evalue;
+    double bitscore;
     // CREATORS
     explicit Line();
         // Create a new 'Line' object having the (default) attribute values:
@@ -53,6 +54,8 @@ class Line {
         // 'value'.
 
 		void setEvalue(const double& value);
+
+    void setBitscore(const double& value);
 
     // ACCESSORS
     const std::string& getOrfId() const;
@@ -108,22 +111,41 @@ std::ostream& operator<<(std::ostream& stream, const Line& rhs);
 inline Line::Line()
 : orfid()
 , evalue()
+, bitscore()
 , line()
 {
 }
+
+// inline
+// Line::Line(const std::string& name, const std::string& sequence)
+// : orfid(name)
+// , evalue(evalue_extractor_from_blast(sequence))
+// , line(sequence)
+// {
+// }
 
 inline
 Line::Line(const std::string& name, const std::string& sequence)
 : orfid(name)
 , evalue(evalue_extractor_from_blast(sequence))
+, bitscore(bit_score_extractor_from_blast(sequence))
 , line(sequence)
 {
 }
+
+// inline
+// Line::Line(const Line& original)
+// : orfid(original.orfid)
+// , evalue(original.evalue)
+// , line(original.line)
+// {
+// }
 
 inline
 Line::Line(const Line& original)
 : orfid(original.orfid)
 , evalue(original.evalue)
+, bitscore(original.bitscore)
 , line(original.line)
 {
 }
@@ -134,6 +156,7 @@ Line& Line::operator=(const Line& rhs)
 {
     orfid  = rhs.orfid;
     evalue = rhs.evalue;
+    bitscore = rhs.bitscore;
     line   = rhs.line;
 
     return *this;
@@ -156,6 +179,12 @@ inline
 void Line::setEvalue(const double& value)
 {
 	evalue = value;
+}
+
+inline
+void Line::setBitscore(const double& value)
+{
+	bitscore = value;
 }
 
 // ACCESSORS

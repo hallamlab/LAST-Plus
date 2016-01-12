@@ -4,7 +4,7 @@
 using namespace std;
 
 void print_heap(vector<pair<int, Line *> >& A) {
-  unsigned int j; 
+  unsigned int j;
   for (j = 0; j<A.size(); j++) {
     cout << "(" << A[j].first << ", " << A[j].second << ") ";
   }
@@ -23,6 +23,10 @@ void heapify(vector<pair<int, Line *> >& A, int i, int S) {
     } else if (l < S && A[l].second->orfid == A[max].second->orfid) {
       if (l < S && A[l].second->evalue < A[max].second->evalue) {
         max = l;
+      } else if (l < S && A[l].second->evalue == A[max].second->evalue) {
+        if (l < S && A[l].second->bitscore > A[max].second->bitscore) {
+          max = l;
+        }
       }
     }
 
@@ -31,6 +35,10 @@ void heapify(vector<pair<int, Line *> >& A, int i, int S) {
     } else if (r < S && A[r].second->orfid == A[max].second->orfid) {
       if (r < S && A[r].second->evalue < A[max].second->evalue) {
         max = r;
+      } else if (r < S && A[r].second->evalue == A[max].second->evalue) {
+        if (r < S && A[r].second->bitscore > A[max].second->bitscore) {
+          max = r;
+        }
       }
     }
 

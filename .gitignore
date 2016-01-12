@@ -25,3 +25,9 @@ script.sh
 todo
 test*
 big*
+
+# OSX files
+.DS_Store
+
+# Test data
+eppley_test/

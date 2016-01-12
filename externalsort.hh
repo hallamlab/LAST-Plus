@@ -31,5 +31,6 @@ int disk_sort_file(string outputdir, string tobe_sorted_file_name, string sorted
 int merge_sorted_files(const vector<string> &filenames, string sorted_file_name);
 void remove_file(string filename); 
 string generate_directory_name();
+void write_sorted_sequences(vector<Line *> &lines, string filename);
 
 #endif // _EXTERNAL_SORT

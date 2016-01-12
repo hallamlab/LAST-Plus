@@ -27,6 +27,7 @@ std::istream& operator>>(std::istream& stream, Line& rhs)
         char *field = split_n_pick(_line, buf, '\t', 0);
         rhs.orfid = string(field);
         rhs.evalue = evalue_extractor_from_blast(_line);
+        rhs.bitscore = bit_score_extractor_from_blast(_line);
     }
     return stream;
 }

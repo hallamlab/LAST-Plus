@@ -7,7 +7,7 @@ string generate_directory_name(){
   string random_string;
   int err = -1;
   do{
-    random_string = random_str(30); 
+    random_string = random_str(30);
     string potential_directory = "/tmp" + random_string + "LASTtemp0";
     struct stat potential_directory_stat;
     err = stat(potential_directory.c_str(), &potential_directory_stat);
@@ -18,9 +18,15 @@ string generate_directory_name(){
 bool comp_lines(const LINE &lhs, const LINE &rhs) {
   if (lhs->orfid < rhs->orfid) return true;
 
-  if (lhs->orfid == rhs->orfid) 
-    return lhs->evalue < rhs->evalue;
-
+  if (lhs->orfid == rhs->orfid) {
+    if (lhs->evalue < rhs->evalue) {
+      return true;
+    } else if (lhs->evalue == rhs->evalue) {
+      if (lhs->bitscore > rhs->bitscore) {
+        return true;
+      }
+    }
+  }
   return false;
 }
 
@@ -30,9 +36,65 @@ void free_lines(vector<Line *> &v) {
     delete *it;
 }
 
-void print_vector(const std::vector<std::string> &a){
-  for(int i=0; i<a.size(); i++){
-    std::cout << a[i] << std::endl;
+/* Sort the input sequences and divide them into blocks; return the number of blocks created */
+int disk_sort_file(string outputdir, string tobe_sorted_file_name, string sorted_file_name,
+    countT chunk_size, string(*key_extractor)(const string &)) {
+
+  // Create iterator for input fasta file
+  std::ifstream inputfile;
+  inputfile.open(tobe_sorted_file_name.c_str(), std::ifstream::in);
+
+  countT curr_size = 0;
+  countT batch = 0;
+
+
+  // The current list of sequences to sort
+  vector<Line *> lines;
+  string line;
+  Line *lineptr;
+
+  string randstr = generate_directory_name();
+
+  TEMPFILES *listptr = new  TEMPFILES( "/tmp", randstr + "LASTtemp0");
+  listptr->clear();
+  TEMPFILES *newlistptr = new  TEMPFILES( "/tmp", randstr + "LASTtemp1");
+  newlistptr->clear();
+
+  // Split input fasta into chunks to sort individually
+  while (std::getline(inputfile, line).good()) {
+    string orfid = key_extractor(line);
+    double evalue = evalue_extractor_from_blast(line);
+    double bitscore = bit_score_extractor_from_blast(line);
+    lineptr = new Line;
+    lineptr->setOrfId(orfid);
+    lineptr->setLine(line);
+    lineptr->setEvalue(evalue);
+    lineptr->setBitscore(bitscore);
+    lines.push_back(lineptr);
+
+    if (curr_size > chunk_size) {
+      // Sort the vector of sequence ids/lengths
+      sort(lines.begin(), lines.end(), comp_lines);
+      // Write the sequences to a file
+      string fname =  listptr->nextFileName() ;
+
+      write_sorted_sequences(lines, fname);
+      free_lines(lines);
+      batch++;
+      // Clear the variables
+      curr_size = 0;
+      lines.clear();
+    }
+    curr_size++;
+  }
+
+  // Sort remaining sequences and write to last file
+  if (lines.size() > 0) {
+    sort(lines.begin(), lines.end(), comp_lines);
+    string fname = listptr->nextFileName() ;
+    write_sorted_sequences(lines, fname);
+    free_lines(lines);
+    lines.clear();
   }
   std::cout << std::endl;
 }

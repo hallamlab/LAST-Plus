@@ -44,9 +44,9 @@ void MultiSequence::fromFiles( const std::string& baseName, indexT seqCount,
 }
 
 void MultiSequence::closeFiles(){
-  ends.m.close(); 
+  ends.m.close();
   seq.m.close();
-  nameEnds.m.close(); 
+  nameEnds.m.close();
   names.m.close();
   qualityScores.m.close();
 }

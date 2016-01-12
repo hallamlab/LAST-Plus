@@ -57,8 +57,7 @@
     std::cerr << stream.str(); \
   }
 
-//#define INPUT_SIZE 10000
-#define INPUT_SIZE 1
+#define INPUT_SIZE 5000
 
 using namespace cbrc;
 

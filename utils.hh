@@ -8,6 +8,7 @@
 #include "Alphabet.hh"
 #include "MultiSequence.hh"
 #include "io.hh"
+#include "SequenceFormat.hh"
 
 struct SequenceStatistics{
   double letterCount;
@@ -21,10 +22,12 @@ struct SequenceStatistics{
 
 void makeAlphabet( cbrc::Alphabet & alph, bool isProtein=false );
 
-void fastaFileSequenceStats( std::string fastaFile, SequenceStatistics *stats );
+//void fastaFileSequenceStats( std::string fastaFile, SequenceStatistics *stats );
+void fastaFileSequenceStats( std::string fastaFile, 
+                            SequenceStatistics *stats, 
+                            cbrc::sequenceFormat::Enum format);
 
 bool __isDubiousDna( const cbrc::Alphabet& alph, const cbrc::MultiSequence& multi );
-
 
 
 

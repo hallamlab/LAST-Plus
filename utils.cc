@@ -46,7 +46,9 @@ bool  isFastaFileProtein(std::string fastaFile) {
 
   unsigned int sequenceCount =0;
   unsigned int lettersTotal =0;
-  while( sequenceCount < 5 &&  multi.appendFromFasta(in, 10000000) ) {
+  while( sequenceCount < 5 && in.good() ){
+    try{
+        multi.appendFromFasta(in, 10000000) ;
          alph.tr( multi.seqWriter() + multi.seqBeg(0), multi.seqWriter() + multi.seqEnd(0) );
          alph.count( multi.seqReader() + multi.seqBeg(0), multi.seqReader() + multi.seqEnd(0), &letterCounts[0] );
          lettersTotal += multi.seqLen(0);
@@ -55,7 +57,15 @@ bool  isFastaFileProtein(std::string fastaFile) {
 	     letterCounts.assign( alph.size, 0 );
 	     multi.reinitForAppending();
          sequenceCount++;
+    } catch (const std::exception &ex){
+        std::cerr << ex.what() << std::endl;
+        std::cerr << "Encountered a malformed sequence. Ignoring sequence and continuing" << std::endl;
+        multi.printOffensiveName();
+	    multi.reinitForAppending();
+        //std::cerr << "Caught the exception" << std::endl;
+    }
   }
+
   unsigned int lettersSum = 0;
   for( unsigned c = 0; c < alph.size; ++c ) {
       lettersSum += letterTotals[c];
@@ -65,12 +75,19 @@ bool  isFastaFileProtein(std::string fastaFile) {
   return false;
 }
 
-void fastaFileSequenceStats(std::string fastaFile,  SequenceStatistics *stats ){
+void fastaFileSequenceStats( std::string fastaFile, 
+                            SequenceStatistics *stats, 
+                            cbrc::sequenceFormat::Enum format){
+
   using namespace cbrc;
+
   Alphabet alph;
   MultiSequence multi;
   
-  bool isProtein = isFastaFileProtein(fastaFile);
+  bool isProtein = false;
+    if( !isFastq(format) ){
+        isProtein = isFastaFileProtein(fastaFile);
+    }
 
   makeAlphabet( alph, isProtein );
   multi.initForAppending(1);
@@ -86,7 +103,11 @@ void fastaFileSequenceStats(std::string fastaFile,  SequenceStatistics *stats ){
   multi.reinitForAppending();
 
   sequenceCount = 0;
-  while(  multi.appendFromFasta(in, 1000000000) ) {
+    
+    if(!isFastq(format)){
+  while(  in.good() ){
+    try{
+        multi.appendFromFasta(in, 1000000000);
          alph.tr( multi.seqWriter() + multi.seqBeg(0), multi.seqWriter() + multi.seqEnd(0) );
          alph.count( multi.seqReader() + multi.seqBeg(0), multi.seqReader() + multi.seqEnd(0), &letterCounts[0] );
          for( unsigned c = 0; c < alph.size; ++c ) 
@@ -95,7 +116,42 @@ void fastaFileSequenceStats(std::string fastaFile,  SequenceStatistics *stats ){
 	     letterCounts.assign( alph.size, 0 );
 	     multi.reinitForAppending();
          sequenceCount++;
+    } catch (const std::exception &ex){
+        std::cerr << ex.what() << std::endl;
+        std::cerr << "Encountered a malformed sequence. Ignoring sequence and continuing" << std::endl;
+        multi.printOffensiveName();
+	    multi.reinitForAppending();
+        //std::cerr << "Caught the exception" << std::endl;
+    }
   }
+
+    }else{
+
+  while(  in.good() ) {
+
+    try{
+
+      multi.appendFromFastq(in, 1000000000);
+         alph.tr( multi.seqWriter() + multi.seqBeg(0), multi.seqWriter() + multi.seqEnd(0) );
+         alph.count( multi.seqReader() + multi.seqBeg(0), multi.seqReader() + multi.seqEnd(0), &letterCounts[0] );
+         for( unsigned c = 0; c < alph.size; ++c ) 
+            letterTotals[c] += letterCounts[c];
+         
+	     letterCounts.assign( alph.size, 0 );
+	     multi.reinitForAppending();
+         sequenceCount++;
+
+    } catch (const std::exception &ex){
+        std::cerr << ex.what() << std::endl;
+        std::cerr << "Encountered a malformed sequence. Ignoring sequence and continuing" << std::endl;
+        multi.printOffensiveName();
+	    multi.reinitForAppending();
+        //std::cerr << "Caught the exception" << std::endl;
+    }
+  }
+
+    }
+
 
   stats->sequenceCount = sequenceCount;
   stats->letterCount =0;

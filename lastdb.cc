@@ -183,6 +183,8 @@ appendFromFasta( MultiSequence& multi,
 		 SubsetSuffixArray indexes[], unsigned numOfIndexes,
 		 const LastdbArguments& args, const Alphabet& alph,
 		 std::istream& in ){
+
+try{
   indexT maxSeqLen = maxLettersPerVolume( args, numOfIndexes );
   if( multi.finishedSequences() == 0 ) maxSeqLen = indexT(-1);
 
@@ -212,6 +214,10 @@ appendFromFasta( MultiSequence& multi,
 			       multi.finishedSize(), args.indexStep );
     }
   }
+
+} catch(const std::exception& ex) {
+    throw;
+}
 
   return in;
 }
@@ -247,9 +253,17 @@ void lastdb( int argc, char** argv ){
     std::istream& in = openIn( *i, inFileStream );
     LOG( "reading " << *i << "..." );
 
-    while( appendFromFasta( multi, indexes, numOfIndexes, args, alph, in ) ){
-      if( !args.isProtein && args.userAlphabet.empty() &&
-          sequenceCount == 0 && isDubiousDna( alph, multi ) ){
+    //!! Need to refactor this loop.
+
+    while( in.good() ){
+
+    try{
+        appendFromFasta( multi, indexes, numOfIndexes, args, alph, in );
+
+      if( !args.isProtein && 
+            args.userAlphabet.empty() &&
+            sequenceCount == 0 && 
+            isDubiousDna( alph, multi ) ){
         std::cerr << "lastdb: that's some funny-lookin DNA\n";
       }
 
@@ -261,16 +275,22 @@ void lastdb( int argc, char** argv ){
                     &letterCounts[0] );
         // memory-saving, which seems to be important on 32-bit systems:
         if( args.isCountsOnly ) multi.reinitForAppending();
+      }else{
+	    std::string baseName = args.lastdbName + stringify(volumeNumber++);
+	    makeVolume( indexes, numOfIndexes,
+		            multi, args, alph, letterCounts, baseName );
+	    for( unsigned c = 0; c < alph.size; ++c )
+	        letterTotals[c] += letterCounts[c];
+	    letterCounts.assign( alph.size, 0 );
+	    multi.reinitForAppending();
       }
-      else{
-	std::string baseName = args.lastdbName + stringify(volumeNumber++);
-	makeVolume( indexes, numOfIndexes,
-		    multi, args, alph, letterCounts, baseName );
-	for( unsigned c = 0; c < alph.size; ++c )
-	  letterTotals[c] += letterCounts[c];
-	letterCounts.assign( alph.size, 0 );
-	multi.reinitForAppending();
-      }
+    } catch (const std::exception &ex){
+        std::cerr << ex.what() << std::endl;
+        std::cerr << "Encountered a malformed sequence. Ignoring sequence and continuing" << std::endl;
+        multi.removeLatest();
+        //std::cerr << "Caught the exception" << std::endl;
+    }
+
     }
   }
 

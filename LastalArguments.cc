@@ -90,7 +90,7 @@ Score options (default settings):\n\
 -A: insertion existence cost (a)\n\
 -B: insertion extension cost (b)\n\
 -c: unaligned residue pair cost (off)\n\
--F: frameshift cost (off)\n\
+-F: frameshift cost (off) (required for BLASTX)\n\
 -x: maximum score drop for gapped alignments (max[y, e-1])\n\
 -y: maximum score drop for gapless alignments (t*10)\n\
 -z: maximum score drop for final gapped alignments (x)\n\

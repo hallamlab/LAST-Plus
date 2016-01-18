@@ -34,7 +34,6 @@ void GeneticCode::fromString( const std::string& s ){
 
   return;
 }
-
 //
 void GeneticCode::codeTableSet( const Alphabet& aaAlph, const Alphabet& dnaAlph )
 {
@@ -84,7 +83,6 @@ void GeneticCode::codeTableSet( const Alphabet& aaAlph, const Alphabet& dnaAlph 
       }
     }
   }
-
   aaAlph.tr( &genome2residue.front(), &genome2residue.back() + 1 );
 
   return;

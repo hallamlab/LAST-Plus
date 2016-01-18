@@ -8,6 +8,7 @@
 #include <cctype>  // isspace
 #include <iterator>  // istreambuf_iterator
 #include <iostream>
+#include <algorithm> //reverse
 
 using namespace cbrc;
 
@@ -98,6 +99,7 @@ std::istream& MultiSequence::readFastaName( std::istream& stream ){
 }
 
 std::istream& MultiSequence::appendFromFasta( std::istream& stream, indexT maxSeqLen ){
+
   if( isFinished() ){
     char c = '>';
     stream >> c;
@@ -182,4 +184,57 @@ MultiSequence::indexT MultiSequence::whichSequence( indexT coordinate ) const{
 std::string MultiSequence::seqName( indexT seqNum ) const{
   return std::string( names.begin() + nameEnds[ seqNum ],
       names.begin() + nameEnds[ seqNum + 1 ] );
+}
+
+void MultiSequence::removeName(){
+    // Remove the offensive name
+    std::string offensive_name = "";
+    std::size_t seq_name_length = nameEnds.v.back();
+    if(nameEnds.v.size() > 1){
+        seq_name_length -= nameEnds.v[nameEnds.v.size()-2];
+    }
+    for(std::size_t i=0; i<seq_name_length; i++){
+        offensive_name += names.v.back();
+        names.v.pop_back();
+    }
+    nameEnds.v.pop_back();
+
+    // Print out the name of the offending sequence
+    std::reverse(offensive_name.begin(), offensive_name.end());
+    std::cerr << "Erroneous sequence : " << offensive_name << std::endl;
+}
+
+
+void MultiSequence::printOffensiveName(){
+    // Remove the offensive name
+    std::string offensive_name = "";
+    std::size_t seq_name_length = nameEnds.v.back();
+    if(nameEnds.v.size() > 1){
+        seq_name_length -= nameEnds.v[nameEnds.v.size()-2];
+    }
+    for(std::size_t i=0; i<seq_name_length; i++){
+        offensive_name += names.v[names.v.size()-1-i];
+    }
+
+    // Print out the name of the offending sequence
+    std::reverse(offensive_name.begin(), offensive_name.end());
+    std::cerr << "Erroneous sequence : " << offensive_name << std::endl;
+}
+
+
+
+//!! LAST+ error handling
+void MultiSequence::removeLatest(){
+
+    removeName();
+
+    // Remove the offensive sequence from the MultiSequence object
+    std::size_t seq_length = ends.v.back() - padSize;
+    if(ends.v.size() > 1){
+        seq_length -= ends.v[ends.v.size()-2];
+    }
+    for(std::size_t j=0; j<seq_length; j++){
+        seq.v.pop_back();
+    }
+    ends.v.pop_back();
 }

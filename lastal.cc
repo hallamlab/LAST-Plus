@@ -736,6 +736,8 @@ std::istream& appendFromFasta(std::istream &in, MultiSequence *query) {
 
   while(count < INPUT_SIZE && !in.eof() ){
 
+    try{
+
     size_t oldUnfinishedSize = query->unfinishedSize();
 
     if (args->inputFormat == sequenceFormat::fasta) {
@@ -760,6 +762,18 @@ std::istream& appendFromFasta(std::istream &in, MultiSequence *query) {
           query->qualityReader() + query->unfinishedSize(),
           qualityOffset(args->inputFormat));
     count++;
+
+    } catch (const std::exception &ex){
+        std::cerr << ex.what() << std::endl;
+        std::cerr << "Encountered a malformed sequence. Ignoring sequence and continuing" << std::endl;
+        query->removeLatest();
+        //!! The problem is the thing only recognizes "-" as a poor symbol. It'll include everything between the previous good and the newest bad error.
+        // Need to reset
+        //std::cerr << "Caught the exception" << std::endl;
+    }
+
+
+
   }
 
   return in;
@@ -769,7 +783,7 @@ void initializeEvalueCalulator(const std::string dbPrjFile, ScoreMatrix *scoreMa
     std::string dbfilePrj) {
   SequenceStatistics _stats1, _stats2;
 
-  fastaFileSequenceStats(dbfilePrj, &_stats1);
+  fastaFileSequenceStats(dbfilePrj, &_stats1, args->inputFormat);
   _stats2 = readStats(dbPrjFile);
 
   cbrc::LastexArguments args1(args->gapExistCost, args->gapExtendCost);

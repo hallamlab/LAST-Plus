@@ -115,6 +115,12 @@ class MultiSequence{
   std::size_t qualsPerLetter() const
   { return qualityScores.size() / seq.size(); }
 
+
+    //!! LAST+ Error handling. Remove the offensive sequence and continue on the merry journey
+    void removeLatest(); 
+    void removeName();
+    void printOffensiveName();
+
   private:
   indexT padSize;  // number of delimiter chars between sequences
   VectorOrMmap<uchar> seq;  // concatenated sequences

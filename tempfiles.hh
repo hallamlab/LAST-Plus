@@ -12,7 +12,7 @@ using namespace std;
 
 typedef struct TempFiles {
 
-      TempFiles(std::string _tempdir, std::string _basedir) : tempdir(_tempdir), basedir(_basedir), count(0), S(10) {} 
+      TempFiles(std::string _tempdir, std::string _basedir) : tempdir(_tempdir), basedir(_basedir), count(0), S(1000) {} 
       void setFanOut(unsigned int i ) {  S = i; }
 
 

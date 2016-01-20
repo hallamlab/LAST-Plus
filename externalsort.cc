@@ -37,8 +37,11 @@ void free_lines(vector<Line *> &v) {
 }
 
 /* Sort the input sequences and divide them into blocks; return the number of blocks created */
-int disk_sort_file(string outputdir, string tobe_sorted_file_name, string sorted_file_name,
-    countT chunk_size, string(*key_extractor)(const string &)) {
+int disk_sort_file(string outputdir, 
+  string tobe_sorted_file_name, 
+  string sorted_file_name,
+  countT chunk_size, 
+  string(*key_extractor)(const string &)) {
 
   // Create iterator for input fasta file
   std::ifstream inputfile;

@@ -117,9 +117,9 @@ void fastaFileSequenceStats( std::string fastaFile,
 	     multi.reinitForAppending();
          sequenceCount++;
     } catch (const std::exception &ex){
-        std::cerr << ex.what() << std::endl;
-        std::cerr << "Encountered a malformed sequence. Ignoring sequence and continuing" << std::endl;
-        multi.printOffensiveName();
+        //std::cerr << ex.what() << std::endl;
+        //std::cerr << "Encountered a malformed sequence. Ignoring sequence and continuing" << std::endl;
+        //multi.printOffensiveName();
 	    multi.reinitForAppending();
         //std::cerr << "Caught the exception" << std::endl;
     }
@@ -142,9 +142,9 @@ void fastaFileSequenceStats( std::string fastaFile,
          sequenceCount++;
 
     } catch (const std::exception &ex){
-        std::cerr << ex.what() << std::endl;
-        std::cerr << "Encountered a malformed sequence. Ignoring sequence and continuing" << std::endl;
-        multi.printOffensiveName();
+        //std::cerr << ex.what() << std::endl;
+        //std::cerr << "Encountered a malformed sequence. Ignoring sequence and continuing" << std::endl;
+        //multi.printOffensiveName();
 	    multi.reinitForAppending();
         //std::cerr << "Caught the exception" << std::endl;
     }

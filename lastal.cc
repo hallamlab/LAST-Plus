@@ -862,9 +862,9 @@ void *writerFunction(void *arguments){
   //std::ostream &out = openOut(args->outFile, outFileStream);
 
   // Create a TEMPFILES class to deal with all of the filenames generated.
-  std::string randstr = generate_directory_name();
+  std::string randstr = generate_directory_name(args->outputdir);
   // listptr is a global structure so it can be dealt with after the writer thread collapses
-  listptr = new  TEMPFILES( "/tmp", randstr + "LASTtemp0");
+  listptr = new TEMPFILES( args->outputdir, randstr + "LASTtemp0");
   //listptr->clear();
 
   while (1) {
@@ -1092,7 +1092,7 @@ void lastal(int argc, char **argv) {
   if(args->outputFormat == 2){
     LOG("Beginning sorting operation")
       //now sort the LAST output on the disk
-      disk_sort_file(std::string("/tmp"), args->outFile, 
+      disk_sort_file(args->outputdir, args->outFile, 
           std::string(args->outFile) + std::string("sort"),
           10, orf_extractor_from_blast, listptr->getFileNames());
     LOG("Completed sorting operation")
@@ -1106,9 +1106,7 @@ void lastal(int argc, char **argv) {
   }
   LOG("Completed alignment operations, exiting")
   
-//!! Deletion 
   listptr->clear();
-  delete listptr;
 }
 
 

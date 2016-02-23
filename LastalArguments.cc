@@ -11,6 +11,7 @@
 #include <cmath>  // log
 #include <cstring>  // strtok
 #include <cstdlib>  // EXIT_SUCCESS
+#include <sys/stat.h>
 
 #define ERR(x) throw std::runtime_error(x)
 
@@ -57,6 +58,7 @@ LastalArguments::LastalArguments() :
   scoreCutoff(20),
   evalueCutoff(1.0e-6),
   threadNum(1),
+  outputdir("/tmp"),
 	topHits(10){}
 
 
@@ -78,6 +80,7 @@ LAST+ Functionality:\n\
 -E: Optional e-value cutoff value (" + stringify(evalueCutoff) + ")\n\
 -P: Optional number of threads (" + stringify(threadNum) + ")\n\
 -K: Optional number of top hits wanted (" + stringify(topHits) + ")\n\
+-X: Temporary directory path for sorting files \n\
 -o: output file\n\
 \n\
 Inherited LAST Functionality:\n\
@@ -136,7 +139,7 @@ LAST+ home page: github.com/hallamlab\n\
   optind = 1;  // allows us to scan arguments more than once(???)
   int c;
   const char optionString[] =
-      "ho:u:s:f:r:q:p:a:b:A:B:c:Fx:y:z:d:e:Q:T:m:l:n:C:k:i:w:t:g:G:vVj:S:E:P:K:";
+      "ho:u:s:f:r:q:p:a:b:A:B:c:Fx:y:z:d:e:Q:T:m:l:n:C:k:i:w:t:g:G:vVj:S:E:P:K:X:";
   while( (c = getopt(argc, argv, optionString)) != -1 ){
     switch(c){
     case 'h':
@@ -284,10 +287,20 @@ LAST+ home page: github.com/hallamlab\n\
 	  case 'K': //Top k for parsing the output file
 		  unstringify(topHits, optarg);
       break;
+    case 'X':
+      outputdir = optarg;
+      break;
     case '?':
       ERR( "bad option" );
     }
   }
+
+  struct stat potential_directory_stat;
+  int error_code = stat(outputdir.c_str(), &potential_directory_stat);
+  if(error_code == -1){
+    ERR( "Given a root path for -X that doesn't exist. Cannot create temporary files, exiting");
+  }
+
 
   if( maskLowercase == 1 && inputFormat == 5 )
     ERR( "can't combine option -u 1 with option -Q 5" );

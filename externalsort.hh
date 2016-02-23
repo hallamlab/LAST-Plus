@@ -27,10 +27,26 @@ using namespace std;
 typedef unsigned long long countT;
 typedef Line *LINE;
 
-int disk_sort_file(string outputdir, string tobe_sorted_file_name, string sorted_file_name, countT chunk_size, string(*key_extractor)(const string &), const std::vector<std::string> &mergelist);
-int merge_sorted_files(const vector<string> &filenames, string sorted_file_name);
-void remove_file(string filename); 
-string generate_directory_name();
-void write_sorted_sequences(vector<Line *> &lines, string filename);
+int disk_sort_file(const string &outputdir, 
+    const string &tobe_sorted_file_name, 
+    const string &sorted_file_name, 
+    countT chunk_size, 
+    string(*key_extractor)(const string &), 
+    const std::vector<std::string> &mergelist);
+
+std::vector<std::string> merge_some_files(const std::vector<std::string> &mergelist, 
+    std::vector<TEMPFILES*> &directories,
+    const string &tmpdir);
+
+int merge_sorted_files(const vector<string> &filenames, 
+    const string &sorted_file_name,
+    const string &tmpdir);
+
+void remove_file(const string &filename); 
+
+string generate_directory_name(const string &tmpdir);
+
+void write_sorted_sequences(vector<Line *> &lines, 
+    const string &filename);
 
 #endif // _EXTERNAL_SORT

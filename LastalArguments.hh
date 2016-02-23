@@ -88,6 +88,7 @@ struct LastalArguments{
   double evalueCutoff;
   int threadNum;
 	int topHits;
+  std::string outputdir;
 
   // positional arguments:
   std::string lastdbName;

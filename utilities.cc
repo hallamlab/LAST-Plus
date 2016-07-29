@@ -44,6 +44,7 @@ string random_str(const int len) {
 
   string str;
 
+  srand(time(NULL));
   for (int i = 0; i < len; ++i) {
     str += alphanum[rand() % (sizeof(alphanum) - 1)];
   }

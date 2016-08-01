@@ -69,7 +69,6 @@ Find local sequence alignments.\n\
 \n\
 Usage Examples:\n\
 Protein - Protein (blastp): lastal+ [options] -o outputFile amino-acid-lastdb-name amino-acid-fasta-sequence-file(s)\n\
-DNA - Protein     (blastx): lastal+ [options] -F -o outputFile amino-acid-lastdb-name DNA-fasta-sequence-file(s)\n\
 DNA - DNA         (blastn): lastal+ [options] -o outputFile DNA-lastdb-name DNA-fasta-sequence-file(s)\n\
 Suggested Usage           : lastal+ -P number_of_cores -o outputFile lastdb-name fasta-sequence-file(s)";
   std::string help = usage + "\n\
@@ -93,7 +92,6 @@ Score options (default settings):\n\
 -A: insertion existence cost (a)\n\
 -B: insertion extension cost (b)\n\
 -c: unaligned residue pair cost (off)\n\
--F: frameshift cost (off) (required for BLASTX)\n\
 -x: maximum score drop for gapped alignments (max[y, e-1])\n\
 -y: maximum score drop for gapless alignments (t*10)\n\
 -z: maximum score drop for final gapped alignments (x)\n\
@@ -103,8 +101,6 @@ Score options (default settings):\n\
 Cosmetic options (default settings):\n\
 -h: show all options and their default settings\n\
 -v: be verbose: write messages about what lastal is doing\n\
--f: output format: 0=tabular, 1=maf 2=BLAST-like ("
-    + stringify(outputFormat) + ")\n\
 \n\
 Miscellaneous options (default settings):\n\
 -s: strand: 0=reverse, 1=forward, 2=both (2 for DNA, 1 for protein)\n\

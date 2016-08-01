@@ -409,8 +409,7 @@ void threadData::alignGapless(SegmentPairPot &gaplessAlns, char strand) {
           aln.fromSegmentPair(sp);
           aln.write(args->scoreCutoff, args->evalueCutoff, *text, *query, strand, 
               args->isTranslated(), *alph, args->outputFormat,
-              outputVector,
-              evaluer);
+              outputVector);
         }
         else {
           gaplessAlns.add(sp);  // add the gapless alignment to the pot
@@ -523,8 +522,7 @@ void threadData::alignFinish(const AlignmentPot &gappedAlns, char strand) {
     const Alignment &aln = gappedAlns.items[i];
     if (args->outputType < 4) {
       aln.write(args->scoreCutoff, args->evalueCutoff, *text, *query, strand, 
-          args->isTranslated(), *alph, args->outputFormat, outputVector,
-          evaluer);
+          args->isTranslated(), *alph, args->outputFormat, outputVector);
     }else{  // calculate match probabilities:
       Alignment probAln(identifier);
       AlignmentExtras extras;
@@ -536,8 +534,7 @@ void threadData::alignFinish(const AlignmentPot &gappedAlns, char strand) {
           dis.i, dis.j, *alph, extras,
           args->gamma, args->outputType);
       probAln.write(args->scoreCutoff, args->evalueCutoff, *text, *query, strand, 
-          args->isTranslated(), *alph, args->outputFormat, outputVector, 
-          evaluer,
+          args->isTranslated(), *alph, args->outputFormat, outputVector,
           extras);
     }
   }
@@ -1060,12 +1057,7 @@ void lastal(int argc, char **argv) {
   char *defaultInput[] = {defaultInputName, 0};
   char **inputBegin = argv + args->inputStart;
 
-  if(args->isTranslated()){
-    evaluer.init_LASTP();
-    evaluer.setSearchSpace( refLetters, args->numOfStrands() );
-  } else {
-    initializeEvalueCalulator(args->lastdbName + ".prj", scoreMatrix, *inputBegin);
-  }
+  initializeEvalueCalulator(args->lastdbName + ".prj", scoreMatrix, *inputBegin);
 
   for (char **i = *inputBegin ? inputBegin : defaultInput; *i; ++i) {
     std::ifstream inFileStream;

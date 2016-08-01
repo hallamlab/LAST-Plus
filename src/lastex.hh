@@ -4,7 +4,7 @@
 #include "ScoreMatrix.hh"
 #include "Alphabet.hh"
 #include "io.hh"
-#include "gumbel_params/mcf_local_alignment_evaluer.hpp"
+#include "../gumbel_params/mcf_local_alignment_evaluer.hpp"
 #include "utils.hh"
 
 

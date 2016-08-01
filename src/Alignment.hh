@@ -14,8 +14,6 @@
 #include <iosfwd>
 #include <iostream>
 
-#include "LastEvaluer.hh"
-
 namespace cbrc{
 
   typedef unsigned char uchar;
@@ -79,7 +77,6 @@ namespace cbrc{
         const MultiSequence& reference, const MultiSequence& query,
         char strand, bool isTranslated, const Alphabet& alph,
         int format, std::vector<std::string> *outputVector,
-        LastEvaluer evaluer,
         const AlignmentExtras& extras = AlignmentExtras() ) const;
 
     // data:
@@ -120,8 +117,7 @@ namespace cbrc{
         double scoreCutoff, double evalueCutoff,
         const MultiSequence& reference, const MultiSequence& query,
         char strand, bool isTranslated, const Alphabet& alph,
-        const AlignmentExtras& extras, std::vector<std::string> *outputVector,
-        LastEvaluer evaluer) const;
+        const AlignmentExtras& extras, std::vector<std::string> *outputVector) const;
 
     void writeMaf( const MultiSequence& reference, const MultiSequence& query,
         char strand, bool isTranslated, const Alphabet& alph, const AlignmentExtras& extras,

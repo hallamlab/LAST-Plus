@@ -65,7 +65,7 @@ LastalArguments::LastalArguments() :
 void LastalArguments::fromArgs( int argc, char** argv, bool optionsOnly ){
 
   std::string usage = "\
-Find local sequence alignments.\n\
+Find local sequence alignments and output in BLAST tabular format.\n\
 \n\
 Usage Examples:\n\
 Protein - Protein (blastp): lastal+ [options] -o outputFile amino-acid-lastdb-name amino-acid-fasta-sequence-file(s)\n\

@@ -949,13 +949,14 @@ void *writerFunction(void *arguments) {
     if (roundDone && readSequences == doneSequences && readSequences) {
       SEM_POST(roundSema);
       if (volume + 1 == volumes) {
-        flushList(outputList);
         SEM_POST(terminationSema);
         break;
       }    
     }    
     SEM_POST(roundCheckSema);
   }
+        
+	flushList(outputList);
   return 0;
 }
 

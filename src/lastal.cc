@@ -731,7 +731,7 @@ std::istream& appendFromFasta(std::istream &in, MultiSequence *query) {
 
   int count = 0;
 
-  while(count < INPUT_SIZE && !in.eof() ){
+  while(count < args->inputSize && !in.eof() ){
 
     try{
 

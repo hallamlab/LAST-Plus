@@ -58,8 +58,6 @@
     std::cerr << stream.str(); \
   }
 
-#define INPUT_SIZE 10000
-
 using namespace cbrc;
 
 typedef MultiSequence::indexT indexT;

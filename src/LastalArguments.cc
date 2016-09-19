@@ -60,8 +60,8 @@ LastalArguments::LastalArguments() :
   threadNum(1),
   outputdir("/tmp"),
 	topHits(10),
-  inputSize(10000),
-  outputSize(5000000) { } 
+  inputSize(25000),
+  outputSize(1000000) { } 
 
 
 

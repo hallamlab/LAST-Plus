@@ -59,7 +59,10 @@ LastalArguments::LastalArguments() :
   evalueCutoff(1.0e-6),
   threadNum(1),
   outputdir("/tmp"),
-	topHits(10){}
+	topHits(10),
+  inputSize(10000),
+  outputSize(5000000) { } 
+
 
 
 void LastalArguments::fromArgs( int argc, char** argv, bool optionsOnly ){
@@ -81,6 +84,8 @@ LAST+ Functionality:\n\
 -K: Optional number of top hits wanted (" + stringify(topHits) + ")\n\
 -X: Temporary directory path for sorting files \n\
 -o: output file\n\
+-I: Sequences per thread per batch (" + stringify(inputSize) + ")\n\
+-O: Sequences per output batch (" + stringify(outputSize) + ")\n\
 \n\
 Inherited LAST Functionality:\n\
 Score options (default settings):\n\
@@ -135,7 +140,7 @@ LAST+ home page: github.com/hallamlab\n\
   optind = 1;  // allows us to scan arguments more than once(???)
   int c;
   const char optionString[] =
-      "ho:u:s:f:r:q:p:a:b:A:B:c:Fx:y:z:d:e:Q:T:m:l:n:C:k:i:w:t:g:G:vVj:S:E:P:K:X:";
+      "ho:u:s:f:r:q:p:a:b:A:B:c:Fx:y:z:d:e:Q:T:m:l:n:C:k:i:w:t:g:G:vVj:S:E:P:K:X:I:O:";
   while( (c = getopt(argc, argv, optionString)) != -1 ){
     switch(c){
     case 'h':
@@ -285,6 +290,12 @@ LAST+ home page: github.com/hallamlab\n\
       break;
     case 'X':
       outputdir = optarg;
+      break;
+    case 'I':
+      unstringify(inputSize, optarg);
+      break;
+    case 'O':
+      unstringify(outputSize, optarg);
       break;
     case '?':
       ERR( "bad option" );

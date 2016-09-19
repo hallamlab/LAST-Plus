@@ -10,6 +10,8 @@
 #include <regex.h>
 #include <time.h>
 
+#include <list>
+
 using namespace std;
 
 void split(const std::string  &strn, std::vector<char *> &v, char *buf, char d='\t');
@@ -21,7 +23,8 @@ std::string random_str(const int len);
 std::string extract_sequence_name(const std::string &name);
 
 void topHits(std::string filename, int maxHits);
-void topHitsVector(std::vector<std::string> &outputVector, int maxHits);
+//void topHitsVector(std::vector<std::string> &outputVector, int maxHits);
+void topHitsList(std::list<std::string> &outputList, int maxHits);
 
 string orf_extractor_from_blast(const string &line);
 

@@ -11,6 +11,7 @@
 #include <stddef.h>  // size_t
 #include <string>
 #include <vector>
+#include <list>
 #include <iosfwd>
 #include <iostream>
 
@@ -76,13 +77,13 @@ namespace cbrc{
         double scoreCutoff, double evalueCutoff,
         const MultiSequence& reference, const MultiSequence& query,
         char strand, bool isTranslated, const Alphabet& alph,
-        int format, std::vector<std::string> *outputVector,
+        int format, std::list<std::string> *outputList,
         const AlignmentExtras& extras = AlignmentExtras() ) const;
 
     // data:
     std::vector<SegmentPair> blocks;  // the gapless blocks of the alignment
     int score;
-	  int identifier; // which thread do I belong to
+    int identifier; // which thread do I belong to
     SegmentPair seed;  // the alignment remembers its seed
 
     size_t beg1() const{ return blocks.front().beg1(); }
@@ -110,18 +111,18 @@ namespace cbrc{
         double gamma, int outputType );
 
     void writeTab( const MultiSequence& reference, const MultiSequence& query,
-        char strand, bool isTranslated, const AlignmentExtras& extras, std::vector<std::string>
-                   *outputVector ) const;
+        char strand, bool isTranslated, const AlignmentExtras& extras, 
+        std::list<std::string> *outputList ) const;
 
     void writeBlastOutput(
         double scoreCutoff, double evalueCutoff,
         const MultiSequence& reference, const MultiSequence& query,
         char strand, bool isTranslated, const Alphabet& alph,
-        const AlignmentExtras& extras, std::vector<std::string> *outputVector) const;
+        const AlignmentExtras& extras, std::list<std::string> *outputList) const;
 
     void writeMaf( const MultiSequence& reference, const MultiSequence& query,
         char strand, bool isTranslated, const Alphabet& alph, const AlignmentExtras& extras,
-        std::vector<std::string> *outputVector ) const;
+        std::list<std::string> *outputList ) const;
 
     size_t numColumns( size_t frameSize ) const;
 

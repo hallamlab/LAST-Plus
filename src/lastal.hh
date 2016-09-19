@@ -35,6 +35,7 @@
 #include <cstdlib>  // EXIT_SUCCESS, EXIT_FAILURE
 #include <string>
 #include <vector>
+#include <list>
 
 #include <queue>
 
@@ -101,12 +102,12 @@ struct threadData{
   Centroid *centroid;
 
   MultiSequence *query;  
-  
+
   std::queue<MultiSequence*> *queryQueue; 
   std::vector< std::vector<countT> > *matchCounts;  // used if outputType == 0
 
-  std::vector<std::string> *outputVector;
-  std::queue< std::vector<std::string>* > *outputVectorQueue;
+  std::list<std::string> *outputVector;
+  std::queue< std::list<std::string>* > *outputVectorQueue;
 
   int identifier;
   int round;
@@ -236,12 +237,14 @@ void initializeEvalueCalulator(const std::string dbPrjFile, ScoreMatrix *scoreMa
     std::string dbfilePrj);
 
 void createStructures(std::string &matrixFile);
-  // Set up a scoring matrix, based on the user options
-  void makeScoreMatrix( const std::string& matrixFile) ;
-  void makeQualityScorers();
-  // Calculate statistical parameters for the alignment scoring scheme
-  // Meaningless for PSSMs, unless they have the same scale as the score matrix
-  void calculateScoreStatistics();
+// Set up a scoring matrix, based on the user options
+void makeScoreMatrix( const std::string& matrixFile) ;
+void makeQualityScorers();
+// Calculate statistical parameters for the alignment scoring scheme
+// Meaningless for PSSMs, unless they have the same scale as the score matrix
+void calculateScoreStatistics();
+
+void flushList(std::list<std::string> &outputList);
 
 void lastal( int argc, char** argv );
 

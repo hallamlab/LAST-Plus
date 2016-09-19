@@ -10,7 +10,7 @@ std::queue<int> idInputQueue;
 std::queue<MultiSequence*> inputQueue;
 
 std::queue<int> idOutputQueue;
-std::queue< std::vector< std::string >* > outputQueue;
+std::queue< std::list< std::string >* > outputQueue;
 
 SEM_T readerSema;
 SEM_T writerSema;
@@ -108,9 +108,9 @@ void threadData::prepareThreadData(int identifier){
     matchCounts = new std::vector< std::vector<countT> >();
   }
 
-  outputVectorQueue = new std::queue< std::vector<std::string>*>();
+  outputVectorQueue = new std::queue< std::list<std::string>*>();
   for (int j=0; j<2; j++){
-    outputVectorQueue->push(new std::vector<std::string>() );
+    outputVectorQueue->push(new std::list<std::string>() );
   }
 
   gappedXdropAligner = new GappedXdropAligner();
@@ -850,27 +850,20 @@ void initializeSemaphores() {
 #endif
 }
 
+/*
 void *writerFunction(void *arguments){
-
-  int id;
-  bool state;
-  std::vector< std::string >* current;
-  //std::ofstream outFileStream;
-  //std::ostream &out = openOut(args->outFile, outFileStream);
 
   // Create a TEMPFILES class to deal with all of the filenames generated.
   std::string randstr = generate_directory_name(args->outputdir);
-  // listptr is a global structure so it can be dealt with after the writer thread collapses
   listptr = new TEMPFILES( args->outputdir, randstr + "LASTtemp0");
-  //listptr->clear();
 
   while (1) {
     SEM_WAIT(writerSema);
 
     SEM_WAIT(inputOutputQueueSema);
-    current = outputQueue.front();
+  	std::list< std::string >* current = outputQueue.front();
     outputQueue.pop();
-    id = idOutputQueue.front();
+    int id = idOutputQueue.front();
     idOutputQueue.pop();
     SEM_POST(inputOutputQueueSema);
 
@@ -905,6 +898,65 @@ void *writerFunction(void *arguments){
     }
     SEM_POST(roundCheckSema);
   }
+}
+*/
+
+void flushList(std::list<std::string> &outputList){
+  std::string name = listptr->nextFileName();
+  std::ofstream out(name.c_str());
+  std::list<std::string>::iterator it = outputList.begin();
+  std::list<std::string>::iterator it2 = outputList.end();
+  for (; it != it2; ++it) {
+    if (*it != "") {
+      out << *it; 
+    }    
+  }
+  outputList.clear();
+}
+
+void *writerFunction(void *arguments) {
+
+  // Create a TEMPFILES class to deal with all of the filenames generated.
+  std::string randstr = generate_directory_name(args->outputdir);
+  listptr = new TempFiles(args->outputdir, randstr + "LASTtemp0");
+
+  std::list<std::string> outputList;
+  while (1) {
+    SEM_WAIT(writerSema);
+    SEM_WAIT(inputOutputQueueSema);
+    std::list<std::string> *current = outputQueue.front();
+    outputQueue.pop();
+    int id = idOutputQueue.front();
+    idOutputQueue.pop();
+    threadData *data = threadDatas[id];
+    SEM_POST(inputOutputQueueSema);
+
+    SEM_WAIT(ioSema);
+    outputList.merge(*current);
+    if (outputList.size() > args->outputSize) {
+      flushList(outputList);
+    }    
+    current->clear();
+    SEM_POST(ioSema);
+
+    SEM_WAIT(inputOutputQueueSema);
+    data->outputVectorQueue->push(current);
+    doneSequences++;
+    SEM_POST(inputOutputQueueSema);
+    SEM_POST(data->writeSema);
+
+    SEM_WAIT(roundCheckSema);
+    if (roundDone && readSequences == doneSequences && readSequences) {
+      SEM_POST(roundSema);
+      if (volume + 1 == volumes) {
+        flushList(outputList);
+        SEM_POST(terminationSema);
+        break;
+      }    
+    }    
+    SEM_POST(roundCheckSema);
+  }
+  return 0;
 }
 
 void readerFunction( std::istream& in ) {
@@ -987,6 +1039,7 @@ bool compare_blast(const std::string &first, const std::string &second){
   return false;
 }
 
+/*
 void *threadFunction(void *__threadData){
 
   struct threadData *data = (struct threadData *) __threadData;
@@ -1011,7 +1064,7 @@ void *threadFunction(void *__threadData){
 
     sort(data->outputVector->begin(), data->outputVector->end(), compare_blast);
     if (args->topHits < 1000 ){
-      topHitsVector(*(data->outputVector), args->topHits);
+      topHitsList(*(data->outputVector), args->topHits);
     }
 
     SEM_WAIT(inputOutputQueueSema);
@@ -1026,6 +1079,45 @@ void *threadFunction(void *__threadData){
   }
   return (void *) 0;
 }
+*/
+
+void *threadFunction(void *__threadData) {
+
+  struct threadData *data = (struct threadData *) __threadData;
+
+  if (args->outputType == 0) { 
+    data->matchCounts->resize(data->query->finishedSequences());
+  }
+
+  while (true) {
+    SEM_WAIT(data->readSema);
+    SEM_WAIT(data->writeSema);
+
+    data->outputVector = data->outputVectorQueue->front();
+    data->outputVectorQueue->pop();
+    data->query = data->queryQueue->front();
+    data->queryQueue->pop();
+
+    data->scanAllVolumes();
+
+    data->query->reinitForAppending();
+
+    data->outputVector->sort(compare_blast);
+    topHitsList(*(data->outputVector), args->topHits);
+
+    SEM_WAIT(inputOutputQueueSema);
+    idInputQueue.push(data->identifier);
+    inputQueue.push(data->query);
+    idOutputQueue.push(data->identifier);
+    outputQueue.push(data->outputVector);
+    SEM_POST(inputOutputQueueSema);
+
+    SEM_POST(readerSema);
+    SEM_POST(writerSema);
+  }
+  return (void *) 0;
+}
+
 
 void lastal(int argc, char **argv) {
   lambdaCalculator = new LambdaCalculator();

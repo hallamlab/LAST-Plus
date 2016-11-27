@@ -1,5 +1,5 @@
 CXX=g++
-CXXFLAGS= -O3 -w -pthread
+CXXFLAGS= -O3 -w -pthread -m64
 
 DBOBJ = src/Alphabet.o \
 				src/MultiSequence.o \
